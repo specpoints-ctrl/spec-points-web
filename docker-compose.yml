@@ -1,0 +1,82 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:16-alpine
+    container_name: specpoints-db
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: specpoints
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - specpoints-network
+
+  # Backend API
+  api:
+    build:
+      context: ./spec-points-api
+      dockerfile: Dockerfile
+    container_name: specpoints-api
+    environment:
+      NODE_ENV: development
+      PORT: 3000
+      API_PORT: 3000
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/specpoints
+      FIREBASE_PROJECT_ID: spec-points-prod
+      FIREBASE_CLIENT_EMAIL: firebase-adminsdk-fbsvc@spec-points-prod.iam.gserviceaccount.com
+      FIREBASE_PRIVATE_KEY: "-----BEGIN PRIVATE KEY-----\nMIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQC6XyGvbqJ5qU7R\ngLz3iAPUqF0CpbLm4idAtrEk8vjxoYIYot8fh+SmUZJQLF/PsFUMKLBkUBgjGiel\nBoDvXaaNGsGl5ZHS8e//ZN4j/pjX3EdblTS6i/aYkzd+8tVAp1mX9L3fPR6Noexw\nZw+whoRITBwChEFn+vqdEvhG0YidRbzm0WW6EhzX7160NgnsgkxjL7+wCy4i20fv\nFEh44GbwB8Uu7jGUwGqgh13/0vsZSfa0JQ8e9DB4NZwcnbiZTYlonvIXj7ADIksw\nxAtiWTW3q4SWw6fqyJHlmMY5mvRHJ+pfpWjrhz4p+Eb74Cr69KCRAPKiqvXNyNar\nhBKo58bNAgMBAAECggEAQfbB2XHzF9SRDR3fxEzj7jTZFsLHG2kYM5N2B3noGr3r\nagTbrDFRAH0GqFHMZ5olv/P22spugJ4VQheXMyGWfYLm32ztvBfdtithZKQMPPq+\nVu/shcpcMYyJq+kPCZ8x2tLJEWZ0lfSl1vLjXrt9vokRsOJWtBLk+QtpzMcE74TQ\nCozwrytCVRYB0F1DnWigtTzLrfmteKM7kvYQUj4InCSVQvYhxzDYv9Or/9XhBLJj\nJSqMiONu/7AHkRralXhMcwcmWmjse7jzLyFuzePz2Ffs27B3oMVzbMPE05t1xpJx\ndpmNL9ZOXrzs9iEVCvY3IxIhpfJ1KtxMSFUwcm1ZkQKBgQDwn8QxsQyYleSWD7RW\nwTedpq1EEk/9h4Povtlq13nZKZa/CxeGQyKlq84ocMqG/7T9lysRXRxP2RhCwxQM\nsHnVNZgQW952afwxf7qE8XINTi20GjVLf+FDocP9HFkdENIRKwem8ooZ7r88f2do\n9jLAeGAF8vdLQW8nHNbdvaxCewKBgQDGR+EninT3sdvp0Fp0aKa/Lpv9JxjfcRYU\nB0n4sDUfm6a7zc46sF4oAthsCi2ophqPKzeC6AeOTL/x/hXs412BTpP/9KXkTUp9\nBKRdylsFUCeKbowd+2yUNhESI01Nod8YuC5K5ZIFJC/GEjDam28q6KDfWn/v+YGP\nA93kARvdVwKBgErUlLITamRlcRINzjqQmhgoBog93axtoWMXPwwP+K/FVEETVPyH\nElZNSK6g7QrwqLuYcGdU+oIGdJoGisyrcSgSI7kqqNNQgIJwQ3Qmlh53KpVw9RQG\nr+pVe1rSnw//9CQsqpOLp9EKw2QwBtvIfN4IUWxoM+mubr/OIzAQVWrTAoGBAIK7\nHb5+UYSGpiJRF3KtFVP0HTEaOBIKc64c6C6przz52UL1/MVBR7NFvP/u7g/GBLjk\nm6MZ7PFrtRqOllIrzpjVAEvAOCiAtV4cU2rrYnvsT0W8gXG7Nem6hCLbV7qZwYiA\n1zTWjCILq9wCXmekF/XIj1j0SGomrb9no0MTYBXdAoGAXHe4Ft9omrFtByrQ0xfx\nQXHCpq+NHQqjsbaN51glZ9ePk2zOtxU+HgVYz+bUMlFCNALXl7Mv6kZplq51YvWM\nU6QlBqKoKnNn/Qr9SHCkYfNTvrCLZaKI1kKmRQtU2dowHT+rTfEykkjztTSxdz2j\n21MZ3xOhR9FERwrxMuNOJB8=\n-----END PRIVATE KEY-----"
+      JWT_SECRET: ZO1pSOu+AVaVOF4VaRQzPqIppb9O0znAxFX3pA0H8i0=
+      CORS_ORIGIN: http://localhost:5173
+      LOG_LEVEL: info
+      RATE_LIMIT_WINDOW_MS: 900000
+      RATE_LIMIT_MAX_ATTEMPTS: 5
+    ports:
+      - "3000:3000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - ./spec-points-api/src:/app/src
+    networks:
+      - specpoints-network
+    command: npm run dev
+
+  # Frontend Web (optional - usually run with npm run dev separately)
+  web:
+    build:
+      context: ./spec-points-web
+      target: builder
+    container_name: specpoints-web-dev
+    environment:
+      VITE_API_URL: http://localhost:3000
+      VITE_FIREBASE_API_KEY: AIzaSyCBf0Po55DuN2LM0c6IsPsoOmaVUmf6Z98
+      VITE_FIREBASE_AUTH_DOMAIN: spec-points-prod.firebaseapp.com
+      VITE_FIREBASE_PROJECT_ID: spec-points-prod
+      VITE_FIREBASE_STORAGE_BUCKET: spec-points-prod.firebasestorage.app
+      VITE_FIREBASE_MESSAGING_SENDER_ID: 1034624051135
+      VITE_FIREBASE_APP_ID: 1:1034624051135:web:d6da31c805a5350efb230a
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./spec-points-web/src:/app/src
+      - ./spec-points-web/public:/app/public
+    networks:
+      - specpoints-network
+    command: npm run dev
+
+volumes:
+  postgres_data:
+
+networks:
+  specpoints-network:
+    driver: bridge

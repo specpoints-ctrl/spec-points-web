@@ -1,0 +1,57 @@
+# SpecPoints SaaS - Railway Monorepo Configuration
+# This file defines the deployment configuration for both API and Web services
+
+[build]
+# Builder to use
+builder = "docker"
+
+[[services]]
+# API Service Configuration
+name = "spec-points-api"
+dir = "spec-points-api"
+dockerfile = "Dockerfile"
+
+[services.variables]
+# Environment Variables for API Service
+NODE_ENV = "production"
+API_PORT = "3000"
+LOG_LEVEL = "info"
+
+# Rate limiting
+RATE_LIMIT_WINDOW_MS = "900000"
+RATE_LIMIT_MAX_ATTEMPTS = "5"
+
+# Note: Add these secrets in Railway dashboard:
+# - DATABASE_URL (Railway PostgreSQL URL)
+# - FIREBASE_PROJECT_ID
+# - FIREBASE_PRIVATE_KEY
+# - FIREBASE_CLIENT_EMAIL  
+# - JWT_SECRET
+# - CORS_ORIGIN (set to your web service URL)
+
+[[services.ports]]
+# Expose port 3000 for API
+port = 3000
+protocol = "http"
+
+[[services]]
+# Web Service Configuration
+name = "spec-points-web"
+dir = "spec-points-web"
+dockerfile = "Dockerfile"
+
+[services.variables]
+# Environment Variables for Web Service
+# Note: Add these secrets in Railway dashboard:
+# - VITE_API_URL (Railway API service URL with /api path)
+# - VITE_FIREBASE_API_KEY
+# - VITE_FIREBASE_AUTH_DOMAIN
+# - VITE_FIREBASE_PROJECT_ID
+# - VITE_FIREBASE_STORAGE_BUCKET
+# - VITE_FIREBASE_MESSAGING_SENDER_ID
+# - VITE_FIREBASE_APP_ID
+
+[[services.ports]]
+# Expose port 8080 for nginx
+port = 8080
+protocol = "http"
