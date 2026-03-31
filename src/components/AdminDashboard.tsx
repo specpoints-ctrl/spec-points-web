@@ -43,8 +43,13 @@ export const AdminDashboard = () => {
   return (
     <div className="p-4 sm:p-6 space-y-6">
       <div>
-        <h1 className="text-3xl sm:text-4xl font-bold text-foreground">Dashboard Administrativo</h1>
-        <p className="text-muted-foreground mt-2">Bem-vindo ao painel de controle</p>
+        <div className="rounded-2xl border border-border/60 bg-gradient-to-br from-primary/95 via-primary/90 to-accent/90 p-5 sm:p-7 text-primary-foreground shadow-[0_20px_45px_rgba(18,114,121,0.28)]">
+          <p className="text-xs sm:text-sm uppercase tracking-[0.2em] text-primary-foreground/80">Visao Geral</p>
+          <h1 className="text-2xl sm:text-4xl font-extrabold mt-2">Dashboard Administrativo</h1>
+          <p className="mt-2 text-primary-foreground/85 max-w-2xl">
+            Acompanhe indicadores em tempo real, performance comercial e evolucao do programa de pontos.
+          </p>
+        </div>
       </div>
 
       {/* Stats Cards */}
@@ -52,14 +57,14 @@ export const AdminDashboard = () => {
         {cards.map((card, index) => {
           const Icon = card.icon;
           return (
-            <Card key={index}>
+            <Card key={index} className="hover:-translate-y-1">
               <CardContent className="pt-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-xs sm:text-sm text-muted-foreground font-medium">{card.label}</p>
-                    <p className="text-xl sm:text-3xl font-bold text-foreground mt-2">{card.value.toLocaleString()}</p>
+                    <p className="text-xs sm:text-sm text-muted-foreground font-semibold uppercase tracking-wide">{card.label}</p>
+                    <p className="text-2xl sm:text-4xl font-extrabold text-foreground mt-2">{card.value.toLocaleString()}</p>
                   </div>
-                  <div className={`p-3 rounded-lg bg-muted ${card.color}`}>
+                  <div className={`p-3 rounded-xl bg-muted/80 ${card.color}`}>
                     <Icon className="w-6 h-6 sm:w-8 sm:h-8" />
                   </div>
                 </div>
@@ -111,7 +116,7 @@ export const AdminDashboard = () => {
             {stats?.recentSales && stats.recentSales.length > 0 ? (
               <div className="space-y-3 max-h-96 overflow-y-auto">
                 {stats.recentSales.map((sale, idx) => (
-                  <div key={idx} className="p-3 border border-border rounded-md hover:bg-muted transition">
+                  <div key={idx} className="p-3 border border-border rounded-xl bg-background/60 hover:bg-muted/40 transition">
                     <div className="flex justify-between items-start">
                       <div>
                         <p className="font-semibold text-foreground">{sale.architect_name}</p>

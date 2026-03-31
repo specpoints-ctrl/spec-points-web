@@ -8,6 +8,7 @@ import StoresPage from './pages/StoresPage';
 import SalesPage from './pages/SalesPage';
 import PrizesPage from './pages/PrizesPage';
 import RedemptionsPage from './pages/RedemptionsPage';
+import UserApprovalsPage from './pages/UserApprovalsPage';
 import { auth } from './lib/firebase';
 import { BackendUserProfile, getCurrentUser } from './lib/api';
 import { AdminLayout } from './components/layouts/AdminLayout';
@@ -197,6 +198,23 @@ function App() {
               })()
             ) : (
               <Navigate to="/auth" replace />
+            )
+          }
+        />
+        <Route
+          path="/approvals"
+          element={
+            isAuthenticated && profile?.user_roles?.[0]?.role === 'admin' ? (
+              (() => {
+                const LayoutComponent = getLayout();
+                return (
+                  <LayoutComponent>
+                    <UserApprovalsPage />
+                  </LayoutComponent>
+                );
+              })()
+            ) : (
+              <Navigate to="/" replace />
             )
           }
         />

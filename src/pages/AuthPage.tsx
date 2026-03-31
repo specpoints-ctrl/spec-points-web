@@ -1,4 +1,5 @@
 import { FormEvent, useState } from 'react';
+import { isAxiosError } from 'axios';
 import { signInWithEmailAndPassword, signOut } from 'firebase/auth';
 import { auth } from '../lib/firebase';
 import { registerUser, validateLoginStatus } from '../lib/api';
@@ -19,6 +20,21 @@ export default function AuthPage({ onLoginSuccess }: AuthPageProps) {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
 
+  const getApiErrorMessage = (err: unknown, fallback: string) => {
+    if (isAxiosError<{ error?: string; message?: string }>(err)) {
+      const apiMessage = err.response?.data?.error || err.response?.data?.message;
+      if (apiMessage) {
+        return apiMessage;
+      }
+    }
+
+    if (err instanceof Error && err.message) {
+      return err.message;
+    }
+
+    return fallback;
+  };
+
   const handleLogin = async () => {
     setLoading(true);
     setError(null);
@@ -37,9 +53,7 @@ export default function AuthPage({ onLoginSuccess }: AuthPageProps) {
       setSuccess('Login realizado com sucesso!');
       onLoginSuccess();
     } catch (err: unknown) {
-      const fallback = 'Não foi possível realizar o login.';
-      const message = err instanceof Error ? err.message : fallback;
-      setError(message);
+      setError(getApiErrorMessage(err, 'Não foi possível realizar o login.'));
     } finally {
       setLoading(false);
     }
@@ -67,9 +81,7 @@ export default function AuthPage({ onLoginSuccess }: AuthPageProps) {
       setMode('login');
       setPassword('');
     } catch (err: unknown) {
-      const fallback = 'Erro ao registrar usuário.';
-      const message = err instanceof Error ? err.message : fallback;
-      setError(message);
+      setError(getApiErrorMessage(err, 'Erro ao registrar usuário.'));
     } finally {
       setLoading(false);
     }

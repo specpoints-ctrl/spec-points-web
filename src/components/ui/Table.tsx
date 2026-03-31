@@ -5,7 +5,7 @@ interface TableProps extends React.TableHTMLAttributes<HTMLTableElement> {}
 
 const Table = React.forwardRef<HTMLTableElement, TableProps>(
   ({ className, ...props }, ref) => (
-    <div className="w-full overflow-x-auto">
+    <div className="w-full overflow-x-auto rounded-xl border border-border/70 bg-card/70">
       <table
         ref={ref}
         className={cn('w-full caption-bottom text-sm', className)}
@@ -22,7 +22,7 @@ const TableHeader = React.forwardRef<HTMLTableSectionElement, TableHeaderProps>(
   ({ className, ...props }, ref) => (
     <thead
       ref={ref}
-      className={cn('border-b border-border bg-muted/30 sticky top-0', className)}
+      className={cn('border-b border-border bg-muted/60 sticky top-0', className)}
       {...props}
     />
   )
@@ -65,7 +65,7 @@ const TableRow = React.forwardRef<HTMLTableRowElement, TableRowProps>(
     <tr
       ref={ref}
       className={cn(
-        'border-b border-border transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted',
+        'border-b border-border/70 transition-colors hover:bg-muted/45 data-[state=selected]:bg-muted',
         className
       )}
       {...props}
@@ -81,7 +81,7 @@ const TableHead = React.forwardRef<HTMLTableCellElement, TableHeadProps>(
     <th
       ref={ref}
       className={cn(
-        'h-12 px-4 text-left align-middle font-semibold text-muted-foreground [&:has([role=checkbox])]:pr-0',
+        'h-12 px-4 text-left align-middle font-bold text-muted-foreground [&:has([role=checkbox])]:pr-0',
         className
       )}
       {...props}

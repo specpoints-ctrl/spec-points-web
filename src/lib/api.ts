@@ -28,6 +28,7 @@ export interface ApiResponse<T = unknown> {
   data?: T;
   error?: string;
   message?: string;
+  total?: number;
 }
 
 export interface BackendUserProfile {
@@ -43,6 +44,17 @@ export interface BackendUserProfile {
     architect_id?: number | null;
     store_id?: number | null;
   }>;
+}
+
+export interface PendingUser {
+  id: string;
+  firebase_uid: string;
+  email: string;
+  status: string;
+  created_at: string;
+  role: string;
+  architect_id?: number;
+  architect_name?: string;
 }
 
 export const registerUser = async (payload: RegisterPayload) => {
@@ -80,6 +92,55 @@ export const getDashboardStats = async (token: string) => {
       Authorization: `Bearer ${token}`,
     },
   });
+
+  return response.data;
+};
+
+// User management endpoints
+export const getPendingUsers = async (token: string) => {
+  const response = await api.get<ApiResponse<PendingUser[]>>('/users/pending', {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  return response.data;
+};
+
+export const getUserDetails = async (token: string, userId: string) => {
+  const response = await api.get<ApiResponse<PendingUser>>(`/users/${userId}`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  return response.data;
+};
+
+export const approveUser = async (token: string, userId: string) => {
+  const response = await api.post<ApiResponse>(
+    `/users/${userId}/approve`,
+    {},
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    }
+  );
+
+  return response.data;
+};
+
+export const rejectUser = async (token: string, userId: string, reason?: string) => {
+  const response = await api.post<ApiResponse>(
+    `/users/${userId}/reject`,
+    { reason },
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    }
+  );
 
   return response.data;
 };
