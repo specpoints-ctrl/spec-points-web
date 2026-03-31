@@ -1,7 +1,5 @@
 import 'dotenv/config';
 import admin from 'firebase-admin';
-import * as fs from 'fs';
-import * as path from 'path';
 
 const firebaseConfig = {
   projectId: process.env.FIREBASE_PROJECT_ID || 'spec-points-prod',

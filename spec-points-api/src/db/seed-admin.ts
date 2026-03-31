@@ -1,5 +1,12 @@
 import { db } from './config.js';
 
+interface UserResult {
+  id: string;
+  firebase_uid: string;
+  email: string;
+  status: string;
+}
+
 const activateAdminUser = async () => {
   try {
     // Update existing admin user to active status
@@ -11,7 +18,7 @@ const activateAdminUser = async () => {
     );
 
     if (result.rowCount > 0) {
-      const user = result.rows[0];
+      const user = result.rows[0] as UserResult;
       console.log('✅ Admin user activated successfully!');
       console.log(`   User ID: ${user.id}`);
       console.log(`   Firebase UID: ${user.firebase_uid}`);
@@ -28,7 +35,7 @@ const activateAdminUser = async () => {
       );
 
       if (adminResult.rows.length > 0) {
-        const newUser = adminResult.rows[0];
+        const newUser = adminResult.rows[0] as UserResult;
         console.log('✅ Admin user created successfully!');
         console.log(`   User ID: ${newUser.id}`);
         console.log(`   Firebase UID: ${newUser.firebase_uid}`);

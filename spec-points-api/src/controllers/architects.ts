@@ -17,7 +17,7 @@ interface ArchitectData {
 }
 
 // GET all architects
-export async function listArchitects(req: Request, res: Response) {
+export async function listArchitects(_req: Request, res: Response) {
   try {
     const architects = await db.manyOrNone(
       `SELECT id, email, name as nome, company as empresa, telefone, status, city as cidade, state as estado, created_at 

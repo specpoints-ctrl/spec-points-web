@@ -122,6 +122,7 @@ import storesRoutes from './routes/stores.js';
 import salesRoutes from './routes/sales.js';
 import prizesRoutes from './routes/prizes.js';
 import redemptionsRoutes from './routes/redemptions.js';
+import usersRoutes from './routes/users.js';
 
 // API Routes
 app.get('/api', (_req: Request, res: Response) => {
@@ -146,6 +147,7 @@ app.use('/api/stores', storesRoutes);
 app.use('/api/sales', salesRoutes);
 app.use('/api/prizes', prizesRoutes);
 app.use('/api/redemptions', redemptionsRoutes);
+app.use('/api/users', usersRoutes);
 
 // Error handling middleware
 app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {

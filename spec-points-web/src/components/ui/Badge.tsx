@@ -12,15 +12,15 @@ const Badge = React.forwardRef<HTMLDivElement, BadgeProps>(
       secondary: 'bg-secondary text-secondary-foreground',
       destructive: 'bg-destructive text-destructive-foreground',
       outline: 'border border-border bg-background text-foreground',
-      success: 'bg-success/10 text-success border border-success/20',
-      warning: 'bg-warning/10 text-warning border border-warning/20',
+      success: 'bg-success/15 text-success border border-success/30',
+      warning: 'bg-warning/15 text-warning border border-warning/30',
     };
 
     return (
       <div
         ref={ref}
         className={cn(
-          'inline-flex items-center rounded-md px-2.5 py-0.5 text-xs font-semibold transition-colors',
+          'inline-flex items-center rounded-full px-2.5 py-1 text-xs font-bold tracking-wide transition-colors',
           variants[variant],
           className
         )}

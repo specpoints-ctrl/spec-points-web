@@ -9,20 +9,20 @@ interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
 
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
   ({ className, variant = 'default', size = 'md', isLoading = false, disabled, children, ...props }, ref) => {
-    const baseStyles = 'inline-flex items-center justify-center rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:opacity-50 disabled:cursor-not-allowed min-h-[44px] min-w-[44px]';
+    const baseStyles = 'inline-flex items-center justify-center rounded-xl font-semibold tracking-tight transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:opacity-50 disabled:cursor-not-allowed min-h-[44px] min-w-[44px] shadow-sm';
 
     const variants = {
-      default: 'bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm',
-      secondary: 'bg-secondary text-secondary-foreground hover:bg-secondary/80 shadow-sm',
-      destructive: 'bg-destructive text-destructive-foreground hover:bg-destructive/90 shadow-sm',
-      outline: 'border border-input bg-background hover:bg-accent hover:text-accent-foreground shadow-sm',
-      ghost: 'hover:bg-accent hover:text-accent-foreground',
+      default: 'bg-primary text-primary-foreground hover:-translate-y-0.5 hover:brightness-105 hover:shadow-md active:translate-y-0',
+      secondary: 'bg-secondary text-secondary-foreground hover:-translate-y-0.5 hover:bg-secondary/90 hover:shadow-md active:translate-y-0',
+      destructive: 'bg-destructive text-destructive-foreground hover:-translate-y-0.5 hover:bg-destructive/90 hover:shadow-md active:translate-y-0',
+      outline: 'border border-border bg-card text-foreground hover:border-primary/40 hover:bg-background hover:text-foreground',
+      ghost: 'text-foreground hover:bg-muted hover:text-foreground',
     };
 
     const sizes = {
       sm: 'h-9 px-3 text-sm',
-      md: 'h-10 px-4 text-base',
-      lg: 'h-12 px-6 text-lg',
+      md: 'h-11 px-4 text-sm sm:text-base',
+      lg: 'h-12 px-6 text-base sm:text-lg',
     };
 
     return (
