@@ -1,0 +1,78 @@
+@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Sora:wght@500;600;700;800&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+:root {
+  --background: 42 34% 96%;
+  --foreground: 192 35% 15%;
+  --primary: 185 73% 26%;
+  --primary-foreground: 42 38% 97%;
+  --secondary: 40 51% 88%;
+  --secondary-foreground: 191 38% 22%;
+  --muted: 36 30% 92%;
+  --muted-foreground: 193 16% 38%;
+  --accent: 24 75% 58%;
+  --accent-foreground: 0 0% 100%;
+  --destructive: 0 71% 48%;
+  --destructive-foreground: 0 0% 100%;
+  --success: 153 55% 34%;
+  --warning: 34 92% 52%;
+  --card: 0 0% 100%;
+  --card-foreground: 192 35% 15%;
+  --border: 188 20% 82%;
+  --input: 0 0% 100%;
+  --ring: 185 73% 30%;
+  --sidebar-background: 190 40% 16%;
+  --sidebar-foreground: 48 44% 94%;
+  --sidebar-accent: 31 76% 61%;
+}
+
+body {
+  font-family: 'Manrope', 'Segoe UI', sans-serif;
+  color: hsl(var(--foreground));
+  background:
+    radial-gradient(circle at 10% 10%, rgba(247, 184, 113, 0.2) 0, transparent 32%),
+    radial-gradient(circle at 90% 0%, rgba(19, 136, 143, 0.16) 0, transparent 28%),
+    linear-gradient(160deg, #faf7f0 0%, #f4efe5 38%, #edf2ef 100%);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+h1,
+h2,
+h3,
+h4 {
+  font-family: 'Sora', 'Manrope', sans-serif;
+  letter-spacing: -0.02em;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: hsl(var(--muted));
+}
+
+::-webkit-scrollbar-thumb {
+  background: hsl(var(--muted-foreground));
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--foreground));
+}
