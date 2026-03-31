@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const configuredBaseUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+const configuredBaseUrl = import.meta.env.VITE_API_URL || 'https://spec-points-api-production.up.railway.app';
 const normalizedBaseUrl = configuredBaseUrl.endsWith('/')
   ? configuredBaseUrl.slice(0, -1)
   : configuredBaseUrl;
