@@ -1,6 +1,7 @@
 import axios from 'axios';
+import { getAuth } from 'firebase/auth';
 
-const configuredBaseUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+const configuredBaseUrl = import.meta.env.VITE_API_URL || 'https://spec-points-api-production.up.railway.app';
 const normalizedBaseUrl = configuredBaseUrl.endsWith('/')
   ? configuredBaseUrl.slice(0, -1)
   : configuredBaseUrl;
@@ -14,6 +15,21 @@ export const api = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
+});
+
+// Interceptor: injeta o Firebase token automaticamente em todas as requisições
+api.interceptors.request.use(async (config) => {
+  try {
+    const auth = getAuth();
+    const user = auth.currentUser;
+    if (user && !config.headers.Authorization) {
+      const token = await user.getIdToken();
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+  } catch {
+    // Sem token disponível, a requisição segue sem autenticação
+  }
+  return config;
 });
 
 export interface RegisterPayload {
