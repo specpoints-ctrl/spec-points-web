@@ -7,21 +7,34 @@ interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
 }
 
 const Input = React.forwardRef<HTMLInputElement, InputProps>(
-  ({ className, type = 'text', error, label, ...props }, ref) => {
+  ({ className, type = 'text', error, label, id, ...props }, ref) => {
+    const inputId = id || label?.toLowerCase().replace(/\s+/g, '-');
     return (
       <div className="w-full">
-        {label && <label className="block text-sm font-medium text-foreground mb-2">{label}</label>}
+        {label && (
+          <label
+            htmlFor={inputId}
+            className="block text-[11px] font-bold uppercase tracking-widest text-muted-foreground mb-1.5"
+          >
+            {label}
+          </label>
+        )}
         <input
+          id={inputId}
           type={type}
           ref={ref}
           className={cn(
-            'flex h-11 w-full rounded-xl border border-border bg-input px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:border-transparent disabled:cursor-not-allowed disabled:opacity-50 transition-all min-h-[44px]',
-            error && 'border-destructive focus-visible:ring-destructive',
+            'flex h-11 w-full rounded-xl border bg-white/80 backdrop-blur-sm px-4 py-2 text-sm text-foreground',
+            'placeholder:text-muted-foreground/60 transition-all duration-200',
+            'border-border/60 focus-visible:outline-none',
+            'focus-visible:border-primary focus-visible:shadow-[0_0_0_3px_hsl(185_73%_26%_/_0.13)]',
+            'disabled:cursor-not-allowed disabled:opacity-50 min-h-[44px]',
+            error && 'border-destructive focus-visible:ring-destructive focus-visible:shadow-[0_0_0_3px_hsl(0_71%_48%_/_0.13)]',
             className
           )}
           {...props}
         />
-        {error && <p className="text-sm text-destructive mt-1">{error}</p>}
+        {error && <p className="text-xs text-destructive mt-1.5 font-medium">{error}</p>}
       </div>
     );
   }

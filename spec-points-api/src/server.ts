@@ -1,4 +1,3 @@
-import './env.js';
 import { app, logger } from './index.js';
 import { testConnection } from './db/config.js';
 

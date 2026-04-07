@@ -1,100 +1,153 @@
 import { ReactNode, useEffect, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { LogOut, Home, Users, Store, ShoppingCart, Gift, RotateCcw, Settings, Menu, X, CheckCircle } from 'lucide-react';
+import {
+  LogOut, Home, Users, Store, ShoppingCart, Gift,
+  RotateCcw, Settings, Menu, X, CheckCircle,
+} from 'lucide-react';
 import { auth } from '../../lib/firebase';
+
+const Logo = () => (
+  <svg width="28" height="28" viewBox="0 0 28 28" fill="none" aria-hidden>
+    <polygon
+      points="14,2 26,8 26,20 14,26 2,20 2,8"
+      fill="none"
+      stroke="url(#lg)"
+      strokeWidth="1.5"
+    />
+    <polygon
+      points="14,7 21,11 21,17 14,21 7,17 7,11"
+      fill="url(#lg)"
+      opacity="0.25"
+    />
+    <circle cx="14" cy="14" r="2.5" fill="url(#lg)" />
+    <defs>
+      <linearGradient id="lg" x1="2" y1="2" x2="26" y2="26" gradientUnits="userSpaceOnUse">
+        <stop stopColor="#f7b871" />
+        <stop offset="1" stopColor="#d4a574" />
+      </linearGradient>
+    </defs>
+  </svg>
+);
+
+const menuItems = [
+  { icon: Home,        label: 'Dashboard',    path: '/' },
+  { icon: Users,       label: 'Arquitetos',   path: '/architects' },
+  { icon: Store,       label: 'Lojas',        path: '/stores' },
+  { icon: ShoppingCart,label: 'Vendas',       path: '/sales' },
+  { icon: Gift,        label: 'Prêmios',      path: '/prizes' },
+  { icon: RotateCcw,   label: 'Resgates',     path: '/redemptions' },
+  { icon: CheckCircle, label: 'Aprovações',   path: '/approvals' },
+  { icon: Settings,    label: 'Configurações',path: '/settings' },
+];
 
 export const AdminLayout = ({ children }: { children: ReactNode }) => {
   const location = useLocation();
   const user = auth.currentUser;
   const [mobileOpen, setMobileOpen] = useState(false);
 
-  const menuItems = [
-    { icon: Home, label: 'Dashboard', path: '/' },
-    { icon: Users, label: 'Arquitetos', path: '/architects' },
-    { icon: Store, label: 'Lojas', path: '/stores' },
-    { icon: ShoppingCart, label: 'Vendas', path: '/sales' },
-    { icon: Gift, label: 'Prêmios', path: '/prizes' },
-    { icon: RotateCcw, label: 'Resgates', path: '/redemptions' },
-    { icon: CheckCircle, label: 'Aprovações', path: '/approvals' },
-    { icon: Settings, label: 'Configurações', path: '/settings' },
-  ];
-
-  useEffect(() => {
-    setMobileOpen(false);
-  }, [location.pathname]);
+  useEffect(() => { setMobileOpen(false); }, [location.pathname]);
 
   const isActive = (path: string) => location.pathname === path;
+  const initial = (user?.email?.[0] ?? 'A').toUpperCase();
 
   const SidebarContent = () => (
-    <>
-      <div className="p-6 border-b border-white/10 bg-white/5">
-        <p className="text-[11px] uppercase tracking-[0.2em] text-sidebar-foreground/70">Painel</p>
-        <h1 className="text-2xl font-extrabold text-sidebar-foreground">SpecPoints</h1>
-        <p className="text-sm text-sidebar-foreground/70">Administrativo</p>
+    <div className="flex flex-col h-full">
+      {/* Brand */}
+      <div className="px-6 py-5 border-b border-white/10">
+        <div className="flex items-center gap-3">
+          <Logo />
+          <div>
+            <p className="text-[10px] uppercase tracking-[0.22em] text-sidebar-foreground/55 leading-none mb-0.5">Painel</p>
+            <h1 className="text-xl font-extrabold text-gradient-gold leading-none">SpecPoints</h1>
+          </div>
+        </div>
+        <div className="mt-3 flex items-center gap-1.5">
+          <span className="block w-1.5 h-1.5 rounded-full bg-emerald-400 animate-live" />
+          <p className="text-[10px] uppercase tracking-widest text-sidebar-foreground/50">Administrativo</p>
+        </div>
       </div>
 
-      <nav className="mt-4 flex-1 overflow-y-auto">
+      {/* Nav */}
+      <nav className="flex-1 overflow-y-auto py-3 px-3">
         {menuItems.map((item) => (
           <Link
             key={item.path}
             to={item.path}
-            className={`mx-3 mb-1.5 flex items-center rounded-xl px-4 py-3 transition-all min-h-[44px] ${
+            className={[
+              'flex items-center rounded-xl px-3.5 py-2.5 mb-0.5 gap-3 text-sm font-medium transition-all duration-200 min-h-[44px]',
               isActive(item.path)
-                ? 'bg-sidebar-accent text-slate-900 shadow-[0_8px_20px_rgba(247,184,113,0.35)]'
-                : 'text-sidebar-foreground/85 hover:bg-white/10 hover:text-sidebar-foreground'
-            }`}
+                ? 'bg-sidebar-accent text-slate-900 shadow-sidebar-item border-l-2 border-sidebar-accent'
+                : 'text-sidebar-foreground/75 hover:bg-white/8 hover:text-sidebar-foreground',
+            ].join(' ')}
           >
-            <item.icon className="w-5 h-5 mr-3" />
+            <item.icon className="w-[18px] h-[18px] shrink-0" />
             {item.label}
           </Link>
         ))}
       </nav>
 
-      <div className="p-6 border-t border-white/10 bg-white/5">
-        <div className="text-sm text-sidebar-foreground/80 mb-4">
-          <p className="truncate">{user?.email}</p>
+      {/* Footer */}
+      <div className="px-4 py-4 border-t border-white/10">
+        <div className="flex items-center gap-3 mb-3 px-1">
+          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-sidebar-accent to-[#c4956a] flex items-center justify-center shrink-0">
+            <span className="text-xs font-bold text-slate-900">{initial}</span>
+          </div>
+          <p className="text-xs text-sidebar-foreground/65 truncate flex-1">{user?.email}</p>
         </div>
         <button
           onClick={() => auth.signOut()}
-          className="w-full flex items-center justify-center bg-white/10 text-sidebar-foreground hover:bg-white/20 font-semibold py-2.5 rounded-xl transition min-h-[44px]"
+          className="w-full flex items-center justify-center gap-2 bg-white/8 hover:bg-white/15 text-sidebar-foreground/85 hover:text-sidebar-foreground text-sm font-semibold py-2.5 rounded-xl transition-all duration-200 min-h-[44px]"
         >
-          <LogOut className="w-4 h-4 mr-2" />
+          <LogOut className="w-4 h-4" />
           Sair
         </button>
       </div>
-    </>
+    </div>
   );
 
   return (
     <div className="flex h-screen bg-background text-foreground">
-      <div className="lg:hidden fixed top-0 left-0 right-0 z-40 h-14 bg-card/90 backdrop-blur border-b border-border flex items-center justify-between px-4">
-        <span className="font-bold text-foreground">SpecPoints</span>
+      {/* Mobile topbar */}
+      <div className="lg:hidden fixed top-0 left-0 right-0 z-40 h-14 glass border-b border-white/30 flex items-center justify-between px-4 shadow-sm">
+        <div className="flex items-center gap-2">
+          <Logo />
+          <span className="font-bold text-foreground text-sm">SpecPoints</span>
+        </div>
         <button
-          onClick={() => setMobileOpen((prev) => !prev)}
-          className="inline-flex items-center justify-center rounded-xl border border-border h-10 w-10 min-h-[44px] min-w-[44px] bg-background"
+          onClick={() => setMobileOpen((p) => !p)}
+          className="inline-flex items-center justify-center rounded-xl border border-border/60 h-10 w-10 min-h-[44px] min-w-[44px] bg-white/60 backdrop-blur-sm hover:bg-white/80 transition-all"
           aria-label="Abrir menu"
         >
-          {mobileOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+          {mobileOpen ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
         </button>
       </div>
 
-      {mobileOpen && <div className="lg:hidden fixed inset-0 z-30 bg-slate-900/60" onClick={() => setMobileOpen(false)} />}
+      {/* Mobile overlay */}
+      {mobileOpen && (
+        <div
+          className="lg:hidden fixed inset-0 z-30 bg-black/50 backdrop-blur-sm animate-fade-in"
+          onClick={() => setMobileOpen(false)}
+        />
+      )}
 
-      <aside className="hidden lg:flex w-72 bg-sidebar-background border-r border-white/10 shadow-[10px_0_30px_rgba(7,24,27,0.28)] flex-col">
+      {/* Desktop sidebar */}
+      <aside className="hidden lg:flex w-64 flex-col bg-gradient-to-b from-[#0b2024] to-[#152d32] border-r border-white/8 shadow-[8px_0_32px_rgba(7,24,27,0.32)]">
         <SidebarContent />
       </aside>
 
+      {/* Mobile sidebar */}
       <aside
-        className={`lg:hidden fixed inset-y-0 left-0 z-40 w-72 max-w-[85vw] bg-sidebar-background border-r border-white/10 shadow-xl flex flex-col transform transition-transform ${
+        className={`lg:hidden fixed inset-y-0 left-0 z-40 w-72 max-w-[85vw] flex flex-col bg-gradient-to-b from-[#0b2024] to-[#152d32] border-r border-white/8 shadow-[8px_0_32px_rgba(7,24,27,0.4)] transform transition-transform duration-300 ease-out ${
           mobileOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
       >
         <SidebarContent />
       </aside>
 
-      <main className="flex-1 overflow-auto bg-transparent pt-14 lg:pt-0">
+      {/* Main content */}
+      <main className="flex-1 overflow-auto pt-14 lg:pt-0">
         <div className="min-h-full p-3 sm:p-4 lg:p-6">
-          <div className="rounded-2xl border border-border/70 bg-card/70 backdrop-blur-md shadow-[0_20px_50px_rgba(30,63,69,0.1)] min-h-full">
+          <div className="rounded-2xl border border-white/50 bg-white/40 backdrop-blur-md shadow-[0_8px_40px_rgba(20,44,50,0.08)] min-h-full">
             {children}
           </div>
         </div>

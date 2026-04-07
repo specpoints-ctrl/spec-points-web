@@ -3,93 +3,121 @@ import { Link, useLocation } from 'react-router-dom';
 import { LogOut, Home, BarChart3, MessageCircle, Menu, X } from 'lucide-react';
 import { auth } from '../../lib/firebase';
 
+const Logo = () => (
+  <svg width="26" height="26" viewBox="0 0 28 28" fill="none" aria-hidden>
+    <polygon points="14,2 26,8 26,20 14,26 2,20 2,8" fill="none" stroke="url(#lgl)" strokeWidth="1.5" />
+    <circle cx="14" cy="14" r="2.5" fill="url(#lgl)" />
+    <defs>
+      <linearGradient id="lgl" x1="2" y1="2" x2="26" y2="26" gradientUnits="userSpaceOnUse">
+        <stop stopColor="#f7b871" />
+        <stop offset="1" stopColor="#d4a574" />
+      </linearGradient>
+    </defs>
+  </svg>
+);
+
+const menuItems = [
+  { icon: Home,         label: 'Dashboard', path: '/' },
+  { icon: BarChart3,    label: 'Vendas',    path: '/sales' },
+  { icon: MessageCircle,label: 'Contatos',  path: '/contacts' },
+];
+
 export const LojistaLayout = ({ children }: { children: ReactNode }) => {
   const location = useLocation();
   const user = auth.currentUser;
   const [mobileOpen, setMobileOpen] = useState(false);
 
-  const menuItems = [
-    { icon: Home, label: 'Dashboard', path: '/' },
-    { icon: BarChart3, label: 'Vendas', path: '/sales' },
-    { icon: MessageCircle, label: 'Contatos', path: '/contacts' },
-  ];
-
-  useEffect(() => {
-    setMobileOpen(false);
-  }, [location.pathname]);
+  useEffect(() => { setMobileOpen(false); }, [location.pathname]);
 
   const isActive = (path: string) => location.pathname === path;
+  const initial = (user?.email?.[0] ?? 'L').toUpperCase();
 
   const SidebarContent = () => (
-    <>
-      <div className="p-6 border-b border-border">
-        <h1 className="text-2xl font-bold text-primary">SpecPoints</h1>
-        <p className="text-sm text-muted-foreground">Lojista</p>
+    <div className="flex flex-col h-full">
+      <div className="px-6 py-5 border-b border-white/10">
+        <div className="flex items-center gap-3">
+          <Logo />
+          <div>
+            <h1 className="text-xl font-extrabold text-gradient-gold leading-none">SpecPoints</h1>
+            <p className="text-[10px] uppercase tracking-[0.18em] text-sidebar-foreground/50 mt-0.5">Lojista</p>
+          </div>
+        </div>
       </div>
 
-      <nav className="mt-4 flex-1 overflow-y-auto">
+      <nav className="flex-1 overflow-y-auto py-3 px-3">
         {menuItems.map((item) => (
           <Link
             key={item.path}
             to={item.path}
-            className={`flex items-center px-6 py-3 transition min-h-[44px] ${
+            className={[
+              'flex items-center rounded-xl px-3.5 py-2.5 mb-0.5 gap-3 text-sm font-medium transition-all duration-200 min-h-[44px]',
               isActive(item.path)
-                ? 'bg-primary text-primary-foreground border-l-4 border-primary'
-                : 'text-foreground hover:bg-muted'
-            }`}
+                ? 'bg-sidebar-accent text-slate-900 shadow-sidebar-item border-l-2 border-sidebar-accent'
+                : 'text-sidebar-foreground/75 hover:bg-white/8 hover:text-sidebar-foreground',
+            ].join(' ')}
           >
-            <item.icon className="w-5 h-5 mr-3" />
+            <item.icon className="w-[18px] h-[18px] shrink-0" />
             {item.label}
           </Link>
         ))}
       </nav>
 
-      <div className="p-6 border-t border-border">
-        <div className="text-sm text-muted-foreground mb-4">
-          <p className="truncate">{user?.email}</p>
+      <div className="px-4 py-4 border-t border-white/10">
+        <div className="flex items-center gap-3 mb-3 px-1">
+          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-sidebar-accent to-[#c4956a] flex items-center justify-center shrink-0">
+            <span className="text-xs font-bold text-slate-900">{initial}</span>
+          </div>
+          <p className="text-xs text-sidebar-foreground/65 truncate flex-1">{user?.email}</p>
         </div>
         <button
           onClick={() => auth.signOut()}
-          className="w-full flex items-center justify-center bg-destructive text-destructive-foreground hover:bg-destructive/90 font-semibold py-2 rounded transition min-h-[44px]"
+          className="w-full flex items-center justify-center gap-2 bg-white/8 hover:bg-white/15 text-sidebar-foreground/85 hover:text-sidebar-foreground text-sm font-semibold py-2.5 rounded-xl transition-all duration-200 min-h-[44px]"
         >
-          <LogOut className="w-4 h-4 mr-2" />
+          <LogOut className="w-4 h-4" />
           Sair
         </button>
       </div>
-    </>
+    </div>
   );
 
   return (
-    <div className="flex h-screen bg-background">
-      <div className="lg:hidden fixed top-0 left-0 right-0 z-40 h-14 bg-background border-b border-border flex items-center justify-between px-4">
-        <span className="font-semibold text-primary">SpecPoints</span>
+    <div className="flex h-screen bg-background text-foreground">
+      <div className="lg:hidden fixed top-0 left-0 right-0 z-40 h-14 glass border-b border-white/30 flex items-center justify-between px-4 shadow-sm">
+        <div className="flex items-center gap-2">
+          <Logo />
+          <span className="font-bold text-sm">SpecPoints</span>
+        </div>
         <button
-          onClick={() => setMobileOpen((prev) => !prev)}
-          className="inline-flex items-center justify-center rounded-md border border-border h-10 w-10 min-h-[44px] min-w-[44px]"
+          onClick={() => setMobileOpen((p) => !p)}
+          className="inline-flex items-center justify-center rounded-xl border border-border/60 h-10 w-10 min-h-[44px] min-w-[44px] bg-white/60 backdrop-blur-sm hover:bg-white/80 transition-all"
           aria-label="Abrir menu"
         >
-          {mobileOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+          {mobileOpen ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
         </button>
       </div>
 
       {mobileOpen && (
-        <div className="lg:hidden fixed inset-0 z-30 bg-black/50" onClick={() => setMobileOpen(false)} />
+        <div className="lg:hidden fixed inset-0 z-30 bg-black/50 backdrop-blur-sm animate-fade-in" onClick={() => setMobileOpen(false)} />
       )}
 
-      <aside className="hidden lg:flex w-56 bg-background border-r border-border shadow-lg flex-col">
+      <aside className="hidden lg:flex w-64 flex-col bg-gradient-to-b from-[#0b2024] to-[#152d32] border-r border-white/8 shadow-[8px_0_32px_rgba(7,24,27,0.32)]">
         <SidebarContent />
       </aside>
 
       <aside
-        className={`lg:hidden fixed inset-y-0 left-0 z-40 w-72 max-w-[85vw] bg-background border-r border-border shadow-xl flex flex-col transform transition-transform ${
+        className={`lg:hidden fixed inset-y-0 left-0 z-40 w-72 max-w-[85vw] flex flex-col bg-gradient-to-b from-[#0b2024] to-[#152d32] border-r border-white/8 shadow-xl transform transition-transform duration-300 ease-out ${
           mobileOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
       >
         <SidebarContent />
       </aside>
 
-      <main className="flex-1 overflow-auto bg-background pt-14 lg:pt-0">
-        {children}
+      <main className="flex-1 overflow-auto pt-14 lg:pt-0">
+        <div className="min-h-full p-3 sm:p-4 lg:p-6">
+          <div className="rounded-2xl border border-white/50 bg-white/40 backdrop-blur-md shadow-[0_8px_40px_rgba(20,44,50,0.08)] min-h-full">
+            {children}
+          </div>
+        </div>
       </main>
     </div>
   );

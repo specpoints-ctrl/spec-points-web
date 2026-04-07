@@ -218,8 +218,10 @@ export const getCurrentUser = async (req: any, res: Response) => {
     }
 
     const user = await db.oneOrNone(
-      `SELECT u.id, u.firebase_uid, u.email, u.status, u.created_at
+      `SELECT u.id, u.firebase_uid, u.email, u.status, u.created_at,
+              ur.role, ur.architect_id, ur.store_id
        FROM users u
+       LEFT JOIN user_roles ur ON ur.user_id = u.id
        WHERE u.firebase_uid = $1`,
       [firebaseUid]
     );
@@ -231,20 +233,9 @@ export const getCurrentUser = async (req: any, res: Response) => {
       });
     }
 
-    // Get user roles
-    const roles = await db.manyOrNone(
-      `SELECT role, architect_id, store_id
-       FROM user_roles
-       WHERE user_id = $1`,
-      [user.id]
-    );
-
     res.json({
       success: true,
-      data: {
-        ...user,
-        user_roles: roles || [],
-      },
+      data: user,
     });
   } catch (error) {
     logger.error('Get current user error:', error);

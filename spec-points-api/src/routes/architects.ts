@@ -1,6 +1,6 @@
 import { Router, Request, Response } from 'express';
-import { authenticateToken } from '../middleware/auth';
-import { requireRole } from '../middleware/role-check';
+import { authenticateToken } from '../middleware/auth.js';
+import { requireRole } from '../middleware/role-check.js';
 import {
   listArchitects,
   getArchitect,
@@ -8,8 +8,8 @@ import {
   updateArchitect,
   deleteArchitect,
   updateArchitectStatus,
-} from '../controllers/architects';
-import { asyncHandler } from '../middleware/async-handler';
+} from '../controllers/architects.js';
+import { asyncHandler } from '../middleware/async-handler.js';
 
 const router = Router();
 

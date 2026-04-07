@@ -1,7 +1,7 @@
 import { Router } from 'express';
-import { authenticateToken } from '../middleware/auth';
-import { requireRole } from '../middleware/role-check';
-import { asyncHandler } from '../middleware/async-handler';
+import { authenticateToken } from '../middleware/auth.js';
+import { requireRole } from '../middleware/role-check.js';
+import { asyncHandler } from '../middleware/async-handler.js';
 import {
   listPrizes,
   getPrize,

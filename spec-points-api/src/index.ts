@@ -24,23 +24,19 @@ export const app: Express = express();
 
 // Middleware
 app.use(helmet());
-
-// Configure CORS - allow multiple ports for development
-const corsOrigins = process.env.NODE_ENV === 'production' 
-  ? [process.env.CORS_ORIGIN || 'https://specpoints.app']
-  : [
-      'http://localhost:5173',
-      'http://localhost:5174',
-      'http://localhost:5175',
-      'http://127.0.0.1:5173',
-      'http://127.0.0.1:5174',
-      'http://127.0.0.1:5175',
-      process.env.CORS_ORIGIN || 'http://localhost:5173',
-    ];
-
 app.use(
   cors({
-    origin: corsOrigins,
+    origin: (origin, callback) => {
+      const allowedOrigins = (process.env.CORS_ORIGIN || 'http://localhost:5173,http://localhost:5174,http://localhost:5175')
+        .split(',')
+        .map((o) => o.trim());
+      // Permite requests sem origin (ex: mobile, curl, Postman)
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error(`CORS: origin '${origin}' not allowed`));
+      }
+    },
     credentials: true,
   })
 );
@@ -116,13 +112,13 @@ app.get('/debug/env', (_req: Request, res: Response) => {
 
 // Import routes
 import authRoutes from './routes/auth.js';
+import architectRoutes from './routes/architects.js';
+import storeRoutes from './routes/stores.js';
+import saleRoutes from './routes/sales.js';
+import prizeRoutes from './routes/prizes.js';
+import redemptionRoutes from './routes/redemptions.js';
+import userRoutes from './routes/users.js';
 import dashboardRoutes from './routes/dashboard.js';
-import architectsRoutes from './routes/architects.js';
-import storesRoutes from './routes/stores.js';
-import salesRoutes from './routes/sales.js';
-import prizesRoutes from './routes/prizes.js';
-import redemptionsRoutes from './routes/redemptions.js';
-import usersRoutes from './routes/users.js';
 
 // API Routes
 app.get('/api', (_req: Request, res: Response) => {
@@ -135,19 +131,23 @@ app.get('/api', (_req: Request, res: Response) => {
       architects: '/api/architects',
       stores: '/api/stores',
       sales: '/api/sales',
+      prizes: '/api/prizes',
+      redemptions: '/api/redemptions',
+      users: '/api/users',
+      dashboard: '/api/dashboard',
     },
   });
 });
 
 // Mount routes
 app.use('/api/auth', authRoutes);
+app.use('/api/architects', architectRoutes);
+app.use('/api/stores', storeRoutes);
+app.use('/api/sales', saleRoutes);
+app.use('/api/prizes', prizeRoutes);
+app.use('/api/redemptions', redemptionRoutes);
+app.use('/api/users', userRoutes);
 app.use('/api/dashboard', dashboardRoutes);
-app.use('/api/architects', architectsRoutes);
-app.use('/api/stores', storesRoutes);
-app.use('/api/sales', salesRoutes);
-app.use('/api/prizes', prizesRoutes);
-app.use('/api/redemptions', redemptionsRoutes);
-app.use('/api/users', usersRoutes);
 
 // Error handling middleware
 app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {

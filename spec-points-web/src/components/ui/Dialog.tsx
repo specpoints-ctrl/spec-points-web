@@ -33,9 +33,7 @@ const Dialog: React.FC<DialogProps & { children: React.ReactNode }> = ({
 
 const useDialog = () => {
   const context = React.useContext(DialogContext);
-  if (!context) {
-    throw new Error('useDialog must be used within a Dialog component');
-  }
+  if (!context) throw new Error('useDialog must be used within a Dialog component');
   return context;
 };
 
@@ -44,14 +42,10 @@ interface DialogTriggerProps extends React.ButtonHTMLAttributes<HTMLButtonElemen
 const DialogTrigger = React.forwardRef<HTMLButtonElement, DialogTriggerProps>(
   ({ onClick, ...props }, ref) => {
     const { onOpenChange } = useDialog();
-
     return (
       <button
         ref={ref}
-        onClick={(e) => {
-          onOpenChange(true);
-          onClick?.(e);
-        }}
+        onClick={(e) => { onOpenChange(true); onClick?.(e); }}
         {...props}
       />
     );
@@ -67,16 +61,12 @@ const DialogContent = React.forwardRef<HTMLDivElement, DialogContentProps>(
 
     React.useEffect(() => {
       const handleEscape = (e: KeyboardEvent) => {
-        if (e.key === 'Escape') {
-          onOpenChange(false);
-        }
+        if (e.key === 'Escape') onOpenChange(false);
       };
-
       if (open) {
         document.addEventListener('keydown', handleEscape);
         document.body.style.overflow = 'hidden';
       }
-
       return () => {
         document.removeEventListener('keydown', handleEscape);
         document.body.style.overflow = 'auto';
@@ -87,14 +77,22 @@ const DialogContent = React.forwardRef<HTMLDivElement, DialogContentProps>(
 
     return (
       <>
+        {/* Overlay */}
         <div
-          className="fixed inset-0 bg-black/50 z-40"
+          className="fixed inset-0 z-40 bg-black/55 backdrop-blur-[6px] animate-fade-in"
           onClick={() => onOpenChange(false)}
         />
+        {/* Panel */}
         <div
           ref={ref}
           className={cn(
-            'fixed left-[50%] top-[50%] z-50 w-full max-w-lg translate-x-[-50%] translate-y-[-50%] rounded-lg border border-border bg-background p-4 sm:p-6 shadow-lg',
+            'fixed left-1/2 top-1/2 z-50 w-full max-w-lg',
+            'animate-scale-in',
+            'rounded-2xl border border-white/60',
+            'bg-white/96 backdrop-blur-xl',
+            'shadow-dialog',
+            'p-6 sm:p-7',
+            'max-h-[90vh] overflow-y-auto',
             className
           )}
           {...props}
@@ -102,10 +100,17 @@ const DialogContent = React.forwardRef<HTMLDivElement, DialogContentProps>(
           {children}
           <button
             onClick={() => onOpenChange(false)}
-            className="absolute right-4 top-4 rounded-md opacity-70 hover:opacity-100 transition-opacity focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+            className={cn(
+              'absolute right-4 top-4',
+              'inline-flex items-center justify-center',
+              'w-8 h-8 rounded-full',
+              'bg-muted/60 hover:bg-muted text-muted-foreground hover:text-foreground',
+              'transition-all duration-150',
+              'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring'
+            )}
           >
-            <X className="h-4 w-4" />
-            <span className="sr-only">Close</span>
+            <X className="h-3.5 w-3.5" />
+            <span className="sr-only">Fechar</span>
           </button>
         </div>
       </>
@@ -120,7 +125,7 @@ const DialogHeader = React.forwardRef<HTMLDivElement, DialogHeaderProps>(
   ({ className, ...props }, ref) => (
     <div
       ref={ref}
-      className={cn('flex flex-col space-y-1.5 text-center sm:text-left mb-4', className)}
+      className={cn('flex flex-col space-y-1 text-left mb-5 pb-4 border-b border-border/50', className)}
       {...props}
     />
   )
@@ -133,7 +138,7 @@ const DialogFooter = React.forwardRef<HTMLDivElement, DialogFooterProps>(
   ({ className, ...props }, ref) => (
     <div
       ref={ref}
-      className={cn('flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2 mt-6', className)}
+      className={cn('flex flex-col-reverse sm:flex-row sm:justify-end gap-2 mt-6 pt-4 border-t border-border/40', className)}
       {...props}
     />
   )
@@ -146,7 +151,7 @@ const DialogTitle = React.forwardRef<HTMLHeadingElement, DialogTitleProps>(
   ({ className, ...props }, ref) => (
     <h2
       ref={ref}
-      className={cn('text-lg sm:text-xl font-semibold leading-none tracking-tight', className)}
+      className={cn('text-lg sm:text-xl font-bold tracking-tight text-foreground', className)}
       {...props}
     />
   )
@@ -157,11 +162,7 @@ interface DialogDescriptionProps extends React.HTMLAttributes<HTMLParagraphEleme
 
 const DialogDescription = React.forwardRef<HTMLParagraphElement, DialogDescriptionProps>(
   ({ className, ...props }, ref) => (
-    <p
-      ref={ref}
-      className={cn('text-sm text-muted-foreground', className)}
-      {...props}
-    />
+    <p ref={ref} className={cn('text-sm text-muted-foreground mt-0.5', className)} {...props} />
   )
 );
 DialogDescription.displayName = 'DialogDescription';
