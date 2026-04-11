@@ -10,6 +10,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  ImageUploader,
   Input,
   Table,
   TableBody,
@@ -33,6 +34,7 @@ interface Store {
   cidade?: string;
   estado?: string;
   pais?: string;
+  logo_url?: string;
   status: 'active' | 'inactive';
   created_at: string;
 }
@@ -52,6 +54,7 @@ interface StoreFormData {
   cidade: string;
   estado: string;
   pais: string;
+  logo_url: string;
 }
 
 const emptyForm: StoreFormData = {
@@ -64,6 +67,7 @@ const emptyForm: StoreFormData = {
   cidade: '',
   estado: '',
   pais: 'Brasil',
+  logo_url: '',
 };
 
 export default function StoresPage() {
@@ -129,6 +133,7 @@ export default function StoresPage() {
       cidade: store.cidade || '',
       estado: store.estado || '',
       pais: store.pais || 'Brasil',
+      logo_url: store.logo_url || '',
     });
     setOpenDialog(true);
   };
@@ -197,6 +202,19 @@ export default function StoresPage() {
                 onChange={handleInputChange}
                 rows={2}
               />
+
+              <div className="space-y-1.5">
+                <label className="block text-[11px] font-bold uppercase tracking-widest text-muted-foreground">
+                  Logo da Loja
+                </label>
+                <ImageUploader
+                  currentUrl={formData.logo_url}
+                  folder="stores"
+                  onUploaded={(url) => setFormData((prev) => ({ ...prev, logo_url: url }))}
+                  label="Enviar logo"
+                  shape="square"
+                />
+              </div>
 
               <div className="flex flex-col-reverse sm:flex-row gap-2 sm:justify-end">
                 <Button type="button" variant="outline" onClick={() => setOpenDialog(false)} className="w-full sm:w-auto">

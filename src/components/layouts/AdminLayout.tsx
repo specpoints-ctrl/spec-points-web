@@ -2,9 +2,10 @@ import { ReactNode, useEffect, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import {
   LogOut, Home, Users, Store, ShoppingCart, Gift,
-  RotateCcw, Settings, Menu, X, CheckCircle,
+  RotateCcw, Settings, Menu, X, CheckCircle, Megaphone, Target,
 } from 'lucide-react';
 import { auth } from '../../lib/firebase';
+import { useProfile } from '../../contexts/ProfileContext';
 
 const Logo = () => (
   <svg width="28" height="28" viewBox="0 0 28 28" fill="none" aria-hidden>
@@ -30,27 +31,30 @@ const Logo = () => (
 );
 
 const menuItems = [
-  { icon: Home,        label: 'Dashboard',    path: '/' },
-  { icon: Users,       label: 'Arquitetos',   path: '/architects' },
-  { icon: Store,       label: 'Lojas',        path: '/stores' },
-  { icon: ShoppingCart,label: 'Vendas',       path: '/sales' },
-  { icon: Gift,        label: 'Prêmios',      path: '/prizes' },
-  { icon: RotateCcw,   label: 'Resgates',     path: '/redemptions' },
-  { icon: CheckCircle, label: 'Aprovações',   path: '/approvals' },
-  { icon: Settings,    label: 'Configurações',path: '/settings' },
+  { icon: Home,        label: 'Dashboard',         path: '/' },
+  { icon: Users,       label: 'Arquitetos',         path: '/architects' },
+  { icon: Store,       label: 'Lojas',              path: '/stores' },
+  { icon: ShoppingCart,label: 'Vendas',             path: '/sales' },
+  { icon: Gift,        label: 'Prêmios',            path: '/prizes' },
+  { icon: RotateCcw,   label: 'Resgates',           path: '/redemptions' },
+  { icon: Target,      label: 'Campanhas',          path: '/campaigns' },
+  { icon: CheckCircle, label: 'Aprovações',         path: '/approvals' },
+  { icon: Megaphone,   label: 'Notificações',       path: '/admin/notifications' },
+  { icon: Settings,    label: 'Configurações',      path: '/settings' },
 ];
 
 export const AdminLayout = ({ children }: { children: ReactNode }) => {
   const location = useLocation();
   const user = auth.currentUser;
   const [mobileOpen, setMobileOpen] = useState(false);
+  const { profile } = useProfile();
 
   useEffect(() => { setMobileOpen(false); }, [location.pathname]);
 
   const isActive = (path: string) => location.pathname === path;
-  const initial = (user?.email?.[0] ?? 'A').toUpperCase();
+  const initial = ((profile?.display_name || user?.email || 'A')[0] ?? 'A').toUpperCase();
 
-  const SidebarContent = () => (
+  const renderSidebar = () => (
     <div className="flex flex-col h-full">
       {/* Brand */}
       <div className="px-6 py-5 border-b border-white/10">
@@ -58,7 +62,7 @@ export const AdminLayout = ({ children }: { children: ReactNode }) => {
           <Logo />
           <div>
             <p className="text-[10px] uppercase tracking-[0.22em] text-sidebar-foreground/55 leading-none mb-0.5">Painel</p>
-            <h1 className="text-xl font-extrabold text-gradient-gold leading-none">SpecPoints</h1>
+            <h1 className="text-xl font-extrabold text-gradient-gold leading-none">CONNECTUS</h1>
           </div>
         </div>
         <div className="mt-3 flex items-center gap-1.5">
@@ -89,10 +93,23 @@ export const AdminLayout = ({ children }: { children: ReactNode }) => {
       {/* Footer */}
       <div className="px-4 py-4 border-t border-white/10">
         <div className="flex items-center gap-3 mb-3 px-1">
-          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-sidebar-accent to-[#c4956a] flex items-center justify-center shrink-0">
-            <span className="text-xs font-bold text-slate-900">{initial}</span>
+          <div className="w-8 h-8 rounded-full overflow-hidden bg-gradient-to-br from-sidebar-accent to-[#c4956a] flex items-center justify-center shrink-0">
+            {profile?.avatar_url ? (
+              <img src={profile.avatar_url} alt="" className="w-full h-full object-cover" />
+            ) : (
+              <span className="text-xs font-bold text-slate-900">{initial}</span>
+            )}
           </div>
-          <p className="text-xs text-sidebar-foreground/65 truncate flex-1">{user?.email}</p>
+          <div className="flex-1 min-w-0">
+            {profile?.display_name && (
+              <p className="text-xs font-semibold text-sidebar-foreground/90 truncate">{profile.display_name}</p>
+            )}
+            <p className={`truncate ${profile?.display_name ? 'text-[10px] text-sidebar-foreground/45' : 'text-xs text-sidebar-foreground/65'}`}>{user?.email}</p>
+          </div>
+        </div>
+        {/* Moducasa partner logo */}
+        <div className="mb-3 flex items-center justify-center">
+          <img src="/moducasa-logo.png" alt="Grupo Moducasa" className="h-10 w-auto object-contain" style={{filter: 'invert(1) brightness(0.85)'}} />
         </div>
         <button
           onClick={() => auth.signOut()}
@@ -111,7 +128,7 @@ export const AdminLayout = ({ children }: { children: ReactNode }) => {
       <div className="lg:hidden fixed top-0 left-0 right-0 z-40 h-14 glass border-b border-white/30 flex items-center justify-between px-4 shadow-sm">
         <div className="flex items-center gap-2">
           <Logo />
-          <span className="font-bold text-foreground text-sm">SpecPoints</span>
+          <span className="font-bold text-foreground text-sm">CONNECTUS</span>
         </div>
         <button
           onClick={() => setMobileOpen((p) => !p)}
@@ -132,7 +149,7 @@ export const AdminLayout = ({ children }: { children: ReactNode }) => {
 
       {/* Desktop sidebar */}
       <aside className="hidden lg:flex w-64 flex-col bg-gradient-to-b from-[#0b2024] to-[#152d32] border-r border-white/8 shadow-[8px_0_32px_rgba(7,24,27,0.32)]">
-        <SidebarContent />
+        {renderSidebar()}
       </aside>
 
       {/* Mobile sidebar */}
@@ -141,13 +158,13 @@ export const AdminLayout = ({ children }: { children: ReactNode }) => {
           mobileOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
       >
-        <SidebarContent />
+        {renderSidebar()}
       </aside>
 
       {/* Main content */}
       <main className="flex-1 overflow-auto pt-14 lg:pt-0">
         <div className="min-h-full p-3 sm:p-4 lg:p-6">
-          <div className="rounded-2xl border border-white/50 bg-white/40 backdrop-blur-md shadow-[0_8px_40px_rgba(20,44,50,0.08)] min-h-full">
+            <div className="rounded-2xl border border-white/50 bg-white/60 shadow-[0_8px_40px_rgba(20,44,50,0.08)] min-h-full">
             {children}
           </div>
         </div>

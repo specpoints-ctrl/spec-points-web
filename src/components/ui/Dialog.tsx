@@ -79,20 +79,20 @@ const DialogContent = React.forwardRef<HTMLDivElement, DialogContentProps>(
       <>
         {/* Overlay */}
         <div
-          className="fixed inset-0 z-40 bg-black/55 backdrop-blur-[6px] animate-fade-in"
+          className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm animate-fade-in"
           onClick={() => onOpenChange(false)}
         />
         {/* Panel */}
         <div
           ref={ref}
           className={cn(
-            'fixed left-1/2 top-1/2 z-50 w-full max-w-lg',
+            'fixed left-1/2 top-1/2 z-50 w-full max-w-xl -translate-x-1/2 -translate-y-1/2',
             'animate-scale-in',
-            'rounded-2xl border border-white/60',
-            'bg-white/96 backdrop-blur-xl',
-            'shadow-dialog',
+            'rounded-2xl border border-border/50',
+            'bg-white',
+            'shadow-[0_24px_64px_rgba(0,0,0,0.18)]',
             'p-6 sm:p-7',
-            'max-h-[90vh] overflow-y-auto',
+            'max-h-[88vh] overflow-y-auto',
             className
           )}
           {...props}

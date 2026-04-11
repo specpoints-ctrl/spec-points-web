@@ -24,10 +24,10 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
           type={type}
           ref={ref}
           className={cn(
-            'flex h-11 w-full rounded-xl border bg-white/80 backdrop-blur-sm px-4 py-2 text-sm text-foreground',
-            'placeholder:text-muted-foreground/60 transition-all duration-200',
-            'border-border/60 focus-visible:outline-none',
-            'focus-visible:border-primary focus-visible:shadow-[0_0_0_3px_hsl(185_73%_26%_/_0.13)]',
+            'flex h-11 w-full rounded-xl border bg-gray-50 px-4 py-2 text-sm text-foreground',
+            'placeholder:text-muted-foreground/50 transition-all duration-200',
+            'border-gray-200 focus-visible:outline-none',
+            'focus-visible:border-primary focus-visible:bg-white focus-visible:shadow-[0_0_0_3px_hsl(185_73%_26%_/_0.12)]',
             'disabled:cursor-not-allowed disabled:opacity-50 min-h-[44px]',
             error && 'border-destructive focus-visible:ring-destructive focus-visible:shadow-[0_0_0_3px_hsl(0_71%_48%_/_0.13)]',
             className

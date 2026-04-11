@@ -33,6 +33,53 @@ const AVATAR_GRADIENTS = [
   'from-sky-500 to-cyan-400',
 ];
 
+/** Avatar with photo fallback to gradient + initial */function Avatar({
+  src,
+  name,
+  size = 'md',
+  gradient,
+}: {
+  src?: string | null;
+  name: string;
+  size?: 'sm' | 'md';
+  gradient?: string;
+}) {
+  const [imgError, setImgError] = useState(false);
+  const dim = size === 'sm' ? 'w-8 h-8 text-xs' : 'w-9 h-9 text-sm';
+  const grad = gradient ?? 'from-teal-500 to-emerald-400';
+  if (src && !imgError) {
+    return (
+      <img
+        src={src}
+        alt={name}
+        onError={() => setImgError(true)}
+        className={`${dim} rounded-full object-cover shrink-0 ring-1 ring-border/30`}
+      />
+    );
+  }
+  return (
+    <div className={`${dim} rounded-full bg-gradient-to-br ${grad} flex items-center justify-center shrink-0`}>
+      <span className="font-bold text-white">{getInitial(name)}</span>
+    </div>
+  );
+}
+
+/** Store logo with fallback to building icon */
+function StoreLogo({ src, name }: { src?: string | null; name: string }) {
+  const [imgError, setImgError] = useState(false);
+  if (src && !imgError) {
+    return (
+      <img
+        src={src}
+        alt={name}
+        onError={() => setImgError(true)}
+        className="w-6 h-6 rounded object-contain"
+      />
+    );
+  }
+  return <Store className="w-3.5 h-3.5 text-muted-foreground/50" />;
+}
+
 export const AdminDashboard = () => {
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [loading, setLoading] = useState(true);
@@ -191,13 +238,16 @@ export const AdminDashboard = () => {
                   return (
                     <div key={idx} className="group flex items-center gap-3 p-3 rounded-xl hover:bg-muted/30 transition-all duration-200">
                       {/* rank badge */}
-                      <div className={`w-8 h-8 rounded-full ring-1 flex items-center justify-center shrink-0 text-sm ${medal ? `${medal.ring} ${medal.bg}` : 'bg-muted ring-border'}`}>
-                        {medal ? (
-                          <span className="text-sm leading-none">{medal.label}</span>
-                        ) : (
-                          <span className="text-xs font-bold text-muted-foreground">{idx + 1}</span>
-                        )}
+                      <div className={`w-6 h-6 rounded-full ring-1 flex items-center justify-center shrink-0 text-[11px] font-bold ${medal ? `${medal.ring} ${medal.bg} ${medal.text}` : 'bg-muted ring-border text-muted-foreground'}`}>
+                        {medal ? medal.label : idx + 1}
                       </div>
+                      {/* architect photo */}
+                      <Avatar
+                        src={arch.avatar_url}
+                        name={arch.name}
+                        size="sm"
+                        gradient={AVATAR_GRADIENTS[idx % AVATAR_GRADIENTS.length]}
+                      />
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center justify-between mb-1">
                           <p className="text-sm font-semibold text-foreground truncate">{arch.name}</p>
@@ -239,12 +289,17 @@ export const AdminDashboard = () => {
                     className="flex items-center gap-3 p-3 rounded-xl border border-border/40 bg-white/50 backdrop-blur-sm hover:bg-white/80 hover:border-border/70 transition-all duration-200"
                   >
                     {/* architect avatar */}
-                    <div className={`w-9 h-9 rounded-full bg-gradient-to-br ${AVATAR_GRADIENTS[idx % AVATAR_GRADIENTS.length]} flex items-center justify-center shrink-0`}>
-                      <span className="text-sm font-bold text-white">{getInitial(sale.architect_name)}</span>
-                    </div>
+                    <Avatar
+                      src={sale.architect_avatar}
+                      name={sale.architect_name}
+                      gradient={AVATAR_GRADIENTS[idx % AVATAR_GRADIENTS.length]}
+                    />
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-semibold text-foreground truncate">{sale.architect_name}</p>
-                      <p className="text-xs text-muted-foreground truncate">{sale.store_name}</p>
+                      <div className="flex items-center gap-1.5 mt-0.5">
+                        <StoreLogo src={sale.store_logo} name={sale.store_name} />
+                        <p className="text-xs text-muted-foreground truncate">{sale.store_name}</p>
+                      </div>
                     </div>
                     <div className="text-right shrink-0">
                       <p className="text-sm font-bold text-emerald-600 tabular-nums">+{sale.points_generated.toLocaleString('pt-BR')} pts</p>

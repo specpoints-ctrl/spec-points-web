@@ -17,8 +17,8 @@ import {
   TableHeader,
   TableRow,
 } from '../components/ui';
-import { api } from '../lib/api';
-import { Check, Edit2, Plus, Trash2 } from 'lucide-react';
+import { api, approveRedemption, deliverRedemption } from '../lib/api';
+import { Check, Edit2, Plus, Trash2, Package, Clock } from 'lucide-react';
 
 interface Redemption {
   id: string;
@@ -28,6 +28,8 @@ interface Redemption {
   prize_name?: string;
   points_required?: number;
   status: 'pending' | 'approved' | 'delivered';
+  deadline_at?: string;
+  delivered_at?: string;
   created_at: string;
 }
 
@@ -144,12 +146,21 @@ export default function RedemptionsPage() {
     }
   };
 
-  const handleStatus = async (id: string, status: 'pending' | 'approved' | 'delivered') => {
+  const handleApprove = async (id: string) => {
     try {
-      await api.patch(`/redemptions/${id}/status`, { status });
+      await approveRedemption(id);
       await loadInitialData();
     } catch (error) {
-      console.error('Erro ao atualizar status:', error);
+      console.error('Erro ao aprovar resgate:', error);
+    }
+  };
+
+  const handleDeliver = async (id: string) => {
+    try {
+      await deliverRedemption(id);
+      await loadInitialData();
+    } catch (error) {
+      console.error('Erro ao marcar entrega:', error);
     }
   };
 
@@ -293,10 +304,12 @@ export default function RedemptionsPage() {
               <TableHeader>
                 <TableRow>
                   <TableHead>Arquiteto</TableHead>
-                  <TableHead>Premio</TableHead>
+                  <TableHead>Prêmio</TableHead>
                   <TableHead>Pontos</TableHead>
                   <TableHead>Status</TableHead>
-                  <TableHead>Acoes</TableHead>
+                  <TableHead>Prazo</TableHead>
+                  <TableHead>Entregue em</TableHead>
+                  <TableHead>Ações</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -304,16 +317,31 @@ export default function RedemptionsPage() {
                   <TableRow key={redemption.id}>
                     <TableCell className="font-medium">{redemption.architect_name || '-'}</TableCell>
                     <TableCell>{redemption.prize_name || '-'}</TableCell>
-                    <TableCell>{redemption.points_required || 0}</TableCell>
+                    <TableCell>{Number(redemption.points_required || 0).toLocaleString('pt-BR')}</TableCell>
                     <TableCell>
                       <Badge variant={statusVariant(redemption.status)}>{statusLabel(redemption.status)}</Badge>
+                    </TableCell>
+                    <TableCell>
+                      {redemption.deadline_at ? (
+                        <span className="text-xs text-amber-600 flex items-center gap-1">
+                          <Clock className="w-3 h-3" />
+                          {new Date(redemption.deadline_at).toLocaleDateString('pt-BR')}
+                        </span>
+                      ) : '-'}
+                    </TableCell>
+                    <TableCell>
+                      {redemption.delivered_at ? (
+                        <span className="text-xs text-emerald-600">
+                          {new Date(redemption.delivered_at).toLocaleDateString('pt-BR')}
+                        </span>
+                      ) : '-'}
                     </TableCell>
                     <TableCell>
                       <div className="flex gap-2">
                         {redemption.status === 'pending' && (
                           <button
-                            onClick={() => handleStatus(redemption.id, 'approved')}
-                            className="inline-flex items-center justify-center rounded-md h-11 w-11 min-h-[44px] min-w-[44px] text-success hover:bg-success/10 transition-colors"
+                            onClick={() => handleApprove(redemption.id)}
+                            className="inline-flex items-center justify-center rounded-md h-9 w-9 text-success hover:bg-success/10 transition-colors"
                             title="Aprovar"
                           >
                             <Check className="w-4 h-4" />
@@ -321,24 +349,23 @@ export default function RedemptionsPage() {
                         )}
                         {redemption.status === 'approved' && (
                           <button
-                            onClick={() => handleStatus(redemption.id, 'delivered')}
-                            className="inline-flex items-center justify-center rounded-md h-11 w-11 min-h-[44px] min-w-[44px] text-secondary hover:bg-secondary/10 transition-colors"
+                            onClick={() => handleDeliver(redemption.id)}
+                            className="inline-flex items-center justify-center rounded-md h-9 w-9 text-blue-600 hover:bg-blue-50 transition-colors"
                             title="Marcar como entregue"
                           >
-                            <Check className="w-4 h-4" />
+                            <Package className="w-4 h-4" />
                           </button>
                         )}
-
                         <button
                           onClick={() => handleEdit(redemption)}
-                          className="inline-flex items-center justify-center rounded-md h-11 w-11 min-h-[44px] min-w-[44px] text-primary hover:bg-primary/10 transition-colors"
+                          className="inline-flex items-center justify-center rounded-md h-9 w-9 text-primary hover:bg-primary/10 transition-colors"
                           title="Editar"
                         >
                           <Edit2 className="w-4 h-4" />
                         </button>
                         <button
                           onClick={() => handleDelete(redemption.id)}
-                          className="inline-flex items-center justify-center rounded-md h-11 w-11 min-h-[44px] min-w-[44px] text-destructive hover:bg-destructive/10 transition-colors"
+                          className="inline-flex items-center justify-center rounded-md h-9 w-9 text-destructive hover:bg-destructive/10 transition-colors"
                           title="Deletar"
                         >
                           <Trash2 className="w-4 h-4" />
