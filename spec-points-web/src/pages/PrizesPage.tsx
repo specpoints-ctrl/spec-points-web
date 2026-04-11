@@ -10,6 +10,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  ImageUploader,
   Input,
   Table,
   TableBody,
@@ -206,21 +207,18 @@ export default function PrizesPage() {
                 />
               </div>
 
-              <Input
-                label="URL da Imagem"
-                name="image_url"
-                value={formData.image_url}
-                onChange={handleInputChange}
+            <div className="space-y-1.5">
+              <label className="block text-[11px] font-bold uppercase tracking-widest text-muted-foreground">
+                Imagem do Prêmio
+              </label>
+              <ImageUploader
+                currentUrl={formData.image_url}
+                folder="prizes"
+                onUploaded={(url) => setFormData((prev) => ({ ...prev, image_url: url }))}
+                label="Enviar imagem"
+                shape="square"
               />
-
-              <Textarea
-                label="Descricao"
-                name="description"
-                value={formData.description}
-                onChange={handleInputChange}
-                rows={3}
-              />
-
+            </div>
               <div className="flex flex-col-reverse sm:flex-row gap-2 sm:justify-end">
                 <Button type="button" variant="outline" onClick={() => setOpenDialog(false)} className="w-full sm:w-auto">
                   Cancelar

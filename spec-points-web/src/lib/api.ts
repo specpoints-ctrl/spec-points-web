@@ -35,8 +35,29 @@ api.interceptors.request.use(async (config) => {
 export interface RegisterPayload {
   email: string;
   password: string;
-  name: string;
   role: 'architect' | 'lojista';
+  // Architect fields
+  name?: string;
+  document_ci?: string;
+  ruc?: string;
+  company?: string;
+  telefone?: string;
+  office_phone?: string;
+  address?: string;
+  city?: string;
+  state?: string;
+  birthday?: string;
+  // Lojista fields
+  store_name?: string;
+  cnpj?: string;
+  owner_name?: string;
+  owner_ci?: string;
+  store_ruc?: string;
+  store_phone?: string;
+  store_office_phone?: string;
+  store_address?: string;
+  store_city?: string;
+  owner_birthday?: string;
 }
 
 export interface ApiResponse<T = unknown> {
@@ -80,6 +101,11 @@ export const registerUser = async (payload: RegisterPayload) => {
 
 export const validateLoginStatus = async (email: string) => {
   const response = await api.post<ApiResponse<{ user: BackendUserProfile }>>('/auth/login', { email });
+  return response.data;
+};
+
+export const googleLoginUpsert = async (name?: string) => {
+  const response = await api.post<ApiResponse<{ status: string; role: string }>>('/auth/google', { name });
   return response.data;
 };
 
@@ -158,5 +184,295 @@ export const rejectUser = async (token: string, userId: string, reason?: string)
     }
   );
 
+  return response.data;
+};
+
+// ── Profile ────────────────────────────────────────────────────────────────
+
+export interface UserProfile {
+  id: string;
+  firebase_uid: string;
+  email: string;
+  display_name: string | null;
+  avatar_url: string | null;
+  status: string;
+  role: string;
+  architect_id?: number;
+  store_id?: number;
+}
+
+export const getProfile = async () => {
+  const response = await api.get<ApiResponse<UserProfile>>('/profile');
+  return response.data;
+};
+
+export const updateProfile = async (payload: { display_name?: string; avatar_url?: string }) => {
+  const response = await api.put<ApiResponse<UserProfile>>('/profile', payload);
+  return response.data;
+};
+
+// ── Upload ─────────────────────────────────────────────────────────────────
+
+export type UploadFolder = 'avatars' | 'prizes' | 'stores';
+
+export const uploadImage = async (
+  file: File,
+  folder: UploadFolder,
+  onProgress?: (pct: number) => void,
+): Promise<string> => {
+  const formData = new FormData();
+  formData.append('file', file);
+  formData.append('folder', folder);
+
+  const response = await api.post<ApiResponse<{ url: string }>>('/upload', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+    onUploadProgress: (e) => {
+      if (onProgress && e.total) {
+        onProgress(Math.round((e.loaded / e.total) * 100));
+      }
+    },
+  });
+
+  if (!response.data.success || !response.data.data?.url) {
+    throw new Error(response.data.error ?? 'Upload falhou');
+  }
+
+  return response.data.data.url;
+};
+
+// ── Notifications ──────────────────────────────────────────────────────────
+
+export interface Notification {
+  id: number;
+  title: string;
+  message: string;
+  type: 'general' | 'offer' | 'campaign';
+  target_role: 'architect' | 'lojista' | 'all';
+  created_at: string;
+  is_read: boolean;
+  creator_email?: string;
+}
+
+export const getNotifications = async () => {
+  const response = await api.get<ApiResponse<Notification[]>>('/notifications');
+  return response.data;
+};
+
+export const getUnreadCount = async () => {
+  const response = await api.get<ApiResponse<{ count: number }>>('/notifications/unread-count');
+  return response.data;
+};
+
+export const markNotificationAsRead = async (id: number) => {
+  const response = await api.patch<ApiResponse>(`/notifications/${id}/read`);
+  return response.data;
+};
+
+export const markAllNotificationsAsRead = async () => {
+  const response = await api.patch<ApiResponse>('/notifications/read-all');
+  return response.data;
+};
+
+export const createNotification = async (payload: {
+  title: string;
+  message: string;
+  type: string;
+  target_role: string;
+}) => {
+  const response = await api.post<ApiResponse<Notification>>('/notifications', payload);
+  return response.data;
+};
+
+export const deleteNotification = async (id: number) => {
+  const response = await api.delete<ApiResponse>(`/notifications/${id}`);
+  return response.data;
+};
+
+export const getAdminNotifications = async () => {
+  const response = await api.get<ApiResponse<Notification[]>>('/notifications/admin');
+  return response.data;
+};
+
+// ── Architect self-service ─────────────────────────────────────────────────
+
+export interface ArchitectProfile {
+  id: number;
+  name: string;
+  email: string;
+  phone?: string;
+  company?: string;
+  points_total: number;
+  points_redeemed: number;
+  status: string;
+}
+
+export const getMyArchitectProfile = async () => {
+  const response = await api.get<ApiResponse<ArchitectProfile>>('/architects/me');
+  return response.data;
+};
+
+export const getMySales = async () => {
+  const response = await api.get<ApiResponse<any[]>>('/sales/my');
+  return response.data;
+};
+
+// ── Auth extended ──────────────────────────────────────────────────────────
+
+export const completeProfile = async (data: Record<string, string>) => {
+  const response = await api.post<ApiResponse>('/auth/complete-profile', data);
+  return response.data;
+};
+
+export const updateEmailApi = async (email: string) => {
+  const response = await api.put<ApiResponse>('/profile/email', { email });
+  return response.data;
+};
+
+// ── Campaigns ──────────────────────────────────────────────────────────────
+
+export interface CampaignPrize {
+  id?: number;
+  name: string;
+  points_required: number;
+  stock: number;
+  image_url?: string;
+}
+
+export interface Campaign {
+  id: number;
+  title: string;
+  subtitle?: string;
+  focus: 'all' | 'architect' | 'lojista';
+  points_multiplier: number;
+  start_date: string;
+  end_date: string;
+  active: boolean;
+  created_at: string;
+  prize_count?: number;
+  sale_count?: number;
+  prizes?: CampaignPrize[];
+}
+
+export interface MyCampaign extends Campaign {
+  points_earned: number;
+}
+
+export interface CampaignPayload {
+  title: string;
+  subtitle?: string;
+  focus: 'all' | 'architect' | 'lojista';
+  points_multiplier: number;
+  start_date: string;
+  end_date: string;
+  active?: boolean;
+  prizes?: CampaignPrize[];
+}
+
+export const getCampaigns = async () => {
+  const response = await api.get<ApiResponse<Campaign[]>>('/campaigns');
+  return response.data;
+};
+
+export const getCampaignById = async (id: number) => {
+  const response = await api.get<ApiResponse<Campaign>>(`/campaigns/${id}`);
+  return response.data;
+};
+
+export const createCampaign = async (data: CampaignPayload) => {
+  const response = await api.post<ApiResponse<Campaign>>('/campaigns', data);
+  return response.data;
+};
+
+export const updateCampaign = async (id: number, data: Partial<CampaignPayload>) => {
+  const response = await api.put<ApiResponse<Campaign>>(`/campaigns/${id}`, data);
+  return response.data;
+};
+
+export const deleteCampaign = async (id: number) => {
+  const response = await api.delete<ApiResponse>(`/campaigns/${id}`);
+  return response.data;
+};
+
+export const getCampaignRanking = async (id: number) => {
+  const response = await api.get<ApiResponse<{ campaign: Campaign; ranking: { architect_id: number; architect_name: string; campaign_points: number }[] }>>(`/campaigns/${id}/ranking`);
+  return response.data;
+};
+
+export const getActiveCampaigns = async () => {
+  const response = await api.get<ApiResponse<Campaign[]>>('/campaigns/active');
+  return response.data;
+};
+
+export const getMyActiveCampaigns = async () => {
+  const response = await api.get<ApiResponse<MyCampaign[]>>('/campaigns/my');
+  return response.data;
+};
+
+// ── Terms ─────────────────────────────────────────────────────────────────
+
+export interface Terms {
+  id: number;
+  content: string;
+  version: string;
+  active: boolean;
+  created_at: string;
+}
+
+export const getActiveTerms = async () => {
+  const response = await api.get<ApiResponse<Terms | null>>('/terms/active');
+  return response.data;
+};
+
+export const checkTermsAcceptance = async () => {
+  const response = await api.get<ApiResponse<{ accepted: boolean; terms: Terms | null }>>('/terms/check');
+  return response.data;
+};
+
+export const acceptTerms = async (terms_id: number) => {
+  const response = await api.post<ApiResponse>('/terms/accept', { terms_id });
+  return response.data;
+};
+
+export const getAllTerms = async () => {
+  const response = await api.get<ApiResponse<Terms[]>>('/terms');
+  return response.data;
+};
+
+export const createTerms = async (data: { content: string; version: string }) => {
+  const response = await api.post<ApiResponse<Terms>>('/terms', data);
+  return response.data;
+};
+
+export const updateTermsApi = async (id: number, data: { content?: string; version?: string }) => {
+  const response = await api.put<ApiResponse<Terms>>(`/terms/${id}`, data);
+  return response.data;
+};
+
+// ── Redemptions extended ───────────────────────────────────────────────────
+
+export const requestRedemption = async (prize_id: number) => {
+  const response = await api.post<ApiResponse>('/redemptions/request', { prize_id });
+  return response.data;
+};
+
+export const getMyRedemptions = async () => {
+  const response = await api.get<ApiResponse<any[]>>('/redemptions/my');
+  return response.data;
+};
+
+export const approveRedemption = async (id: number) => {
+  const response = await api.patch<ApiResponse>(`/redemptions/${id}/approve`);
+  return response.data;
+};
+
+export const deliverRedemption = async (id: number) => {
+  const response = await api.patch<ApiResponse>(`/redemptions/${id}/deliver`);
+  return response.data;
+};
+
+// ── Architects extended ───────────────────────────────────────────────────
+
+export const getActiveCompleteArchitects = async () => {
+  const response = await api.get<ApiResponse<{ id: number; nome: string; email: string }[]>>('/architects/active-complete');
   return response.data;
 };

@@ -9,6 +9,8 @@ interface SaleData {
   client_phone?: string;
   amount_usd: number;
   description?: string;
+  product_name?: string;
+  quantity?: number;
 }
 
 export async function listSales(_req: Request, res: Response) {
@@ -21,22 +23,25 @@ export async function listSales(_req: Request, res: Response) {
         s.client_name,
         s.client_phone,
         s.amount_usd,
-        s.points_generated,
+        COALESCE(s.points_effective, s.points_generated) as points_generated,
+        s.points_effective,
+        s.product_name,
+        s.quantity,
         s.description,
+        s.campaign_id,
         s.created_at,
         a.name as architect_name,
-        st.name as store_name
+        st.name as store_name,
+        c.title as campaign_title,
+        c.points_multiplier
       FROM sales s
       LEFT JOIN architects a ON a.id = s.architect_id
       LEFT JOIN stores st ON st.id = s.store_id
+      LEFT JOIN campaigns c ON c.id = s.campaign_id
       ORDER BY s.created_at DESC`
     );
 
-    return res.json({
-      success: true,
-      data: sales || [],
-      total: sales?.length || 0,
-    });
+    return res.json({ success: true, data: sales || [], total: sales?.length || 0 });
   } catch (error) {
     throw new AppError('Erro ao listar vendas', 400, error);
   }
@@ -48,67 +53,118 @@ export async function getSale(req: Request, res: Response) {
 
     const sale = await db.oneOrNone(
       `SELECT
-        s.id,
-        s.architect_id,
-        s.store_id,
-        s.client_name,
-        s.client_phone,
-        s.amount_usd,
-        s.points_generated,
-        s.description,
-        s.created_at,
-        s.updated_at,
+        s.id, s.architect_id, s.store_id, s.client_name, s.client_phone,
+        s.amount_usd, COALESCE(s.points_effective, s.points_generated) as points_generated,
+        s.points_effective, s.product_name, s.quantity, s.description,
+        s.campaign_id, s.created_at, s.updated_at,
         a.name as architect_name,
-        st.name as store_name
+        st.name as store_name,
+        c.title as campaign_title,
+        c.points_multiplier
       FROM sales s
       LEFT JOIN architects a ON a.id = s.architect_id
       LEFT JOIN stores st ON st.id = s.store_id
+      LEFT JOIN campaigns c ON c.id = s.campaign_id
       WHERE s.id = $1`,
       [id]
     );
 
-    if (!sale) throw new AppError('Venda nao encontrada', 404);
+    if (!sale) throw new AppError('Venda não encontrada', 404);
 
-    return res.json({
-      success: true,
-      data: sale,
-    });
+    return res.json({ success: true, data: sale });
   } catch (error) {
+    if (error instanceof AppError) throw error;
     throw new AppError('Erro ao buscar venda', 400, error);
   }
 }
 
 export async function createSale(req: Request, res: Response) {
   try {
-    const { architect_id, store_id, client_name, client_phone, amount_usd, description }: SaleData = req.body;
+    const {
+      architect_id, store_id, client_name, client_phone,
+      amount_usd, description, product_name, quantity,
+    }: SaleData = req.body;
 
     if (!architect_id || !store_id || amount_usd === undefined || amount_usd === null) {
-      throw new AppError('Arquiteto, loja e valor sao obrigatorios', 400);
+      throw new AppError('Arquiteto, loja e valor são obrigatórios', 400);
     }
 
     if (Number(amount_usd) < 0) {
-      throw new AppError('Valor da venda nao pode ser negativo', 400);
+      throw new AppError('Valor da venda não pode ser negativo', 400);
     }
 
-    const architect = await db.oneOrNone('SELECT id FROM architects WHERE id = $1', [architect_id]);
-    if (!architect) throw new AppError('Arquiteto nao encontrado', 404);
+    const architect = await db.oneOrNone(
+      'SELECT id, profile_complete FROM architects WHERE id = $1',
+      [architect_id]
+    );
+    if (!architect) throw new AppError('Arquiteto não encontrado', 404);
+
+    // Gate: only accumulate points if profile is complete
+    if (!architect.profile_complete) {
+      throw new AppError(
+        'Arquiteto deve completar o perfil antes de acumular pontos. Peça ao arquiteto que finalize o cadastro.',
+        403
+      );
+    }
 
     const store = await db.oneOrNone('SELECT id FROM stores WHERE id = $1', [store_id]);
-    if (!store) throw new AppError('Loja nao encontrada', 404);
+    if (!store) throw new AppError('Loja não encontrada', 404);
 
-    const sale = await db.one(
-      `INSERT INTO sales (architect_id, store_id, client_name, client_phone, amount_usd, description)
-       VALUES ($1, $2, $3, $4, $5, $6)
-       RETURNING id, architect_id, store_id, client_name, client_phone, amount_usd, points_generated, description, created_at`,
-      [architect_id, store_id, client_name || null, client_phone || null, amount_usd, description || null]
+    // Check for active campaign targeting architects
+    const activeCampaign = await db.oneOrNone(
+      `SELECT id, points_multiplier FROM campaigns
+       WHERE active = true
+         AND start_date <= CURRENT_DATE
+         AND end_date >= CURRENT_DATE
+         AND (focus = 'all' OR focus = 'architect')
+       ORDER BY created_at DESC
+       LIMIT 1`
     );
+
+    const multiplier = activeCampaign ? Number(activeCampaign.points_multiplier) : 1.0;
+    const pointsEffective = Math.floor(Number(amount_usd) * multiplier);
+
+    const sale = await db.tx(async (tx) => {
+      const newSale = await tx.one(
+        `INSERT INTO sales (
+          architect_id, store_id, client_name, client_phone, amount_usd,
+          description, product_name, quantity, campaign_id, points_effective
+        )
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+        RETURNING *`,
+        [
+          architect_id, store_id,
+          client_name || null, client_phone || null,
+          amount_usd, description || null,
+          product_name || null, quantity || 1,
+          activeCampaign?.id || null, pointsEffective,
+        ]
+      );
+
+      // Link sale to campaign for ranking
+      if (activeCampaign) {
+        await tx.none(
+          `INSERT INTO campaign_sales (campaign_id, sale_id, points_earned) VALUES ($1, $2, $3)`,
+          [activeCampaign.id, newSale.id, pointsEffective]
+        );
+      }
+
+      // Update architect points total
+      await tx.none(
+        `UPDATE architects SET points_total = points_total + $1, updated_at = NOW() WHERE id = $2`,
+        [pointsEffective, architect_id]
+      );
+
+      return newSale;
+    });
 
     return res.status(201).json({
       success: true,
-      data: sale,
-      message: 'Venda criada com sucesso',
+      data: { ...sale, points_generated: pointsEffective },
+      message: `Venda criada com sucesso. ${pointsEffective} pontos gerados${activeCampaign ? ` (campanha ativa: ${multiplier}x)` : ''}.`,
     });
   } catch (error) {
+    if (error instanceof AppError) throw error;
     throw new AppError('Erro ao criar venda', 400, error);
   }
 }
@@ -116,7 +172,8 @@ export async function createSale(req: Request, res: Response) {
 export async function updateSale(req: Request, res: Response) {
   try {
     const { id } = req.params;
-    const { architect_id, store_id, client_name, client_phone, amount_usd, description } = req.body as Partial<SaleData>;
+    const { architect_id, store_id, client_name, client_phone, amount_usd, description, product_name, quantity } =
+      req.body as Partial<SaleData>;
 
     const sale = await db.oneOrNone(
       `UPDATE sales
@@ -127,9 +184,11 @@ export async function updateSale(req: Request, res: Response) {
          client_phone = COALESCE($4, client_phone),
          amount_usd = COALESCE($5, amount_usd),
          description = COALESCE($6, description),
+         product_name = COALESCE($7, product_name),
+         quantity = COALESCE($8, quantity),
          updated_at = NOW()
-       WHERE id = $7
-       RETURNING id, architect_id, store_id, client_name, client_phone, amount_usd, points_generated, description, created_at, updated_at`,
+       WHERE id = $9
+       RETURNING *`,
       [
         architect_id ?? null,
         store_id ?? null,
@@ -137,18 +196,17 @@ export async function updateSale(req: Request, res: Response) {
         client_phone ?? null,
         amount_usd ?? null,
         description ?? null,
+        product_name ?? null,
+        quantity ?? null,
         id,
       ]
     );
 
-    if (!sale) throw new AppError('Venda nao encontrada', 404);
+    if (!sale) throw new AppError('Venda não encontrada', 404);
 
-    return res.json({
-      success: true,
-      data: sale,
-      message: 'Venda atualizada com sucesso',
-    });
+    return res.json({ success: true, data: sale, message: 'Venda atualizada com sucesso' });
   } catch (error) {
+    if (error instanceof AppError) throw error;
     throw new AppError('Erro ao atualizar venda', 400, error);
   }
 }
@@ -156,13 +214,8 @@ export async function updateSale(req: Request, res: Response) {
 export async function deleteSale(req: Request, res: Response) {
   try {
     const { id } = req.params;
-
     await db.result('DELETE FROM sales WHERE id = $1', [id]);
-
-    return res.json({
-      success: true,
-      message: 'Venda deletada com sucesso',
-    });
+    return res.json({ success: true, message: 'Venda deletada com sucesso' });
   } catch (error) {
     throw new AppError('Erro ao deletar venda', 400, error);
   }

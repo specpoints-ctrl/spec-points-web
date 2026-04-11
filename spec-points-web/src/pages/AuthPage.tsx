@@ -1,11 +1,19 @@
-import { FormEvent, useState } from 'react';
+import { FormEvent, useState, useEffect } from 'react';
 import { isAxiosError } from 'axios';
-import { signInWithEmailAndPassword, signOut } from 'firebase/auth';
-import { Loader2, AlertCircle, CheckCircle2, Eye, EyeOff } from 'lucide-react';
+import {
+  signInWithEmailAndPassword, signOut, signInWithRedirect,
+  getRedirectResult, GoogleAuthProvider, sendPasswordResetEmail,
+} from 'firebase/auth';
+import {
+  Loader2, AlertCircle, CheckCircle2, Eye, EyeOff,
+  Mail, Lock, User, Briefcase, Phone, Building2, MapPin, CreditCard,
+  Calendar, ArrowLeft, ChevronRight,
+} from 'lucide-react';
 import { auth } from '../lib/firebase';
-import { registerUser, validateLoginStatus } from '../lib/api';
+import { registerUser, validateLoginStatus, googleLoginUpsert } from '../lib/api';
 
-type Mode = 'login' | 'register';
+type Mode = 'login' | 'register' | 'forgot';
+type RegisterStep = 1 | 2;
 
 interface AuthPageProps {
   onLoginSuccess: () => void;
@@ -14,7 +22,7 @@ interface AuthPageProps {
 const Logo = () => (
   <svg width="36" height="36" viewBox="0 0 28 28" fill="none" aria-hidden>
     <polygon points="14,2 26,8 26,20 14,26 2,20 2,8" fill="none" stroke="url(#auth-lg)" strokeWidth="1.5"/>
-    <polygon points="14,7 21,11 21,17 14,21 7,17 7,11" fill="url(#auth-lg)" opacity="0.2"/>
+    <polygon points="14,7 21,11 21,17 14,21 7,17 7,11" fill="url(#auth-lg)" opacity="0.25"/>
     <circle cx="14" cy="14" r="2.5" fill="url(#auth-lg)"/>
     <defs>
       <linearGradient id="auth-lg" x1="2" y1="2" x2="26" y2="26" gradientUnits="userSpaceOnUse">
@@ -25,13 +33,56 @@ const Logo = () => (
   </svg>
 );
 
+const Field = ({
+  label, icon: Icon, children,
+}: { label: string; icon: React.ElementType; children: React.ReactNode }) => (
+  <div className="space-y-1.5">
+    <label className="block text-[11px] font-bold uppercase tracking-[0.12em] text-[#0b6e78]">{label}</label>
+    <div className="relative">
+      <Icon className="absolute left-4 top-1/2 -translate-y-1/2 w-[15px] h-[15px] text-[#8fadb4]" strokeWidth={2} />
+      {children}
+    </div>
+  </div>
+);
+
+const inputCls = 'w-full h-11 pl-11 pr-4 rounded-xl border border-gray-200 bg-gray-50 text-sm text-[#071519] placeholder:text-gray-300 focus:outline-none focus:border-[#0b6e78] focus:bg-white focus:shadow-[0_0_0_3px_rgba(11,110,120,0.12)] transition-all';
+
 export default function AuthPage({ onLoginSuccess }: AuthPageProps) {
   const [mode, setMode] = useState<Mode>('login');
-  const [name, setName] = useState('');
+  const [step, setStep] = useState<RegisterStep>(1);
+
+  // Step 1 fields
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPwd, setShowPwd] = useState(false);
   const [role, setRole] = useState<'architect' | 'lojista'>('architect');
+
+  // Step 2 — architect fields
+  const [name, setName] = useState('');
+  const [documentCi, setDocumentCi] = useState('');
+  const [ruc, setRuc] = useState('');
+  const [company, setCompany] = useState('');
+  const [telefone, setTelefone] = useState('');
+  const [officePhone, setOfficePhone] = useState('');
+  const [address, setAddress] = useState('');
+  const [city, setCity] = useState('');
+  const [birthday, setBirthday] = useState('');
+
+  // Step 2 — lojista fields
+  const [storeName, setStoreName] = useState('');
+  const [cnpj, setCnpj] = useState('');
+  const [ownerName, setOwnerName] = useState('');
+  const [ownerCi, setOwnerCi] = useState('');
+  const [storeRuc, setStoreRuc] = useState('');
+  const [storePhone, setStorePhone] = useState('');
+  const [storeOfficePhone, setStoreOfficePhone] = useState('');
+  const [storeAddress, setStoreAddress] = useState('');
+  const [storeCity, setStoreCity] = useState('');
+  const [ownerBirthday, setOwnerBirthday] = useState('');
+
+  // Forgot password
+  const [forgotEmail, setForgotEmail] = useState('');
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
@@ -64,16 +115,38 @@ export default function AuthPage({ onLoginSuccess }: AuthPageProps) {
     }
   };
 
-  const handleRegister = async () => {
+  const handleRegisterStep1 = (e: FormEvent) => {
+    e.preventDefault();
+    setError(null);
+    if (!email || !password) { setError('Email e senha são obrigatórios'); return; }
+    if (password.length < 8) { setError('Senha deve ter no mínimo 8 caracteres'); return; }
+    setStep(2);
+  };
+
+  const handleRegisterStep2 = async (e: FormEvent) => {
+    e.preventDefault();
     setLoading(true); setError(null); setSuccess(null);
     try {
-      const response = await registerUser({ name, email, password, role });
+      const payload = role === 'architect'
+        ? {
+            email, password, role: 'architect' as const,
+            name, document_ci: documentCi, ruc, company, telefone,
+            office_phone: officePhone, address, city, birthday,
+          }
+        : {
+            email, password, role: 'lojista' as const,
+            store_name: storeName, cnpj, owner_name: ownerName, owner_ci: ownerCi,
+            store_ruc: storeRuc, store_phone: storePhone, store_office_phone: storeOfficePhone,
+            store_address: storeAddress, store_city: storeCity, owner_birthday: ownerBirthday,
+          };
+
+      const response = await registerUser(payload);
       if (!response.success) {
         setError(response.error || 'Não foi possível registrar usuário.');
         return;
       }
       setSuccess(response.message || 'Conta criada! Aguarde aprovação do administrador.');
-      setMode('login');
+      switchMode('login');
       setPassword('');
     } catch (err: unknown) {
       setError(getApiErrorMessage(err, 'Erro ao registrar usuário.'));
@@ -82,217 +155,419 @@ export default function AuthPage({ onLoginSuccess }: AuthPageProps) {
     }
   };
 
+  const handleForgotPassword = async (e: FormEvent) => {
+    e.preventDefault();
+    if (!forgotEmail) { setError('Informe seu email'); return; }
+    setLoading(true); setError(null); setSuccess(null);
+    try {
+      await sendPasswordResetEmail(auth, forgotEmail);
+      setSuccess('Email de recuperação enviado! Verifique sua caixa de entrada.');
+    } catch {
+      setError('Não foi possível enviar o email. Verifique se o endereço está correto.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const onSubmit = async (event: FormEvent) => {
     event.preventDefault();
     if (mode === 'login') await handleLogin();
-    else await handleRegister();
   };
 
-  const switchMode = (m: Mode) => { setMode(m); setError(null); setSuccess(null); };
+  const handleGoogleLogin = async () => {
+    setLoading(true); setError(null); setSuccess(null);
+    try {
+      const provider = new GoogleAuthProvider();
+      await signInWithRedirect(auth, provider);
+    } catch (err: unknown) {
+      setError(getApiErrorMessage(err, 'Não foi possível iniciar login com Google.'));
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    getRedirectResult(auth).then(async (result) => {
+      if (!result) return;
+      setLoading(true);
+      try {
+        const displayName = result.user.displayName ?? result.user.email ?? '';
+        const response = await googleLoginUpsert(displayName);
+        if (!response.success) {
+          await signOut(auth);
+          setError(response.error || 'Não foi possível acessar a plataforma com esta conta Google.');
+          return;
+        }
+        if (response.data?.status === 'pending') {
+          await signOut(auth);
+          setSuccess('Conta criada! Aguarde a aprovação do administrador para acessar.');
+          return;
+        }
+        if (response.data?.status === 'blocked') {
+          await signOut(auth);
+          setError('Sua conta está bloqueada. Entre em contato com o suporte.');
+          return;
+        }
+        setSuccess('Login realizado com sucesso!');
+        onLoginSuccess();
+      } catch (err: unknown) {
+        await signOut(auth).catch(() => {});
+        setError(getApiErrorMessage(err, 'Não foi possível fazer login com Google.'));
+      } finally {
+        setLoading(false);
+      }
+    }).catch((err: unknown) => {
+      setError(getApiErrorMessage(err, 'Erro ao processar login com Google.'));
+    });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const switchMode = (m: Mode) => {
+    setMode(m); setStep(1);
+    setError(null); setSuccess(null);
+  };
+
+  // ── Shared feedback ──────────────────────────────────────────────────────
+  const Feedback = () => (
+    <>
+      {error && (
+        <div className="flex items-start gap-2.5 p-3.5 rounded-xl bg-red-50 border border-red-100 text-red-600 text-sm animate-fade-in">
+          <AlertCircle className="w-4 h-4 mt-0.5 shrink-0" />
+          <p>{error}</p>
+        </div>
+      )}
+      {success && (
+        <div className="flex items-start gap-2.5 p-3.5 rounded-xl bg-emerald-50 border border-emerald-100 text-emerald-700 text-sm animate-fade-in">
+          <CheckCircle2 className="w-4 h-4 mt-0.5 shrink-0" />
+          <p>{success}</p>
+        </div>
+      )}
+    </>
+  );
+
+  const SubmitBtn = ({ label }: { label: string }) => (
+    <button
+      type="submit"
+      disabled={loading}
+      className="w-full h-12 rounded-xl font-bold text-white text-sm flex items-center justify-center gap-2 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_8px_24px_rgba(11,110,120,0.35)] active:scale-[0.98] disabled:opacity-60 disabled:pointer-events-none mt-2"
+      style={{ background: 'linear-gradient(135deg,#0b6e78 0%,#134e56 100%)' }}
+    >
+      {loading ? <><Loader2 className="w-4 h-4 animate-spin" /> Processando...</> : label}
+    </button>
+  );
 
   return (
-    <div className="min-h-screen flex">
+    <div className="min-h-screen flex flex-col lg:flex-row">
 
-      {/* ── Left Brand Panel (hidden on mobile) ──────────────────────── */}
-      <div className="hidden lg:flex lg:w-[52%] relative flex-col items-center justify-center p-12 bg-gradient-to-br from-[#071519] via-[#0d2d33] to-[#152d32] overflow-hidden">
-        {/* ambient orbs */}
-        <div className="absolute top-1/4 left-1/4 w-80 h-80 rounded-full bg-[hsl(var(--sidebar-accent)/0.07)] blur-3xl pointer-events-none" />
-        <div className="absolute bottom-1/3 right-1/4 w-56 h-56 rounded-full bg-teal-500/6 blur-2xl pointer-events-none" />
-        {/* dot pattern */}
+      {/* ── LEFT BRAND PANEL ─────────────────────────────────────────── */}
+      <div
+        className="hidden lg:flex lg:w-[48%] relative flex-col items-center justify-center p-14 overflow-hidden"
+        style={{ background: 'linear-gradient(145deg, #071519 0%, #0b2228 45%, #0f2d35 75%, #071c22 100%)' }}
+      >
+        <div className="absolute -top-24 -left-24 w-[480px] h-[480px] rounded-full animate-blob"
+          style={{ background: 'radial-gradient(circle at 40% 40%, rgba(19,136,143,0.38) 0%, transparent 65%)' }} />
+        <div className="absolute top-[20%] -right-32 w-[400px] h-[400px] rounded-full animate-blob animation-delay-2000"
+          style={{ background: 'radial-gradient(circle at 50% 50%, rgba(212,165,116,0.28) 0%, transparent 65%)' }} />
+        <div className="absolute -bottom-20 left-[10%] w-[440px] h-[440px] rounded-full animate-blob animation-delay-4000"
+          style={{ background: 'radial-gradient(circle at 50% 60%, rgba(10,84,96,0.35) 0%, transparent 65%)' }} />
         <div className="dot-pattern absolute inset-0 opacity-20 pointer-events-none" />
 
-        <div className="relative max-w-sm text-center">
-          {/* Logo mark */}
-          <div className="flex items-center justify-center gap-3 mb-8">
-            <Logo />
-            <span className="text-3xl font-extrabold text-gradient-gold tracking-tight">SpecPoints</span>
+        <div className="relative z-10 max-w-[360px] w-full text-center">
+          <div className="flex flex-col items-center gap-5 mb-12">
+            <div className="flex items-center gap-3">
+              <Logo />
+              <span className="text-[2rem] font-extrabold tracking-tight" style={{ background: 'linear-gradient(90deg,#f7b871,#d4a574)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+                CONNECTUS
+              </span>
+            </div>
+            <img src="/moducasa-logo.png" alt="Grupo Moducasa" className="h-9 w-auto object-contain"
+              style={{ filter: 'invert(1) brightness(0.88)' }} />
           </div>
-
-          {/* Tagline */}
-          <h2 className="text-2xl sm:text-3xl font-extrabold text-white leading-snug mb-4">
-            O programa de fidelidade<br />
-            <span className="text-gradient-gold">para arquitetos de alto padrão.</span>
+          <h2 className="text-[1.75rem] font-extrabold text-white leading-tight mb-4">
+            O programa de fidelidade para{' '}
+            <span style={{ background: 'linear-gradient(90deg,#f7b871,#d4a574)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+              arquitetos de alto padrão.
+            </span>
           </h2>
-          <p className="text-white/45 text-sm leading-relaxed">
-            Cada projeto especificado vira pontos reais. Troque por prêmios exclusivos e experiências únicas.
+          <p className="text-white/40 text-[0.9rem] leading-relaxed mb-12">
+            Cada projeto especificado vira pontos reais.<br />
+            Troque por prêmios exclusivos e experiências únicas.
           </p>
-
-          {/* Feature pills */}
-          <div className="mt-10 flex flex-col gap-3 text-left">
-            {[
-              { icon: '◆', label: 'Pontos em cada especificação de produto' },
-              { icon: '◆', label: 'Prêmios exclusivos e viagens internacionais' },
-              { icon: '◆', label: 'Painel de controle em tempo real' },
-            ].map((f, i) => (
-              <div key={i} className="flex items-center gap-3 bg-white/5 border border-white/8 rounded-xl px-4 py-3">
-                <span className="text-[hsl(var(--sidebar-accent))] text-xs">{f.icon}</span>
-                <p className="text-white/65 text-sm">{f.label}</p>
+          <div className="flex flex-col gap-3 text-left">
+            {['Pontos em cada especificação de produto', 'Prêmios exclusivos e viagens internacionais', 'Painel de controle em tempo real'].map((label, i) => (
+              <div key={i} className="flex items-center gap-3 rounded-2xl px-4 py-3.5"
+                style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)' }}>
+                <span className="text-[#d4a574] text-[10px]">◆</span>
+                <span className="text-white/60 text-sm">{label}</span>
               </div>
             ))}
           </div>
         </div>
-
-        {/* Bottom badge */}
-        <div className="absolute bottom-6 left-0 right-0 flex justify-center">
-          <span className="flex items-center gap-2 text-[11px] uppercase tracking-widest text-white/30 border border-white/8 px-4 py-2 rounded-full bg-white/4 backdrop-blur-sm">
+        <div className="absolute bottom-7 left-0 right-0 flex justify-center">
+          <span className="flex items-center gap-2 text-[10px] uppercase tracking-[0.15em] text-white/30 px-5 py-2 rounded-full"
+            style={{ border: '1px solid rgba(255,255,255,0.08)', background: 'rgba(255,255,255,0.03)' }}>
             <span className="block w-1.5 h-1.5 rounded-full bg-emerald-400 animate-live" />
             Sistema ativo
           </span>
         </div>
       </div>
 
-      {/* ── Right Form Panel ─────────────────────────────────────────── */}
-      <div className="flex-1 flex items-center justify-center p-6 sm:p-10 bg-gradient-to-br from-[#f0f4f5] via-[#e8eff1] to-[#dde8ea]">
-        <div className="w-full max-w-md">
+      {/* ── RIGHT FORM PANEL ─────────────────────────────────────────── */}
+      <div className="flex-1 flex items-center justify-center bg-white px-6 py-12 sm:px-16 overflow-y-auto">
+        <div className="w-full max-w-[440px] animate-fade-in-up">
 
           {/* Mobile logo */}
-          <div className="lg:hidden flex items-center justify-center gap-2 mb-8">
-            <Logo />
-            <span className="text-2xl font-extrabold text-gradient-gold">SpecPoints</span>
+          <div className="lg:hidden flex flex-col items-center gap-3 mb-10">
+            <div className="flex items-center gap-2.5">
+              <Logo />
+              <span className="text-2xl font-extrabold" style={{ background: 'linear-gradient(90deg,#f7b871,#d4a574)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+                CONNECTUS
+              </span>
+            </div>
+            <img src="/moducasa-logo.png" alt="Grupo Moducasa" className="h-7 w-auto" style={{ filter: 'brightness(0)' }} />
           </div>
 
-          {/* Card */}
-          <div className="bg-white/90 backdrop-blur-xl rounded-2xl border border-white/70 shadow-[0_32px_80px_rgba(7,24,27,0.14),0_8px_24px_rgba(7,24,27,0.07)] p-7 sm:p-9">
+          {/* ── FORGOT PASSWORD ─────────────────────────────────────── */}
+          {mode === 'forgot' && (
+            <>
+              <button type="button" onClick={() => switchMode('login')}
+                className="flex items-center gap-1.5 text-sm text-[#0b6e78] mb-6 hover:underline">
+                <ArrowLeft className="w-4 h-4" /> Voltar ao login
+              </button>
+              <div className="mb-8">
+                <h1 className="text-2xl font-extrabold text-[#071519]">Recuperar senha</h1>
+                <p className="text-[#7a9099] text-sm mt-1.5">Enviaremos um link de redefinição para seu email.</p>
+              </div>
+              <form onSubmit={handleForgotPassword} className="space-y-5">
+                <Field label="E-mail" icon={Mail}>
+                  <input type="email" value={forgotEmail} onChange={e => setForgotEmail(e.target.value)}
+                    required placeholder="voce@empresa.com" className={inputCls} />
+                </Field>
+                <Feedback />
+                <SubmitBtn label="Enviar link de recuperação" />
+              </form>
+            </>
+          )}
 
-            {/* Header */}
-            <div className="mb-7">
-              <h1 className="text-2xl font-extrabold text-foreground tracking-tight">
-                {mode === 'login' ? 'Bem-vindo de volta' : 'Criar conta'}
-              </h1>
-              <p className="text-sm text-muted-foreground mt-1">
-                {mode === 'login'
-                  ? 'Acesse seu painel SpecPoints'
-                  : 'Registre-se e aguarde aprovação'}
-              </p>
-            </div>
+          {/* ── LOGIN ───────────────────────────────────────────────── */}
+          {mode === 'login' && (
+            <>
+              <div className="mb-8">
+                <h1 className="text-[1.85rem] font-extrabold text-[#071519] leading-tight tracking-tight">Bem-vindo de volta.</h1>
+                <p className="text-[#7a9099] text-sm mt-1.5">Acesse seu painel CONNECTUS</p>
+              </div>
 
-            {/* Mode toggle */}
-            <div className="flex gap-1.5 mb-7 p-1 bg-muted/60 rounded-xl border border-border/30">
-              {(['login', 'register'] as Mode[]).map((m) => (
-                <button
-                  key={m}
-                  type="button"
-                  onClick={() => switchMode(m)}
-                  className={[
-                    'flex-1 py-2 text-sm font-semibold rounded-lg transition-all duration-200',
-                    mode === m
-                      ? 'bg-white shadow-sm text-foreground border border-border/40'
-                      : 'text-muted-foreground hover:text-foreground',
-                  ].join(' ')}
-                >
-                  {m === 'login' ? 'Entrar' : 'Cadastro'}
-                </button>
-              ))}
-            </div>
-
-            <form onSubmit={onSubmit} className="space-y-4">
-              {mode === 'register' && (
-                <fieldset className="space-y-1">
-                  <label className="block text-[11px] font-bold uppercase tracking-widest text-muted-foreground">
-                    Nome completo
-                  </label>
-                  <input
-                    type="text"
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    required
-                    placeholder="Seu nome"
-                    className="w-full px-4 py-3 rounded-xl border border-border/60 bg-white/80 backdrop-blur-sm text-sm text-foreground placeholder:text-muted-foreground/60 focus:outline-none focus:border-primary focus:shadow-[0_0_0_3px_hsl(var(--primary)/0.12)] transition-all duration-200"
-                  />
-                </fieldset>
-              )}
-
-              <fieldset className="space-y-1">
-                <label className="block text-[11px] font-bold uppercase tracking-widest text-muted-foreground">
-                  E-mail
-                </label>
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                  placeholder="voce@empresa.com"
-                  className="w-full px-4 py-3 rounded-xl border border-border/60 bg-white/80 backdrop-blur-sm text-sm text-foreground placeholder:text-muted-foreground/60 focus:outline-none focus:border-primary focus:shadow-[0_0_0_3px_hsl(var(--primary)/0.12)] transition-all duration-200"
-                />
-              </fieldset>
-
-              <fieldset className="space-y-1">
-                <label className="block text-[11px] font-bold uppercase tracking-widest text-muted-foreground">
-                  Senha
-                </label>
-                <div className="relative">
-                  <input
-                    type={showPwd ? 'text' : 'password'}
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    required
-                    minLength={8}
-                    placeholder="Mínimo 8 caracteres"
-                    className="w-full px-4 py-3 pr-11 rounded-xl border border-border/60 bg-white/80 backdrop-blur-sm text-sm text-foreground placeholder:text-muted-foreground/60 focus:outline-none focus:border-primary focus:shadow-[0_0_0_3px_hsl(var(--primary)/0.12)] transition-all duration-200"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPwd((p) => !p)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-                    tabIndex={-1}
-                  >
-                    {showPwd ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+              <div className="flex gap-6 mb-8 border-b border-gray-100">
+                {(['login', 'register'] as const).map((m) => (
+                  <button key={m} type="button" onClick={() => switchMode(m)}
+                    className={['pb-3 text-sm font-bold transition-all duration-200 border-b-2 -mb-[1px]',
+                      mode === m ? 'border-[#0b6e78] text-[#071519]' : 'border-transparent text-[#a0b4ba] hover:text-[#071519]'].join(' ')}>
+                    {m === 'login' ? 'Entrar' : 'Criar conta'}
                   </button>
-                </div>
-              </fieldset>
+                ))}
+              </div>
 
-              {mode === 'register' && (
-                <fieldset className="space-y-1">
-                  <label className="block text-[11px] font-bold uppercase tracking-widest text-muted-foreground">
-                    Perfil
-                  </label>
-                  <select
-                    value={role}
-                    onChange={(e) => setRole(e.target.value as 'architect' | 'lojista')}
-                    className="w-full px-4 py-3 rounded-xl border border-border/60 bg-white/80 backdrop-blur-sm text-sm text-foreground focus:outline-none focus:border-primary focus:shadow-[0_0_0_3px_hsl(var(--primary)/0.12)] transition-all duration-200"
-                  >
+              <form onSubmit={onSubmit} className="space-y-5">
+                <Field label="E-mail" icon={Mail}>
+                  <input type="email" value={email} onChange={e => setEmail(e.target.value)} required placeholder="voce@empresa.com" className={inputCls} />
+                </Field>
+                <div className="space-y-1.5">
+                  <label className="block text-[11px] font-bold uppercase tracking-[0.12em] text-[#0b6e78]">Senha</label>
+                  <div className="relative">
+                    <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-[15px] h-[15px] text-[#8fadb4]" strokeWidth={2} />
+                    <input type={showPwd ? 'text' : 'password'} value={password} onChange={e => setPassword(e.target.value)}
+                      required minLength={8} placeholder="Mínimo 8 caracteres"
+                      className="w-full h-11 pl-11 pr-12 rounded-xl border border-gray-200 bg-gray-50 text-sm text-[#071519] placeholder:text-gray-300 focus:outline-none focus:border-[#0b6e78] focus:bg-white focus:shadow-[0_0_0_3px_rgba(11,110,120,0.12)] transition-all" />
+                    <button type="button" onClick={() => setShowPwd(p => !p)} tabIndex={-1}
+                      className="absolute right-4 top-1/2 -translate-y-1/2 text-[#8fadb4] hover:text-[#071519] transition-colors">
+                      {showPwd ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                  </div>
+                  <div className="text-right">
+                    <button type="button" onClick={() => switchMode('forgot')}
+                      className="text-xs text-[#0b6e78] hover:underline mt-1">
+                      Esqueceu sua senha?
+                    </button>
+                  </div>
+                </div>
+
+                <Feedback />
+                <SubmitBtn label="Entrar na plataforma" />
+              </form>
+
+              <div className="flex items-center gap-3 my-6">
+                <div className="flex-1 h-px bg-gray-100" />
+                <span className="text-[11px] text-gray-300 uppercase tracking-widest">ou</span>
+                <div className="flex-1 h-px bg-gray-100" />
+              </div>
+              <button type="button" onClick={handleGoogleLogin} disabled={loading}
+                className="w-full h-12 rounded-xl border border-gray-200 bg-white text-[#071519] text-sm font-semibold flex items-center justify-center gap-3 hover:bg-gray-50 hover:border-gray-300 hover:shadow-sm active:scale-[0.98] transition-all duration-200 disabled:opacity-60 disabled:pointer-events-none">
+                <svg width="18" height="18" viewBox="0 0 48 48" aria-hidden>
+                  <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
+                  <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
+                  <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
+                  <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.31-8.16 2.31-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
+                </svg>
+                Continuar com Google
+              </button>
+            </>
+          )}
+
+          {/* ── REGISTER STEP 1 ─────────────────────────────────────── */}
+          {mode === 'register' && step === 1 && (
+            <>
+              <div className="mb-8">
+                <h1 className="text-[1.85rem] font-extrabold text-[#071519] leading-tight tracking-tight">Crie sua conta.</h1>
+                <p className="text-[#7a9099] text-sm mt-1.5">Passo 1 de 2 — Dados de acesso</p>
+              </div>
+
+              <div className="flex gap-6 mb-8 border-b border-gray-100">
+                {(['login', 'register'] as const).map((m) => (
+                  <button key={m} type="button" onClick={() => switchMode(m)}
+                    className={['pb-3 text-sm font-bold transition-all duration-200 border-b-2 -mb-[1px]',
+                      mode === m ? 'border-[#0b6e78] text-[#071519]' : 'border-transparent text-[#a0b4ba] hover:text-[#071519]'].join(' ')}>
+                    {m === 'login' ? 'Entrar' : 'Criar conta'}
+                  </button>
+                ))}
+              </div>
+
+              <form onSubmit={handleRegisterStep1} className="space-y-5">
+                <Field label="E-mail" icon={Mail}>
+                  <input type="email" value={email} onChange={e => setEmail(e.target.value)} required placeholder="voce@empresa.com" className={inputCls} />
+                </Field>
+                <div className="space-y-1.5">
+                  <label className="block text-[11px] font-bold uppercase tracking-[0.12em] text-[#0b6e78]">Senha</label>
+                  <div className="relative">
+                    <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-[15px] h-[15px] text-[#8fadb4]" strokeWidth={2} />
+                    <input type={showPwd ? 'text' : 'password'} value={password} onChange={e => setPassword(e.target.value)}
+                      required minLength={8} placeholder="Mínimo 8 caracteres"
+                      className="w-full h-11 pl-11 pr-12 rounded-xl border border-gray-200 bg-gray-50 text-sm text-[#071519] placeholder:text-gray-300 focus:outline-none focus:border-[#0b6e78] focus:bg-white focus:shadow-[0_0_0_3px_rgba(11,110,120,0.12)] transition-all" />
+                    <button type="button" onClick={() => setShowPwd(p => !p)} tabIndex={-1}
+                      className="absolute right-4 top-1/2 -translate-y-1/2 text-[#8fadb4] hover:text-[#071519] transition-colors">
+                      {showPwd ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                  </div>
+                </div>
+                <Field label="Perfil" icon={Briefcase}>
+                  <select value={role} onChange={e => setRole(e.target.value as 'architect' | 'lojista')}
+                    className={inputCls + ' appearance-none cursor-pointer'}>
                     <option value="architect">Arquiteto</option>
                     <option value="lojista">Lojista</option>
                   </select>
-                </fieldset>
-              )}
+                </Field>
+                <Feedback />
+                <button type="submit" disabled={loading}
+                  className="w-full h-12 rounded-xl font-bold text-white text-sm flex items-center justify-center gap-2 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_8px_24px_rgba(11,110,120,0.35)] active:scale-[0.98] disabled:opacity-60 disabled:pointer-events-none mt-2"
+                  style={{ background: 'linear-gradient(135deg,#0b6e78 0%,#134e56 100%)' }}>
+                  Próximo <ChevronRight className="w-4 h-4" />
+                </button>
+              </form>
+            </>
+          )}
 
-              {/* Feedback messages */}
-              {error && (
-                <div className="flex items-start gap-2.5 p-3.5 rounded-xl bg-red-50 border border-red-200/70 text-red-700 text-sm animate-fade-in">
-                  <AlertCircle className="w-4 h-4 mt-0.5 shrink-0" />
-                  <p>{error}</p>
-                </div>
-              )}
-              {success && (
-                <div className="flex items-start gap-2.5 p-3.5 rounded-xl bg-emerald-50 border border-emerald-200/70 text-emerald-700 text-sm animate-fade-in">
-                  <CheckCircle2 className="w-4 h-4 mt-0.5 shrink-0" />
-                  <p>{success}</p>
-                </div>
-              )}
+          {/* ── REGISTER STEP 2 ─────────────────────────────────────── */}
+          {mode === 'register' && step === 2 && (
+            <>
+              <div className="flex items-center gap-3 mb-6">
+                <button type="button" onClick={() => { setStep(1); setError(null); }}
+                  className="flex items-center gap-1.5 text-sm text-[#0b6e78] hover:underline">
+                  <ArrowLeft className="w-4 h-4" /> Voltar
+                </button>
+                <div className="flex-1 h-px bg-gray-100" />
+                <span className="text-xs text-[#7a9099]">Passo 2 de 2</span>
+              </div>
 
-              {/* Submit */}
-              <button
-                type="submit"
-                disabled={loading}
-                className="btn-shimmer relative w-full overflow-hidden flex items-center justify-center gap-2 bg-gradient-to-r from-primary to-[hsl(var(--primary)/0.82)] text-primary-foreground font-bold py-3.5 rounded-xl shadow-btn-primary hover:shadow-btn-hover hover:-translate-y-0.5 active:scale-[0.97] transition-all duration-200 disabled:opacity-60 disabled:pointer-events-none border-t border-white/15 mt-2"
-              >
-                {loading ? (
-                  <>
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                    Processando...
-                  </>
-                ) : mode === 'login' ? (
-                  'Entrar na plataforma'
-                ) : (
-                  'Criar conta'
-                )}
-              </button>
-            </form>
-          </div>
+              <div className="mb-6">
+                <h1 className="text-2xl font-extrabold text-[#071519] leading-tight">
+                  {role === 'architect' ? 'Dados do Arquiteto' : 'Dados do Lojista'}
+                </h1>
+                <p className="text-[#7a9099] text-sm mt-1">Complete seu perfil profissional</p>
+              </div>
 
-          <p className="mt-5 text-center text-[11px] text-muted-foreground/60">
-            Ao continuar, você concorda com os termos de uso da plataforma SpecPoints.
+              {role === 'architect' ? (
+                <form onSubmit={handleRegisterStep2} className="space-y-4">
+                  <div className="grid grid-cols-1 gap-4">
+                    <Field label="Nome Completo *" icon={User}>
+                      <input type="text" value={name} onChange={e => setName(e.target.value)} required placeholder="Nome completo do arquiteto" className={inputCls} />
+                    </Field>
+                    <div className="grid grid-cols-2 gap-3">
+                      <Field label="Número CI *" icon={CreditCard}>
+                        <input type="text" value={documentCi} onChange={e => setDocumentCi(e.target.value)} required placeholder="CI do arquiteto" className={inputCls} />
+                      </Field>
+                      <Field label="RUC Escritório *" icon={CreditCard}>
+                        <input type="text" value={ruc} onChange={e => setRuc(e.target.value)} required placeholder="RUC" className={inputCls} />
+                      </Field>
+                    </div>
+                    <Field label="Escritório / Empresa *" icon={Building2}>
+                      <input type="text" value={company} onChange={e => setCompany(e.target.value)} required placeholder="Nome do escritório" className={inputCls} />
+                    </Field>
+                    <div className="grid grid-cols-2 gap-3">
+                      <Field label="Tel. Arquiteto *" icon={Phone}>
+                        <input type="tel" value={telefone} onChange={e => setTelefone(e.target.value)} required placeholder="+595..." className={inputCls} />
+                      </Field>
+                      <Field label="Tel. Escritório" icon={Phone}>
+                        <input type="tel" value={officePhone} onChange={e => setOfficePhone(e.target.value)} placeholder="+595..." className={inputCls} />
+                      </Field>
+                    </div>
+                    <Field label="Endereço do Escritório" icon={MapPin}>
+                      <input type="text" value={address} onChange={e => setAddress(e.target.value)} placeholder="Rua, número, bairro" className={inputCls} />
+                    </Field>
+                    <Field label="Cidade" icon={MapPin}>
+                      <input type="text" value={city} onChange={e => setCity(e.target.value)} placeholder="Ciudad" className={inputCls} />
+                    </Field>
+                    <Field label="Data de Aniversário *" icon={Calendar}>
+                      <input type="date" value={birthday} onChange={e => setBirthday(e.target.value)} required className={inputCls} />
+                    </Field>
+                  </div>
+                  <Feedback />
+                  <SubmitBtn label="Criar conta" />
+                </form>
+              ) : (
+                <form onSubmit={handleRegisterStep2} className="space-y-4">
+                  <div className="grid grid-cols-1 gap-4">
+                    <Field label="Nome do Responsável *" icon={User}>
+                      <input type="text" value={ownerName} onChange={e => setOwnerName(e.target.value)} required placeholder="Nome completo" className={inputCls} />
+                    </Field>
+                    <div className="grid grid-cols-2 gap-3">
+                      <Field label="CI do Responsável *" icon={CreditCard}>
+                        <input type="text" value={ownerCi} onChange={e => setOwnerCi(e.target.value)} required placeholder="CI" className={inputCls} />
+                      </Field>
+                      <Field label="RUC da Loja *" icon={CreditCard}>
+                        <input type="text" value={storeRuc} onChange={e => setStoreRuc(e.target.value)} required placeholder="RUC" className={inputCls} />
+                      </Field>
+                    </div>
+                    <Field label="Nome da Loja *" icon={Building2}>
+                      <input type="text" value={storeName} onChange={e => setStoreName(e.target.value)} required placeholder="Nome da loja" className={inputCls} />
+                    </Field>
+                    <Field label="CNPJ / RUC Empresa" icon={CreditCard}>
+                      <input type="text" value={cnpj} onChange={e => setCnpj(e.target.value)} placeholder="CNPJ ou RUC da empresa" className={inputCls} />
+                    </Field>
+                    <div className="grid grid-cols-2 gap-3">
+                      <Field label="Tel. Responsável *" icon={Phone}>
+                        <input type="tel" value={storePhone} onChange={e => setStorePhone(e.target.value)} required placeholder="+595..." className={inputCls} />
+                      </Field>
+                      <Field label="Tel. Loja" icon={Phone}>
+                        <input type="tel" value={storeOfficePhone} onChange={e => setStoreOfficePhone(e.target.value)} placeholder="+595..." className={inputCls} />
+                      </Field>
+                    </div>
+                    <Field label="Endereço da Loja" icon={MapPin}>
+                      <input type="text" value={storeAddress} onChange={e => setStoreAddress(e.target.value)} placeholder="Endereço completo" className={inputCls} />
+                    </Field>
+                    <Field label="Cidade" icon={MapPin}>
+                      <input type="text" value={storeCity} onChange={e => setStoreCity(e.target.value)} placeholder="Ciudad" className={inputCls} />
+                    </Field>
+                    <Field label="Data de Aniversário *" icon={Calendar}>
+                      <input type="date" value={ownerBirthday} onChange={e => setOwnerBirthday(e.target.value)} required className={inputCls} />
+                    </Field>
+                  </div>
+                  <Feedback />
+                  <SubmitBtn label="Criar conta" />
+                </form>
+              )}
+            </>
+          )}
+
+          <p className="mt-5 text-center text-[11px] text-gray-300">
+            Ao continuar, você concorda com os termos de uso da plataforma CONNECTUS.
           </p>
         </div>
       </div>

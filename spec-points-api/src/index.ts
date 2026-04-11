@@ -1,7 +1,6 @@
 import express, { Express, Request, Response, NextFunction } from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
-import rateLimit from 'express-rate-limit';
 import dotenv from 'dotenv';
 import winston from 'winston';
 
@@ -21,6 +20,9 @@ const logger = winston.createLogger({
 
 // Initialize Express app
 export const app: Express = express();
+
+// Trust Railway/Heroku reverse proxy so rate limiter uses the real client IP
+app.set('trust proxy', 1);
 
 // Middleware
 app.use(helmet());
@@ -43,14 +45,8 @@ app.use(
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ limit: '10mb', extended: true }));
 
-// Rate limiting
-const limiter = rateLimit({
-  windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS || '900000'),
-  max: parseInt(process.env.RATE_LIMIT_MAX_ATTEMPTS || '100'),
-  message: 'Too many requests from this IP, please try again later.',
-});
-
-app.use(limiter);
+// Global rate limiter removed — authenticated routes are protected by JWT.
+// Auth-specific rate limiting (login/register brute-force) lives in routes/auth.ts.
 
 // Logging middleware
 app.use((req: Request, _res: Response, next: NextFunction) => {
@@ -119,6 +115,11 @@ import prizeRoutes from './routes/prizes.js';
 import redemptionRoutes from './routes/redemptions.js';
 import userRoutes from './routes/users.js';
 import dashboardRoutes from './routes/dashboard.js';
+import notificationRoutes from './routes/notifications.js';
+import profileRoutes from './routes/profile.js';
+import uploadRoutes from './routes/upload.js';
+import campaignRoutes from './routes/campaigns.js';
+import termsRoutes from './routes/terms.js';
 
 // API Routes
 app.get('/api', (_req: Request, res: Response) => {
@@ -135,6 +136,8 @@ app.get('/api', (_req: Request, res: Response) => {
       redemptions: '/api/redemptions',
       users: '/api/users',
       dashboard: '/api/dashboard',
+      notifications: '/api/notifications',
+      profile: '/api/profile',
     },
   });
 });
@@ -148,6 +151,11 @@ app.use('/api/prizes', prizeRoutes);
 app.use('/api/redemptions', redemptionRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/dashboard', dashboardRoutes);
+app.use('/api/notifications', notificationRoutes);
+app.use('/api/profile', profileRoutes);
+app.use('/api/upload', uploadRoutes);
+app.use('/api/campaigns', campaignRoutes);
+app.use('/api/terms', termsRoutes);
 
 // Error handling middleware
 app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {

@@ -1,7 +1,8 @@
 import express from 'express';
 import rateLimit from 'express-rate-limit';
-import { register, login, getCurrentUser } from '../controllers/auth.js';
+import { register, login, getCurrentUser, googleLogin, completeProfile } from '../controllers/auth.js';
 import { authenticateToken } from '../middleware/auth.js';
+import { asyncHandler } from '../middleware/async-handler.js';
 
 const router = express.Router();
 
@@ -18,5 +19,7 @@ router.post('/login', authLimiter, login);
 
 // Protected routes
 router.get('/me', authenticateToken, getCurrentUser);
+router.post('/google', authenticateToken, googleLogin);
+router.post('/complete-profile', authenticateToken, asyncHandler(completeProfile as any));
 
 export default router;

@@ -23,24 +23,28 @@ export const getDashboardStats = async (_req: Request, res: Response) => {
       'SELECT COALESCE(SUM(points_generated), 0) as total FROM sales'
     );
 
-    // Get recent sales
+    // Get recent sales (with architect avatar and store logo)
     const recentSales = await db.manyOrNone(
-      `SELECT s.*, a.name as architect_name, st.name as store_name 
+      `SELECT s.*, a.name as architect_name, st.name as store_name,
+              u.avatar_url as architect_avatar, st.logo_url as store_logo
        FROM sales s
        LEFT JOIN architects a ON s.architect_id = a.id
        LEFT JOIN stores st ON s.store_id = st.id
+       LEFT JOIN users u ON u.email = a.email
        ORDER BY s.created_at DESC
        LIMIT 10`
     );
 
-    // Get top 5 architects
+    // Get top 5 architects (with avatar)
     const topArchitects = await db.manyOrNone(
-      `SELECT a.id, a.name, a.email, 
+      `SELECT a.id, a.name, a.email,
               COALESCE(SUM(s.points_generated), 0) as total_points,
-              COUNT(s.id) as total_sales
+              COUNT(s.id) as total_sales,
+              u.avatar_url
        FROM architects a
        LEFT JOIN sales s ON a.id = s.architect_id
-       GROUP BY a.id, a.name, a.email
+       LEFT JOIN users u ON u.email = a.email
+       GROUP BY a.id, a.name, a.email, u.avatar_url
        ORDER BY total_points DESC
        LIMIT 5`
     );

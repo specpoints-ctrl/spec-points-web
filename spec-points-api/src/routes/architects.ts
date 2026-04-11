@@ -8,6 +8,7 @@ import {
   updateArchitect,
   deleteArchitect,
   updateArchitectStatus,
+  listActiveCompleteArchitects,
 } from '../controllers/architects.js';
 import { asyncHandler } from '../middleware/async-handler.js';
 
@@ -15,6 +16,24 @@ const router = Router();
 
 // All architect routes require authentication
 router.use(authenticateToken);
+
+// GET own architect profile (architect role)
+router.get('/me', requireRole(['architect']), asyncHandler(async (req: Request, res: Response) => {
+  const uid = (req as any).user?.uid;
+  const userRole = await (await import('../db/config.js')).db.oneOrNone(
+    `SELECT ur.architect_id FROM user_roles ur JOIN users u ON u.id = ur.user_id WHERE u.firebase_uid = $1`,
+    [uid]
+  );
+  if (!userRole?.architect_id) return res.status(404).json({ success: false, error: 'Perfil de arquiteto não encontrado' });
+
+  const { db } = await import('../db/config.js');
+  const architect = await db.oneOrNone(`SELECT * FROM architects WHERE id = $1`, [userRole.architect_id]);
+  if (!architect) return res.status(404).json({ success: false, error: 'Arquiteto não encontrado' });
+  return res.json({ success: true, data: architect });
+}));
+
+// GET active architects with complete profile (for sale form dropdown — admin/lojista)
+router.get('/active-complete', asyncHandler(listActiveCompleteArchitects));
 
 // GET all architects (admin only)
 router.get('/', requireRole(['admin']), asyncHandler(listArchitects));

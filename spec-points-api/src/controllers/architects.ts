@@ -139,6 +139,21 @@ export async function deleteArchitect(req: Request, res: Response) {
   }
 }
 
+// GET active architects with complete profile (for sale form dropdown)
+export async function listActiveCompleteArchitects(_req: Request, res: Response) {
+  try {
+    const architects = await db.manyOrNone(
+      `SELECT id, name as nome, email FROM architects
+       WHERE status = 'active' AND profile_complete = true
+       ORDER BY name ASC`
+    );
+
+    return res.json({ success: true, data: architects || [] });
+  } catch (error) {
+    throw new AppError('Erro ao listar arquitetos ativos', 400, error);
+  }
+}
+
 // UPDATE architect status
 export async function updateArchitectStatus(req: Request, res: Response) {
   try {

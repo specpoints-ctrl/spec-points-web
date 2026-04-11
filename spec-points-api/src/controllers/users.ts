@@ -70,14 +70,7 @@ export const getUserDetails = async (req: Request, res: Response) => {
 export const approveUser = async (req: Request, res: Response) => {
   try {
     const { userId } = req.params;
-    const adminId = (req as any).user?.id;
-
-    if (!adminId) {
-      return res.status(401).json({
-        success: false,
-        error: 'Admin ID not found in token',
-      });
-    }
+    const adminUid = (req as any).user?.uid ?? 'system';
 
     // Get user
     const user = await db.oneOrNone(
@@ -108,8 +101,8 @@ export const approveUser = async (req: Request, res: Response) => {
     // Log audit
     await db.none(
       `INSERT INTO security_audit_log (user_id, action, resource) 
-       VALUES ($1, 'USER_APPROVED', $2)`,
-      [adminId, `User ${user.id} approved`]
+       VALUES (NULL, 'USER_APPROVED', $1)`,
+      [`Admin ${adminUid} approved user ${user.id}`]
     );
 
     logger.info(`User approved: ${userId}`);
@@ -133,14 +126,7 @@ export const rejectUser = async (req: Request, res: Response) => {
   try {
     const { userId } = req.params;
     const { reason } = req.body;
-    const adminId = (req as any).user?.id;
-
-    if (!adminId) {
-      return res.status(401).json({
-        success: false,
-        error: 'Admin ID not found in token',
-      });
-    }
+    const adminUid = (req as any).user?.uid ?? 'system';
 
     // Get user
     const user = await db.oneOrNone(
@@ -171,8 +157,8 @@ export const rejectUser = async (req: Request, res: Response) => {
     // Log audit with reason
     await db.none(
       `INSERT INTO security_audit_log (user_id, action, resource, old_value, new_value) 
-       VALUES ($1, 'USER_REJECTED', $2, $3, $4)`,
-      [adminId, `User ${user.id} rejected`, user.status, `Reason: ${reason || 'No reason provided'}`]
+       VALUES (NULL, 'USER_REJECTED', $1, $2, $3)`,
+      [`Admin ${adminUid} rejected user ${user.id}`, user.status, `Reason: ${reason || 'No reason provided'}`]
     );
 
     logger.info(`User rejected: ${userId}`);

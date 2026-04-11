@@ -22,3 +22,4 @@ export {
   DialogDescription,
 } from './Dialog';
 export { Textarea } from './Textarea';
+export { default as ImageUploader } from './ImageUploader';

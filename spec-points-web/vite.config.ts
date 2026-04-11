@@ -8,10 +8,10 @@ export default defineConfig({
     VitePWA({
       registerType: 'autoUpdate',
       manifest: {
-        name: 'SpecPoints',
-        short_name: 'SpecPoints',
-        description: 'SaaS de Fidelidade para Especificadores',
-        theme_color: '#007AFF',
+        name: 'CONNECTUS',
+        short_name: 'CONNECTUS',
+        description: 'Plataforma de Fidelidade para Arquitetos - Grupo Moducasa',
+        theme_color: '#071519',
         background_color: '#ffffff',
         display: 'standalone',
         scope: '/',

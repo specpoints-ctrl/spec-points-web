@@ -1,14 +1,19 @@
 import pgPromise from 'pg-promise';
-import { logger } from '../index.js';
+
+// Use console for db-level logs to avoid circular dependency with index.ts
+const log = {
+  debug: (msg: string) => process.env.LOG_LEVEL === 'debug' && console.debug('[db]', msg),
+  error: (msg: string, ...args: unknown[]) => console.error('[db]', msg, ...args),
+};
 
 const pgp = pgPromise({
   query(e) {
-    logger.debug('Query:', e.query);
+    log.debug('Query: ' + e.query);
   },
   error(err, e) {
-    logger.error('Database error:', err);
+    log.error('Database error:', err);
     if (e.query) {
-      logger.error('Query:', e.query);
+      log.error('Query:', e.query);
     }
   },
 });
@@ -25,10 +30,10 @@ export const db = pgp(databaseUrl);
 export const testConnection = async () => {
   try {
     await db.connect();
-    logger.info('Database connection established successfully');
+    log.error('Database connection established successfully');
     return true;
   } catch (error) {
-    logger.error('Failed to connect to database:', error);
+    log.error('Failed to connect to database:' + error);
     return false;
   }
 };
