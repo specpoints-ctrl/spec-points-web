@@ -372,8 +372,8 @@ export default function CampaignsPage() {
                           <label className="block text-xs text-muted-foreground mb-1">Imagem do Produto</label>
                           <ImageUploader
                             folder="prizes"
-                            value={prize.image_url}
-                            onChange={url => updatePrize(idx, 'image_url', url)}
+                            currentUrl={prize.image_url}
+                            onUploaded={(url: string) => updatePrize(idx, 'image_url', url)}
                             placeholder="Imagem do prêmio"
                           />
                         </div>
