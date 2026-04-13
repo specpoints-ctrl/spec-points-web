@@ -148,7 +148,7 @@ export default function RedemptionsPage() {
 
   const handleApprove = async (id: string) => {
     try {
-      await approveRedemption(id);
+      await approveRedemption(Number(id));
       await loadInitialData();
     } catch (error) {
       console.error('Erro ao aprovar resgate:', error);
@@ -157,7 +157,7 @@ export default function RedemptionsPage() {
 
   const handleDeliver = async (id: string) => {
     try {
-      await deliverRedemption(id);
+      await deliverRedemption(Number(id));
       await loadInitialData();
     } catch (error) {
       console.error('Erro ao marcar entrega:', error);

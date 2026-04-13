@@ -26,7 +26,7 @@ interface Sale {
 }
 
 interface ArchitectOption {
-  id: string;
+  id: string | number;
   nome: string;
 }
 
