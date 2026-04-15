@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import { db } from '../db/config.js';
-import { createFirebaseUser } from '../middleware/auth.js';
+import { createFirebaseUser, deleteFirebaseUser } from '../middleware/auth.js';
 import { logger } from '../index.js';
 import { AuthRequest } from '../middleware/auth.js';
 import { AppError } from '../middleware/error-handler.js';
@@ -39,89 +39,98 @@ export const register = async (req: Request, res: Response) => {
 
     const firebaseUser = await createFirebaseUser(email, password);
 
-    const user = await db.one(
-      `INSERT INTO users (firebase_uid, email, email_verified, status)
-       VALUES ($1, $2, $3, $4)
-       RETURNING *`,
-      [firebaseUser.uid, email, false, 'pending']
-    );
-
-    let relatedId: number | null = null;
-
-    if (role === 'architect') {
-      // Determine if profile is complete based on required fields
-      const profileComplete = !!(document_ci && company && ruc && telefone && birthday);
-
-      const architect = await db.one(
-        `INSERT INTO architects (
-          name, email, status,
-          document_ci, ruc, company, telefone, office_phone,
-          address, city, state, birthday, profile_complete
-        )
-        VALUES ($1,$2,'pending',$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)
-        RETURNING id`,
-        [
-          name, email,
-          document_ci || null, ruc || null, company || null, telefone || null,
-          office_phone || null, address || null, city || null, state || null,
-          birthday || null, profileComplete,
-        ]
+    try {
+      const user = await db.one(
+        `INSERT INTO users (firebase_uid, email, email_verified, status)
+         VALUES ($1, $2, $3, $4)
+         RETURNING *`,
+        [firebaseUser.uid, email, false, 'pending']
       );
-      relatedId = architect.id;
+
+      let relatedId: number | null = null;
+
+      if (role === 'architect') {
+        // Determine if profile is complete based on required fields
+        const profileComplete = !!(document_ci && company && ruc && telefone && birthday);
+
+        const architect = await db.one(
+          `INSERT INTO architects (
+            name, email, status,
+            document_ci, ruc, company, telefone, office_phone,
+            address, city, state, birthday, profile_complete
+          )
+          VALUES ($1,$2,'pending',$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)
+          RETURNING id`,
+          [
+            name, email,
+            document_ci || null, ruc || null, company || null, telefone || null,
+            office_phone || null, address || null, city || null, state || null,
+            birthday || null, profileComplete,
+          ]
+        );
+        relatedId = architect.id;
+
+        await db.none(
+          `INSERT INTO user_roles (user_id, role, architect_id, store_id) VALUES ($1, $2, $3, NULL)`,
+          [user.id, 'architect', relatedId]
+        );
+      } else if (role === 'lojista') {
+        // Lojista: create a stores record
+        const profileComplete = !!(owner_name && owner_ci && store_ruc && store_phone && owner_birthday);
+
+        // cnpj is required uniquely; use email as fallback identifier
+        const effectiveCnpj = cnpj || `TEMP-${Date.now()}`;
+
+        const store = await db.one(
+          `INSERT INTO stores (
+            name, cnpj, email, status,
+            owner_name, owner_ci, ruc, phone, office_phone,
+            address, city, owner_birthday, profile_complete
+          )
+          VALUES ($1,$2,$3,'pending',$4,$5,$6,$7,$8,$9,$10,$11,$12)
+          RETURNING id`,
+          [
+            store_name, effectiveCnpj, email,
+            owner_name || null, owner_ci || null, store_ruc || null,
+            store_phone || null, store_office_phone || null,
+            store_address || null, store_city || null,
+            owner_birthday || null, profileComplete,
+          ]
+        );
+        relatedId = store.id;
+
+        await db.none(
+          `INSERT INTO user_roles (user_id, role, architect_id, store_id) VALUES ($1, $2, NULL, $3)`,
+          [user.id, 'lojista', relatedId]
+        );
+      } else {
+        // Unknown role fallback
+        await db.none(
+          `INSERT INTO user_roles (user_id, role, architect_id, store_id) VALUES ($1, $2, NULL, NULL)`,
+          [user.id, role]
+        );
+      }
 
       await db.none(
-        `INSERT INTO user_roles (user_id, role, architect_id, store_id) VALUES ($1, $2, $3, NULL)`,
-        [user.id, 'architect', relatedId]
+        `INSERT INTO security_audit_log (user_id, action, resource) VALUES ($1, 'USER_REGISTER', $2)`,
+        [user.id, `User ${email} registered with role ${role}`]
       );
-    } else if (role === 'lojista') {
-      // Lojista: create a stores record
-      const profileComplete = !!(owner_name && owner_ci && store_ruc && store_phone && owner_birthday);
 
-      // cnpj is required uniquely; use email as fallback identifier
-      const effectiveCnpj = cnpj || `TEMP-${Date.now()}`;
+      logger.info(`New user registered: ${email} (${role})`);
 
-      const store = await db.one(
-        `INSERT INTO stores (
-          name, cnpj, email, status,
-          owner_name, owner_ci, ruc, phone, office_phone,
-          address, city, owner_birthday, profile_complete
-        )
-        VALUES ($1,$2,$3,'pending',$4,$5,$6,$7,$8,$9,$10,$11,$12)
-        RETURNING id`,
-        [
-          store_name, effectiveCnpj, email,
-          owner_name || null, owner_ci || null, store_ruc || null,
-          store_phone || null, store_office_phone || null,
-          store_address || null, store_city || null,
-          owner_birthday || null, profileComplete,
-        ]
-      );
-      relatedId = store.id;
-
-      await db.none(
-        `INSERT INTO user_roles (user_id, role, architect_id, store_id) VALUES ($1, $2, NULL, $3)`,
-        [user.id, 'lojista', relatedId]
-      );
-    } else {
-      // Unknown role fallback
-      await db.none(
-        `INSERT INTO user_roles (user_id, role, architect_id, store_id) VALUES ($1, $2, NULL, NULL)`,
-        [user.id, role]
-      );
+      res.status(201).json({
+        success: true,
+        message: 'Cadastro realizado com sucesso. Aguardando aprovação.',
+        data: { uid: firebaseUser.uid, email: user.email, status: user.status },
+      });
+    } catch (dbError: any) {
+      // DB failed after Firebase user was created — roll back Firebase to avoid orphaned accounts
+      logger.warn(`DB error after Firebase user creation for ${email}, rolling back Firebase user ${firebaseUser.uid}`);
+      await deleteFirebaseUser(firebaseUser.uid).catch((rollbackErr) => {
+        logger.error('Failed to rollback Firebase user:', rollbackErr);
+      });
+      throw dbError;
     }
-
-    await db.none(
-      `INSERT INTO security_audit_log (user_id, action, resource) VALUES ($1, 'USER_REGISTER', $2)`,
-      [user.id, `User ${email} registered with role ${role}`]
-    );
-
-    logger.info(`New user registered: ${email} (${role})`);
-
-    res.status(201).json({
-      success: true,
-      message: 'Cadastro realizado com sucesso. Aguardando aprovação.',
-      data: { uid: firebaseUser.uid, email: user.email, status: user.status },
-    });
   } catch (error: any) {
     logger.error('Registration error:', error);
     if (error.code === 'auth/email-already-exists') {
