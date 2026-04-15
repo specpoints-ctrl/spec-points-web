@@ -3,7 +3,7 @@
 
 [build]
 # Builder to use
-builder = "docker"
+builder = "DOCKERFILE"
 
 [[services]]
 # API Service Configuration
