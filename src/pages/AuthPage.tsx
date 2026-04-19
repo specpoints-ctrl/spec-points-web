@@ -109,6 +109,7 @@ export default function AuthPage({ onLoginSuccess }: AuthPageProps) {
       setSuccess('Login realizado com sucesso!');
       onLoginSuccess();
     } catch (err: unknown) {
+      await signOut(auth).catch(() => {});
       setError(getApiErrorMessage(err, 'Não foi possível realizar o login.'));
     } finally {
       setLoading(false);

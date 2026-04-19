@@ -470,6 +470,21 @@ export const deliverRedemption = async (id: number) => {
   return response.data;
 };
 
+// ── Stores extended ───────────────────────────────────────────────────────
+
+export interface ActiveStore {
+  id: number;
+  name: string;
+  city?: string;
+  phone?: string;
+  logo_url?: string;
+}
+
+export const getActiveStoresList = async () => {
+  const response = await api.get<ApiResponse<ActiveStore[]>>('/stores/active-list');
+  return response.data;
+};
+
 // ── Architects extended ───────────────────────────────────────────────────
 
 export const getActiveCompleteArchitects = async () => {

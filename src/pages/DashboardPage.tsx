@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
-import { TrendingUp, ShoppingCart, Award, Star, ArrowUpRight, Zap } from 'lucide-react';
-import { BackendUserProfile, getMyArchitectProfile, getMySales, getMyActiveCampaigns, ArchitectProfile, MyCampaign } from '../lib/api';
+import { TrendingUp, ShoppingCart, Award, Star, ArrowUpRight, Zap, Store, MapPin, Phone } from 'lucide-react';
+import { BackendUserProfile, getMyArchitectProfile, getMySales, getMyActiveCampaigns, getActiveStoresList, ArchitectProfile, MyCampaign, ActiveStore } from '../lib/api';
 import { AdminDashboard } from '../components/AdminDashboard';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui';
 
@@ -15,16 +15,21 @@ function ArchitectDashboard() {
   const [architect, setArchitect] = useState<ArchitectProfile | null>(null);
   const [sales, setSales] = useState<any[]>([]);
   const [campaigns, setCampaigns] = useState<MyCampaign[]>([]);
+  const [stores, setStores] = useState<ActiveStore[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    Promise.all([getMyArchitectProfile(), getMySales(), getMyActiveCampaigns()])
-      .then(([archRes, salesRes, campRes]) => {
-        if (archRes.success && archRes.data) setArchitect(archRes.data);
-        if (salesRes.success && salesRes.data) setSales(salesRes.data);
-        if (campRes.success && campRes.data) setCampaigns(campRes.data);
+    Promise.allSettled([getMyArchitectProfile(), getMySales(), getMyActiveCampaigns(), getActiveStoresList()])
+      .then(([archResult, salesResult, campResult, storesResult]) => {
+        if (archResult.status === 'fulfilled' && archResult.value.success && archResult.value.data)
+          setArchitect(archResult.value.data);
+        if (salesResult.status === 'fulfilled' && salesResult.value.success && salesResult.value.data)
+          setSales(salesResult.value.data);
+        if (campResult.status === 'fulfilled' && campResult.value.success && campResult.value.data)
+          setCampaigns(campResult.value.data);
+        if (storesResult.status === 'fulfilled' && storesResult.value.success && storesResult.value.data)
+          setStores(storesResult.value.data);
       })
-      .catch(() => { /* API não disponível — dashboard fica vazio */ })
       .finally(() => setLoading(false));
   }, []);
 
@@ -137,6 +142,39 @@ function ArchitectDashboard() {
                   <span className="inline-flex items-center gap-0.5 text-xs font-bold text-amber-700 bg-amber-100 px-2 py-0.5 rounded-full mt-1">
                     <Zap className="w-3 h-3" />{c.points_multiplier}x pts/$
                   </span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Partner Stores */}
+      {stores.length > 0 && (
+        <div>
+          <h2 className="text-sm font-bold uppercase tracking-widest text-muted-foreground mb-3 flex items-center gap-2">
+            <Store className="w-4 h-4 text-teal-500" /> Lojas Parceiras
+          </h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {stores.map(s => (
+              <div key={s.id} className="flex items-center gap-3 p-4 rounded-2xl border border-border/40 bg-white/50 hover:bg-white/80 transition-all">
+                <div className="w-10 h-10 rounded-xl bg-teal-50 flex items-center justify-center shrink-0 overflow-hidden">
+                  {s.logo_url
+                    ? <img src={s.logo_url} alt="" className="w-full h-full object-cover" />
+                    : <Store className="w-5 h-5 text-teal-600" />}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="font-semibold text-foreground text-sm truncate">{s.name}</p>
+                  {s.city && (
+                    <p className="text-xs text-muted-foreground flex items-center gap-1">
+                      <MapPin className="w-3 h-3" />{s.city}
+                    </p>
+                  )}
+                  {s.phone && (
+                    <p className="text-xs text-muted-foreground flex items-center gap-1">
+                      <Phone className="w-3 h-3" />{s.phone}
+                    </p>
+                  )}
                 </div>
               </div>
             ))}

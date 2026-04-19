@@ -5,6 +5,7 @@ import {
   Input, Table, TableBody, TableCell, TableHead, TableHeader, TableRow, Textarea,
 } from '../components/ui';
 import { api, getActiveCampaigns, getActiveCompleteArchitects, Campaign } from '../lib/api';
+import { useProfile } from '../contexts/ProfileContext';
 import { Edit2, Plus, Trash2, Zap, AlertCircle } from 'lucide-react';
 
 interface Sale {
@@ -60,6 +61,9 @@ const emptyForm: SaleForm = {
 const selectCls = 'flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm min-h-[44px]';
 
 export default function SalesPage() {
+  const { profile } = useProfile();
+  const isLojista = profile?.role === 'lojista';
+
   const [sales, setSales] = useState<Sale[]>([]);
   const [architects, setArchitects] = useState<ArchitectOption[]>([]);
   const [stores, setStores] = useState<StoreOption[]>([]);
@@ -72,7 +76,8 @@ export default function SalesPage() {
 
   useEffect(() => {
     void loadInitialData();
-  }, []);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isLojista]);
 
   const multiplier = activeCampaign ? Number(activeCampaign.points_multiplier) : 1;
 
@@ -85,16 +90,20 @@ export default function SalesPage() {
   const loadInitialData = async () => {
     try {
       setLoading(true);
-      const [salesResponse, architectsResponse, storesResponse, campaignsResponse] = await Promise.all([
-        api.get('/sales'),
+      const salesEndpoint = isLojista ? '/sales/lojista' : '/sales';
+      const [salesResponse, architectsResponse, campaignsResponse] = await Promise.all([
+        api.get(salesEndpoint),
         getActiveCompleteArchitects(),
-        api.get('/stores'),
         getActiveCampaigns(),
       ]);
 
       setSales(salesResponse.data.data || []);
       setArchitects(architectsResponse.data || []);
-      setStores(storesResponse.data.data || []);
+
+      if (!isLojista) {
+        const storesResponse = await api.get('/stores');
+        setStores(storesResponse.data.data || []);
+      }
 
       const camps: Campaign[] = campaignsResponse.data || [];
       setActiveCampaign(camps.length > 0 ? camps[0] : null);
@@ -118,7 +127,7 @@ export default function SalesPage() {
     setSubmitError(null);
     const payload = {
       architect_id: Number(formData.architect_id),
-      store_id: Number(formData.store_id),
+      store_id: isLojista ? undefined : Number(formData.store_id),
       client_name: formData.client_name || null,
       client_phone: formData.client_phone || null,
       product_name: formData.product_name || null,
@@ -127,11 +136,13 @@ export default function SalesPage() {
       description: formData.description || null,
     };
 
+    const postEndpoint = isLojista ? '/sales/lojista' : '/sales';
+
     try {
-      if (editingId) {
+      if (editingId && !isLojista) {
         await api.put(`/sales/${editingId}`, payload);
       } else {
-        await api.post('/sales', payload);
+        await api.post(postEndpoint, payload);
       }
       setOpenDialog(false);
       resetForm();
@@ -224,16 +235,18 @@ export default function SalesPage() {
                   )}
                 </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-foreground mb-2">Loja *</label>
-                  <select name="store_id" value={formData.store_id} onChange={handleInputChange}
-                    className={selectCls} required>
-                    <option value="">Selecione a loja</option>
-                    {stores.map(s => (
-                      <option key={s.id} value={s.id}>{s.nome}</option>
-                    ))}
-                  </select>
-                </div>
+                {!isLojista && (
+                  <div>
+                    <label className="block text-sm font-medium text-foreground mb-2">Loja *</label>
+                    <select name="store_id" value={formData.store_id} onChange={handleInputChange}
+                      className={selectCls} required>
+                      <option value="">Selecione a loja</option>
+                      {stores.map(s => (
+                        <option key={s.id} value={s.id}>{s.nome}</option>
+                      ))}
+                    </select>
+                  </div>
+                )}
 
                 <Input label="Nome do Cliente" name="client_name" value={formData.client_name} onChange={handleInputChange} placeholder="Nome do cliente" />
                 <Input label="Telefone do Cliente" name="client_phone" value={formData.client_phone} onChange={handleInputChange} placeholder="+595..." />
@@ -317,7 +330,7 @@ export default function SalesPage() {
                   <TableHead>Valor</TableHead>
                   <TableHead>Pontos</TableHead>
                   <TableHead>Campanha</TableHead>
-                  <TableHead>Ações</TableHead>
+                  {!isLojista && <TableHead>Ações</TableHead>}
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -350,18 +363,20 @@ export default function SalesPage() {
                         <span className="text-xs text-muted-foreground truncate max-w-[100px] block">{sale.campaign_title}</span>
                       ) : '-'}
                     </TableCell>
-                    <TableCell>
-                      <div className="flex gap-2">
-                        <button onClick={() => handleEdit(sale)}
-                          className="inline-flex items-center justify-center rounded-md h-8 w-8 text-primary hover:bg-primary/10 transition-colors" title="Editar">
-                          <Edit2 className="w-4 h-4" />
-                        </button>
-                        <button onClick={() => handleDelete(sale.id)}
-                          className="inline-flex items-center justify-center rounded-md h-8 w-8 text-destructive hover:bg-destructive/10 transition-colors" title="Deletar">
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </div>
-                    </TableCell>
+                    {!isLojista && (
+                      <TableCell>
+                        <div className="flex gap-2">
+                          <button onClick={() => handleEdit(sale)}
+                            className="inline-flex items-center justify-center rounded-md h-8 w-8 text-primary hover:bg-primary/10 transition-colors" title="Editar">
+                            <Edit2 className="w-4 h-4" />
+                          </button>
+                          <button onClick={() => handleDelete(sale.id)}
+                            className="inline-flex items-center justify-center rounded-md h-8 w-8 text-destructive hover:bg-destructive/10 transition-colors" title="Deletar">
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </TableCell>
+                    )}
                   </TableRow>
                 ))}
               </TableBody>
