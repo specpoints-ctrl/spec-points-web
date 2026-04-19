@@ -15,6 +15,15 @@ const router = Router();
 
 router.use(authenticateToken);
 
+// Active stores list — read-only for architect and lojista
+router.get('/active-list', requireRole(['admin', 'architect', 'lojista']), asyncHandler(async (_req, res) => {
+  const { db } = await import('../db/config.js');
+  const stores = await db.manyOrNone(
+    `SELECT id, name, city, phone, logo_url FROM stores WHERE status = 'active' ORDER BY name`
+  );
+  return res.json({ success: true, data: stores || [] });
+}));
+
 router.get('/', requireRole(['admin']), asyncHandler(listStores));
 router.get('/:id', requireRole(['admin']), asyncHandler(getStore));
 router.post('/', requireRole(['admin']), asyncHandler(createStore));

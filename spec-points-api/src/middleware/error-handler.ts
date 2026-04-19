@@ -15,6 +15,7 @@ export function createErrorHandler() {
   return (err: any, _req: any, res: any, _next: any) => {
     if (err instanceof AppError) {
       return res.status(err.status).json({
+        success: false,
         error: err.message,
         status: err.status,
       });
@@ -22,6 +23,7 @@ export function createErrorHandler() {
 
     console.error('Unhandled error:', err);
     return res.status(500).json({
+      success: false,
       error: 'Internal Server Error',
       status: 500,
     });

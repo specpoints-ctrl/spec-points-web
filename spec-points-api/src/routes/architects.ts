@@ -46,8 +46,16 @@ router.get(
     const { id } = req.params;
 
     // Check if user is admin or the architect themselves
-    if (user.role !== 'admin' && user.id !== id) {
-      return res.status(403).json({ error: 'Acesso negado' });
+    const { db } = await import('../db/config.js');
+    const userRole = await db.oneOrNone(
+      `SELECT ur.role, ur.architect_id FROM user_roles ur
+       JOIN users u ON u.id = ur.user_id
+       WHERE u.firebase_uid = $1`,
+      [user.uid]
+    );
+
+    if (userRole?.role !== 'admin' && String(userRole?.architect_id) !== id) {
+      return res.status(403).json({ success: false, error: 'Acesso negado' });
     }
 
     await getArchitect(req, res);

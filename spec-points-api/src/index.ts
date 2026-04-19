@@ -161,6 +161,7 @@ app.use('/api/terms', termsRoutes);
 app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
   logger.error(`Error: ${err.message}`);
   res.status(err.status || 500).json({
+    success: false,
     error: err.message || 'Internal Server Error',
     status: err.status || 500,
   });

@@ -15,6 +15,8 @@ const getConfig = () => {
   const secretAccessKey = env(['AWS_SECRET_ACCESS_KEY', 'BUCKET_SECRET_ACCESS_KEY', 'S3_SECRET_ACCESS_KEY']);
   const bucketName = env(['AWS_S3_BUCKET_NAME', 'BUCKET_NAME', 'S3_BUCKET_NAME', 'RAILWAY_BUCKET_NAME']);
   const region = env(['AWS_DEFAULT_REGION', 'BUCKET_REGION', 'S3_REGION']) || 'auto';
+  // Optional: separate public base URL (e.g. Railway CDN URL differs from S3 API endpoint)
+  const publicUrl = env(['BUCKET_PUBLIC_URL', 'S3_PUBLIC_URL', 'AWS_PUBLIC_URL']);
 
   const missing = [
     !endpoint && 'AWS_ENDPOINT_URL',
@@ -27,7 +29,7 @@ const getConfig = () => {
     throw new Error(`Railway Bucket não conectado à API. Variáveis faltando: ${missing.join(', ')}. Conecte o Bucket ao serviço spec-points-api no Railway.`);
   }
 
-  return { endpoint: endpoint!, accessKeyId: accessKeyId!, secretAccessKey: secretAccessKey!, bucketName: bucketName!, region };
+  return { endpoint: endpoint!, accessKeyId: accessKeyId!, secretAccessKey: secretAccessKey!, bucketName: bucketName!, region, publicUrl };
 };
 
 export const uploadImage = async (req: AuthRequest, res: Response): Promise<void> => {
@@ -37,7 +39,7 @@ export const uploadImage = async (req: AuthRequest, res: Response): Promise<void
       return;
     }
 
-    const { endpoint, accessKeyId, secretAccessKey, bucketName, region } = getConfig();
+    const { endpoint, accessKeyId, secretAccessKey, bucketName, region, publicUrl } = getConfig();
 
     const folder: UploadFolder = ALLOWED_FOLDERS.includes(req.body.folder as UploadFolder)
       ? (req.body.folder as UploadFolder)
@@ -61,9 +63,11 @@ export const uploadImage = async (req: AuthRequest, res: Response): Promise<void
       ContentType: req.file.mimetype,
     }));
 
-    const url = `${endpoint.replace(/\/$/, '')}/${bucketName}/${key}`;
+    // Use BUCKET_PUBLIC_URL if set (Railway CDN may differ from S3 API endpoint)
+    const baseUrl = publicUrl ? publicUrl.replace(/\/$/, '') : `${endpoint.replace(/\/$/, '')}/${bucketName}`;
+    const url = `${baseUrl}/${key}`;
 
-    res.json({ success: true, url });
+    res.json({ success: true, data: { url } });
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : 'Upload falhou';
     res.status(500).json({ success: false, error: message });

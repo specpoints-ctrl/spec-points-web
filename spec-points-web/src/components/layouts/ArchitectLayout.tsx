@@ -1,6 +1,6 @@
 import { ReactNode, useEffect, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { LogOut, Home, TrendingUp, Bell, Settings, Menu, X, Gift } from 'lucide-react';
+import { LogOut, Home, Bell, Settings, Menu, X, Gift } from 'lucide-react';
 import { auth } from '../../lib/firebase';
 import { useNotifications } from '../../contexts/NotificationsContext';
 import { useProfile } from '../../contexts/ProfileContext';
@@ -20,7 +20,6 @@ const Logo = () => (
 
 const menuItems = [
   { icon: Home,       label: 'Dashboard',     path: '/' },
-  { icon: TrendingUp, label: 'Meus Pontos',   path: '/points' },
   { icon: Gift,       label: 'Lojinha',       path: '/store' },
   { icon: Bell,       label: 'Notificações',  path: '/notifications' },
   { icon: Settings,   label: 'Configurações', path: '/settings' },
