@@ -53,7 +53,7 @@ export const uploadImage = async (req: AuthRequest, res: Response): Promise<void
       endpoint,
       region,
       credentials: { accessKeyId, secretAccessKey },
-      forcePathStyle: true,
+      forcePathStyle: false, // Railway/Tigris requires virtual-hosted-style
     });
 
     await s3.send(new PutObjectCommand({
@@ -63,9 +63,16 @@ export const uploadImage = async (req: AuthRequest, res: Response): Promise<void
       ContentType: req.file.mimetype,
     }));
 
-    // Use BUCKET_PUBLIC_URL if set (Railway CDN may differ from S3 API endpoint)
-    const baseUrl = publicUrl ? publicUrl.replace(/\/$/, '') : `${endpoint.replace(/\/$/, '')}/${bucketName}`;
-    const url = `${baseUrl}/${key}`;
+    // Railway/Tigris public URL format: https://{bucket}.{endpoint-domain}/{key}
+    // Override with BUCKET_PUBLIC_URL if needed
+    let url: string;
+    if (publicUrl) {
+      url = `${publicUrl.replace(/\/$/, '')}/${key}`;
+    } else {
+      // Strip protocol to get domain, then build virtual-hosted-style URL
+      const endpointDomain = endpoint.replace(/^https?:\/\//, '').replace(/\/$/, '');
+      url = `https://${bucketName}.${endpointDomain}/${key}`;
+    }
 
     res.json({ success: true, data: { url } });
   } catch (err: unknown) {
