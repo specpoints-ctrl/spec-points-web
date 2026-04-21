@@ -23,13 +23,23 @@ const getAppliedMigrations = async (): Promise<Set<string>> => {
   return new Set(rows.map((r: { filename: string }) => r.filename));
 };
 
-// Returns true if the DB has existing tables (pre-migration-tracking deploy)
-const isPreExistingDatabase = async (): Promise<boolean> => {
-  const result = await db.oneOrNone(`
-    SELECT 1 FROM information_schema.tables
-    WHERE table_schema = 'public' AND table_name = 'users'
-  `);
-  return !!result;
+const tableExists = async (table: string): Promise<boolean> => {
+  const r = await db.oneOrNone(
+    `SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = $1`,
+    [table]
+  );
+  return !!r;
+};
+
+// Verifies that a migration's key objects actually exist in the DB.
+// Returns false if the migration is recorded as applied but its objects are missing.
+const verifyApplied = async (filename: string): Promise<boolean> => {
+  switch (filename) {
+    case '0006_campaigns_terms_registration.sql':
+      return tableExists('campaigns');
+    default:
+      return true;
+  }
 };
 
 export const runMigrations = async () => {
@@ -45,29 +55,19 @@ export const runMigrations = async () => {
       .filter((file) => file.endsWith('.sql'))
       .sort();
 
-    // Baseline migration: if schema_migrations is empty but the DB already has tables,
-    // the schema was created before migration tracking was introduced.
-    // Mark all current migration files as applied so they are not re-executed.
-    if (applied.size === 0 && (await isPreExistingDatabase())) {
-      logger.warn('Pre-existing database detected with no migration history. Seeding baseline migrations...');
-      await db.tx(async (t) => {
-        for (const file of files) {
-          await t.none(
-            `INSERT INTO schema_migrations (filename) VALUES ($1) ON CONFLICT DO NOTHING`,
-            [file]
-          );
-          logger.info(`  ✓ Baseline registered: ${file}`);
-        }
-      });
-      logger.info('Baseline seeding complete. Future migrations will run normally.');
-      return;
-    }
-
     let ran = 0;
     for (const file of files) {
       if (applied.has(file)) {
-        logger.info(`⏭  Skipping already applied migration: ${file}`);
-        continue;
+        // Verify the migration's objects actually exist — guards against incorrect baseline seeding
+        if (!(await verifyApplied(file))) {
+          logger.warn(`Migration ${file} is recorded as applied but objects are missing. Re-running...`);
+          await db.none(`DELETE FROM schema_migrations WHERE filename = $1`, [file]);
+          applied.delete(file);
+          // fall through to run it
+        } else {
+          logger.info(`⏭  Skipping already applied migration: ${file}`);
+          continue;
+        }
       }
 
       const filePath = path.join(migrationsDir, file);
@@ -75,16 +75,28 @@ export const runMigrations = async () => {
 
       logger.info(`Running migration: ${file}`);
 
-      await db.tx(async (t) => {
-        await t.none(sql);
-        await t.none(`INSERT INTO schema_migrations (filename) VALUES ($1)`, [file]);
-      });
-
-      logger.info(`✓ Migration completed: ${file}`);
-      ran++;
+      try {
+        await db.tx(async (t) => {
+          await t.none(sql);
+          await t.none(`INSERT INTO schema_migrations (filename) VALUES ($1)`, [file]);
+        });
+        logger.info(`✓ Migration completed: ${file}`);
+        ran++;
+      } catch (err: any) {
+        // Objects already exist → migration ran before tracking was set up (baseline case)
+        if (err.code === '42710' || err.code === '42P07') {
+          logger.warn(`Migration ${file} objects already exist — recording as baseline`);
+          await db.none(
+            `INSERT INTO schema_migrations (filename) VALUES ($1) ON CONFLICT DO NOTHING`,
+            [file]
+          );
+        } else {
+          throw err;
+        }
+      }
     }
 
-    logger.info(`All migrations completed successfully (${ran} new, ${applied.size} skipped)`);
+    logger.info(`All migrations completed (${ran} new, ${applied.size} skipped)`);
   } catch (error) {
     logger.error('Migration error:', error);
     throw error;
