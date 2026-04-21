@@ -12,18 +12,18 @@ import { Badge } from '../components/ui';
 function relativeTime(dateStr: string): string {
   const diff = Date.now() - new Date(dateStr).getTime();
   const m = Math.floor(diff / 60000);
-  if (m < 1) return 'agora';
-  if (m < 60) return `${m}min atrás`;
+  if (m < 1) return 'ahora';
+  if (m < 60) return `hace ${m}min`;
   const h = Math.floor(m / 60);
-  if (h < 24) return `${h}h atrás`;
+  if (h < 24) return `hace ${h}h`;
   const d = Math.floor(h / 24);
-  return `${d}d atrás`;
+  return `hace ${d}d`;
 }
 
 const TYPE_CONFIG = {
   offer: { label: 'Oferta', icon: Tag, variant: 'warning' as const },
-  campaign: { label: 'Campanha', icon: Megaphone, variant: 'default' as const },
-  general: { label: 'Geral', icon: Info, variant: 'secondary' as const },
+  campaign: { label: 'Campaña', icon: Megaphone, variant: 'default' as const },
+  general: { label: 'General', icon: Info, variant: 'secondary' as const },
 };
 
 export default function NotificationsPage() {
@@ -63,12 +63,11 @@ export default function NotificationsPage() {
 
   return (
     <div className="p-4 sm:p-6 space-y-6">
-      {/* Header */}
       <div className="flex items-center justify-between gap-4 flex-wrap">
         <div>
-          <h1 className="text-2xl font-extrabold text-foreground tracking-tight">Notificações</h1>
+          <h1 className="text-2xl font-extrabold text-foreground tracking-tight">Notificaciones</h1>
           <p className="text-sm text-muted-foreground mt-1">
-            {unread > 0 ? `${unread} não ${unread === 1 ? 'lida' : 'lidas'}` : 'Tudo em dia'}
+            {unread > 0 ? `${unread} no ${unread === 1 ? 'leída' : 'leídas'}` : 'Todo al día'}
           </p>
         </div>
         {unread > 0 && (
@@ -77,12 +76,11 @@ export default function NotificationsPage() {
             className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-border/60 bg-white/70 backdrop-blur-sm text-sm font-semibold text-muted-foreground hover:text-foreground hover:bg-white/90 transition-all duration-200"
           >
             <CheckCheck className="w-4 h-4" />
-            Marcar todas como lidas
+            Marcar todas como leídas
           </button>
         )}
       </div>
 
-      {/* List */}
       {loading ? (
         <div className="flex items-center justify-center py-16">
           <div className="w-8 h-8 rounded-full border-2 border-primary/30 border-t-primary animate-spin" />
@@ -92,8 +90,8 @@ export default function NotificationsPage() {
           <div className="w-14 h-14 rounded-2xl bg-muted/50 flex items-center justify-center">
             <BellOff className="w-7 h-7 opacity-40" />
           </div>
-          <p className="text-sm font-medium">Nenhuma notificação</p>
-          <p className="text-xs">Você receberá ofertas e campanhas aqui</p>
+          <p className="text-sm font-medium">Ninguna notificación</p>
+          <p className="text-xs">Recibirá ofertas y campañas aquí</p>
         </div>
       ) : (
         <div className="space-y-2.5">
@@ -111,7 +109,6 @@ export default function NotificationsPage() {
                     : 'border-primary/30 bg-primary/[0.04] cursor-pointer hover:bg-primary/[0.07]',
                 ].join(' ')}
               >
-                {/* Icon */}
                 <div className={`mt-0.5 p-2.5 rounded-xl shrink-0 ${n.is_read ? 'bg-muted/60' : 'bg-primary/10'}`}>
                   <Icon className={`w-4 h-4 ${n.is_read ? 'text-muted-foreground' : 'text-primary'}`} />
                 </div>
@@ -135,7 +132,7 @@ export default function NotificationsPage() {
                     {n.message}
                   </p>
                   {!n.is_read && (
-                    <p className="text-[11px] text-primary/70 mt-2 font-medium">Clique para marcar como lida</p>
+                    <p className="text-[11px] text-primary/70 mt-2 font-medium">Haga clic para marcar como leída</p>
                   )}
                 </div>
               </div>

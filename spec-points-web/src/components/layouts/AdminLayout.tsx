@@ -31,16 +31,16 @@ const Logo = () => (
 );
 
 const menuItems = [
-  { icon: Home,        label: 'Dashboard',         path: '/' },
-  { icon: Users,       label: 'Arquitetos',         path: '/architects' },
-  { icon: Store,       label: 'Lojas',              path: '/stores' },
-  { icon: ShoppingCart,label: 'Vendas',             path: '/sales' },
-  { icon: Gift,        label: 'Prêmios',            path: '/prizes' },
-  { icon: RotateCcw,   label: 'Resgates',           path: '/redemptions' },
-  { icon: Target,      label: 'Campanhas',          path: '/campaigns' },
-  { icon: CheckCircle, label: 'Aprovações',         path: '/approvals' },
-  { icon: Megaphone,   label: 'Notificações',       path: '/admin/notifications' },
-  { icon: Settings,    label: 'Configurações',      path: '/settings' },
+  { icon: Home,        label: 'Dashboard',          path: '/' },
+  { icon: Users,       label: 'Arquitectos',         path: '/architects' },
+  { icon: Store,       label: 'Tiendas',             path: '/stores' },
+  { icon: ShoppingCart,label: 'Ventas',              path: '/sales' },
+  { icon: Gift,        label: 'Premios',             path: '/prizes' },
+  { icon: RotateCcw,   label: 'Canjes',              path: '/redemptions' },
+  { icon: Target,      label: 'Campañas',            path: '/campaigns' },
+  { icon: CheckCircle, label: 'Aprobaciones',        path: '/approvals' },
+  { icon: Megaphone,   label: 'Notificaciones',      path: '/admin/notifications' },
+  { icon: Settings,    label: 'Configuraciones',     path: '/settings' },
 ];
 
 export const AdminLayout = ({ children }: { children: ReactNode }) => {
@@ -61,13 +61,14 @@ export const AdminLayout = ({ children }: { children: ReactNode }) => {
         <div className="flex items-center gap-3">
           <Logo />
           <div>
-            <p className="text-[10px] uppercase tracking-[0.22em] text-sidebar-foreground/55 leading-none mb-0.5">Painel</p>
+            <p className="text-[10px] uppercase tracking-[0.22em] text-sidebar-foreground/55 leading-none mb-0.5">Panel</p>
             <h1 className="text-xl font-extrabold text-gradient-gold leading-none">CONNECTUS</h1>
           </div>
         </div>
         <div className="mt-3 flex items-center gap-1.5">
           <span className="block w-1.5 h-1.5 rounded-full bg-emerald-400 animate-live" />
           <p className="text-[10px] uppercase tracking-widest text-sidebar-foreground/50">Administrativo</p>
+
         </div>
       </div>
 
@@ -133,7 +134,7 @@ export const AdminLayout = ({ children }: { children: ReactNode }) => {
         <button
           onClick={() => setMobileOpen((p) => !p)}
           className="inline-flex items-center justify-center rounded-xl border border-border/60 h-10 w-10 min-h-[44px] min-w-[44px] bg-white/60 backdrop-blur-sm hover:bg-white/80 transition-all"
-          aria-label="Abrir menu"
+          aria-label="Abrir menú"
         >
           {mobileOpen ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
         </button>

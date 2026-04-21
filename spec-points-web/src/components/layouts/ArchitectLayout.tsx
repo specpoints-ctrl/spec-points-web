@@ -19,10 +19,10 @@ const Logo = () => (
 );
 
 const menuItems = [
-  { icon: Home,       label: 'Dashboard',     path: '/' },
-  { icon: Gift,       label: 'Lojinha',       path: '/store' },
-  { icon: Bell,       label: 'Notificações',  path: '/notifications' },
-  { icon: Settings,   label: 'Configurações', path: '/settings' },
+  { icon: Home,       label: 'Dashboard',      path: '/' },
+  { icon: Gift,       label: 'Tienda',         path: '/store' },
+  { icon: Bell,       label: 'Notificaciones', path: '/notifications' },
+  { icon: Settings,   label: 'Configuraciones',path: '/settings' },
 ];
 
 export const ArchitectLayout = ({ children }: { children: ReactNode }) => {
@@ -44,7 +44,7 @@ export const ArchitectLayout = ({ children }: { children: ReactNode }) => {
           <Logo />
           <div>
             <h1 className="text-xl font-extrabold text-gradient-gold leading-none">CONNECTUS</h1>
-            <p className="text-[10px] uppercase tracking-[0.18em] text-sidebar-foreground/50 mt-0.5">Arquiteto</p>
+            <p className="text-[10px] uppercase tracking-[0.18em] text-sidebar-foreground/50 mt-0.5">Arquitecto</p>
           </div>
         </div>
       </div>

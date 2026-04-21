@@ -66,7 +66,7 @@ const emptyForm: StoreFormData = {
   endereco: '',
   cidade: '',
   estado: '',
-  pais: 'Brasil',
+  pais: 'Paraguay',
   logo_url: '',
 };
 
@@ -87,7 +87,7 @@ export default function StoresPage() {
       const response = await api.get<StoresResponse>('/stores');
       setStores(response.data.data || []);
     } catch (error) {
-      console.error('Erro ao carregar lojas:', error);
+      console.error('Error al cargar tiendas:', error);
       setStores([]);
     } finally {
       setLoading(false);
@@ -117,7 +117,7 @@ export default function StoresPage() {
       resetForm();
       await loadStores();
     } catch (error) {
-      console.error('Erro ao salvar loja:', error);
+      console.error('Error al guardar tienda:', error);
     }
   };
 
@@ -132,20 +132,20 @@ export default function StoresPage() {
       endereco: store.endereco || '',
       cidade: store.cidade || '',
       estado: store.estado || '',
-      pais: store.pais || 'Brasil',
+      pais: store.pais || 'Paraguay',
       logo_url: store.logo_url || '',
     });
     setOpenDialog(true);
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Tem certeza que deseja deletar esta loja?')) return;
+    if (!confirm('¿Está seguro de que desea eliminar esta tienda?')) return;
 
     try {
       await api.delete(`/stores/${id}`);
       await loadStores();
     } catch (error) {
-      console.error('Erro ao deletar loja:', error);
+      console.error('Error al eliminar tienda:', error);
     }
   };
 
@@ -154,7 +154,7 @@ export default function StoresPage() {
       await api.patch(`/stores/${id}/status`, { status });
       await loadStores();
     } catch (error) {
-      console.error('Erro ao atualizar status da loja:', error);
+      console.error('Error al actualizar estado de la tienda:', error);
     }
   };
 
@@ -162,8 +162,8 @@ export default function StoresPage() {
     <div className="flex-1 p-4 sm:p-6 space-y-6">
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-foreground">Lojas</h1>
-          <p className="text-sm text-muted-foreground mt-1">Gerencie lojas parceiras</p>
+          <h1 className="text-2xl sm:text-3xl font-bold text-foreground">Tiendas</h1>
+          <p className="text-sm text-muted-foreground mt-1">Administre las tiendas asociadas</p>
         </div>
 
         <Dialog open={openDialog} onOpenChange={setOpenDialog}>
@@ -175,28 +175,28 @@ export default function StoresPage() {
             }}
           >
             <Plus className="w-4 h-4 mr-2" />
-            Nova Loja
+            Nueva Tienda
           </Button>
 
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>{editingId ? 'Editar Loja' : 'Nova Loja'}</DialogTitle>
+              <DialogTitle>{editingId ? 'Editar Tienda' : 'Nueva Tienda'}</DialogTitle>
             </DialogHeader>
 
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <Input label="Nome" name="nome" value={formData.nome} onChange={handleInputChange} required />
-                <Input label="CNPJ" name="cnpj" value={formData.cnpj} onChange={handleInputChange} required />
-                <Input label="Email" name="email" type="email" value={formData.email} onChange={handleInputChange} />
-                <Input label="Telefone" name="telefone" value={formData.telefone} onChange={handleInputChange} />
-                <Input label="Ramo" name="ramo" value={formData.ramo} onChange={handleInputChange} />
-                <Input label="Cidade" name="cidade" value={formData.cidade} onChange={handleInputChange} />
-                <Input label="Estado" name="estado" value={formData.estado} onChange={handleInputChange} />
-                <Input label="Pais" name="pais" value={formData.pais} onChange={handleInputChange} />
+                <Input label="Nombre" name="nome" value={formData.nome} onChange={handleInputChange} required />
+                <Input label="RUC" name="cnpj" value={formData.cnpj} onChange={handleInputChange} required />
+                <Input label="Correo" name="email" type="email" value={formData.email} onChange={handleInputChange} />
+                <Input label="Teléfono" name="telefone" value={formData.telefone} onChange={handleInputChange} />
+                <Input label="Rubro" name="ramo" value={formData.ramo} onChange={handleInputChange} />
+                <Input label="Ciudad" name="cidade" value={formData.cidade} onChange={handleInputChange} />
+                <Input label="Departamento" name="estado" value={formData.estado} onChange={handleInputChange} />
+                <Input label="País" name="pais" value={formData.pais} onChange={handleInputChange} />
               </div>
 
               <Textarea
-                label="Endereco"
+                label="Dirección"
                 name="endereco"
                 value={formData.endereco}
                 onChange={handleInputChange}
@@ -205,13 +205,13 @@ export default function StoresPage() {
 
               <div className="space-y-1.5">
                 <label className="block text-[11px] font-bold uppercase tracking-widest text-muted-foreground">
-                  Logo da Loja
+                  Logo de la Tienda
                 </label>
                 <ImageUploader
                   currentUrl={formData.logo_url}
                   folder="stores"
                   onUploaded={(url) => setFormData((prev) => ({ ...prev, logo_url: url }))}
-                  label="Enviar logo"
+                  label="Subir logo"
                   shape="square"
                 />
               </div>
@@ -220,7 +220,7 @@ export default function StoresPage() {
                 <Button type="button" variant="outline" onClick={() => setOpenDialog(false)} className="w-full sm:w-auto">
                   Cancelar
                 </Button>
-                <Button type="submit" className="w-full sm:w-auto">{editingId ? 'Atualizar' : 'Criar'}</Button>
+                <Button type="submit" className="w-full sm:w-auto">{editingId ? 'Actualizar' : 'Crear'}</Button>
               </div>
             </form>
           </DialogContent>
@@ -237,14 +237,14 @@ export default function StoresPage() {
 
         <Card>
           <CardContent className="pt-6 text-center">
-            <p className="text-sm text-muted-foreground">Ativas</p>
+            <p className="text-sm text-muted-foreground">Activas</p>
             <p className="text-2xl font-bold text-success">{stores.filter((s) => s.status === 'active').length}</p>
           </CardContent>
         </Card>
 
         <Card>
           <CardContent className="pt-6 text-center">
-            <p className="text-sm text-muted-foreground">Inativas</p>
+            <p className="text-sm text-muted-foreground">Inactivas</p>
             <p className="text-2xl font-bold text-destructive">{stores.filter((s) => s.status === 'inactive').length}</p>
           </CardContent>
         </Card>
@@ -252,22 +252,22 @@ export default function StoresPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Lista de Lojas</CardTitle>
+          <CardTitle>Lista de Tiendas</CardTitle>
         </CardHeader>
         <CardContent>
           {loading ? (
-            <div className="text-center py-8 text-muted-foreground">Carregando...</div>
+            <div className="text-center py-8 text-muted-foreground">Cargando...</div>
           ) : stores.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">Nenhuma loja cadastrada</div>
+            <div className="text-center py-8 text-muted-foreground">Ninguna tienda registrada</div>
           ) : (
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Nome</TableHead>
-                  <TableHead>CNPJ</TableHead>
-                  <TableHead>Cidade</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Acoes</TableHead>
+                  <TableHead>Nombre</TableHead>
+                  <TableHead>RUC</TableHead>
+                  <TableHead>Ciudad</TableHead>
+                  <TableHead>Estado</TableHead>
+                  <TableHead>Acciones</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -278,7 +278,7 @@ export default function StoresPage() {
                     <TableCell>{store.cidade || '-'}</TableCell>
                     <TableCell>
                       <Badge variant={store.status === 'active' ? 'success' : 'destructive'}>
-                        {store.status === 'active' ? 'Ativa' : 'Inativa'}
+                        {store.status === 'active' ? 'Activa' : 'Inactiva'}
                       </Badge>
                     </TableCell>
                     <TableCell>
@@ -287,7 +287,7 @@ export default function StoresPage() {
                           <button
                             onClick={() => handleStatusChange(store.id, 'inactive')}
                             className="inline-flex items-center justify-center rounded-md h-11 w-11 min-h-[44px] min-w-[44px] text-destructive hover:bg-destructive/10 transition-colors"
-                            title="Desativar"
+                            title="Desactivar"
                           >
                             <X className="w-4 h-4" />
                           </button>
@@ -295,7 +295,7 @@ export default function StoresPage() {
                           <button
                             onClick={() => handleStatusChange(store.id, 'active')}
                             className="inline-flex items-center justify-center rounded-md h-11 w-11 min-h-[44px] min-w-[44px] text-success hover:bg-success/10 transition-colors"
-                            title="Ativar"
+                            title="Activar"
                           >
                             <Check className="w-4 h-4" />
                           </button>
@@ -312,7 +312,7 @@ export default function StoresPage() {
                         <button
                           onClick={() => handleDelete(store.id)}
                           className="inline-flex items-center justify-center rounded-md h-11 w-11 min-h-[44px] min-w-[44px] text-destructive hover:bg-destructive/10 transition-colors"
-                          title="Deletar"
+                          title="Eliminar"
                         >
                           <Trash2 className="w-4 h-4" />
                         </button>

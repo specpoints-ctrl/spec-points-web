@@ -25,7 +25,7 @@ export default function UserApprovalsPage() {
           await loadPendingUsers(idToken);
         }
       } catch (err) {
-        setError('Failed to authenticate');
+        setError('Error al autenticar');
       }
     };
 
@@ -39,7 +39,7 @@ export default function UserApprovalsPage() {
       const response = await getPendingUsers(idToken);
       setPendingUsers(response.data || []);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load pending users');
+      setError(err instanceof Error ? err.message : 'Error al cargar usuarios pendientes');
     } finally {
       setLoading(false);
     }
@@ -53,7 +53,7 @@ export default function UserApprovalsPage() {
       await approveUser(token, userId);
       setPendingUsers(prev => prev.filter(u => u.id !== userId));
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to approve user');
+      setError(err instanceof Error ? err.message : 'Error al aprobar usuario');
     } finally {
       setApprovingId(null);
     }
@@ -64,13 +64,13 @@ export default function UserApprovalsPage() {
 
     try {
       setRejectingId(userId);
-      const reason = rejectReason[userId] || 'No reason provided';
+      const reason = rejectReason[userId] || 'Sin motivo especificado';
       await rejectUser(token, userId, reason);
       setPendingUsers(prev => prev.filter(u => u.id !== userId));
       setRejectReason(prev => ({ ...prev, [userId]: '' }));
       setShowRejectReason(null);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to reject user');
+      setError(err instanceof Error ? err.message : 'Error al rechazar usuario');
     } finally {
       setRejectingId(null);
     }
@@ -89,11 +89,11 @@ export default function UserApprovalsPage() {
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-4xl font-bold text-gray-900 mb-2">Account Approvals</h1>
+          <h1 className="text-4xl font-bold text-gray-900 mb-2">Aprobaciones de Cuentas</h1>
           <p className="text-gray-600">
-            {pendingUsers.length === 0 
-              ? 'No pending accounts' 
-              : `${pendingUsers.length} pending account${pendingUsers.length !== 1 ? 's' : ''}`}
+            {pendingUsers.length === 0
+              ? 'Sin cuentas pendientes'
+              : `${pendingUsers.length} cuenta${pendingUsers.length !== 1 ? 's' : ''} pendiente${pendingUsers.length !== 1 ? 's' : ''}`}
           </p>
         </div>
 
@@ -108,7 +108,7 @@ export default function UserApprovalsPage() {
 
         {pendingUsers.length === 0 ? (
           <Card className="text-center py-12">
-            <p className="text-gray-500 text-lg">All accounts have been reviewed!</p>
+            <p className="text-gray-500 text-lg">¡Todas las cuentas han sido revisadas!</p>
           </Card>
         ) : (
           <div className="grid gap-4">
@@ -122,24 +122,24 @@ export default function UserApprovalsPage() {
                           {user.architect_name || user.email}
                         </h3>
                         <Badge variant={user.role === 'admin' ? 'default' : 'secondary'}>
-                          {user.role}
+                          {user.role === 'architect' ? 'Arquitecto' : user.role === 'lojista' ? 'Comerciante' : user.role}
                         </Badge>
                       </div>
                       <p className="text-sm text-gray-600 mb-3">{user.email}</p>
                       <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 text-sm">
                         <div>
-                          <p className="text-gray-500">Status</p>
+                          <p className="text-gray-500">Estado</p>
                           <p className="font-medium text-gray-900">{user.status}</p>
                         </div>
                         <div>
-                          <p className="text-gray-500">Requested</p>
+                          <p className="text-gray-500">Solicitado</p>
                           <p className="font-medium text-gray-900">
-                            {new Date(user.created_at).toLocaleDateString()}
+                            {new Date(user.created_at).toLocaleDateString('es-PY')}
                           </p>
                         </div>
                         {user.architect_id && (
                           <div>
-                            <p className="text-gray-500">Architect ID</p>
+                            <p className="text-gray-500">ID Arquitecto</p>
                             <p className="font-medium text-gray-900">{user.architect_id}</p>
                           </div>
                         )}
@@ -152,7 +152,7 @@ export default function UserApprovalsPage() {
                         onClick={() => handleApprove(user.id)}
                         disabled={approvingId === user.id}
                         className="p-2 rounded-lg bg-green-100 hover:bg-green-200 text-green-700 disabled:opacity-50 transition"
-                        title="Approve"
+                        title="Aprobar"
                       >
                         {approvingId === user.id ? (
                           <Loader className="w-5 h-5 animate-spin" />
@@ -164,7 +164,7 @@ export default function UserApprovalsPage() {
                         onClick={() => setShowRejectReason(user.id === showRejectReason ? null : user.id)}
                         disabled={rejectingId === user.id}
                         className="p-2 rounded-lg bg-red-100 hover:bg-red-200 text-red-700 disabled:opacity-50 transition"
-                        title="Reject"
+                        title="Rechazar"
                       >
                         {rejectingId === user.id ? (
                           <Loader className="w-5 h-5 animate-spin" />
@@ -179,12 +179,12 @@ export default function UserApprovalsPage() {
                   {showRejectReason === user.id && (
                     <div className="mt-4 pt-4 border-t border-gray-200">
                       <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Reason for rejection (optional)
+                        Motivo del rechazo (opcional)
                       </label>
                       <textarea
                         value={rejectReason[user.id] || ''}
                         onChange={(e) => setRejectReason({ ...rejectReason, [user.id]: e.target.value })}
-                        placeholder="e.g., Document verification failed"
+                        placeholder="Ej: Verificación de documentos fallida"
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-red-500 focus:border-transparent"
                         rows={2}
                       />
@@ -194,13 +194,13 @@ export default function UserApprovalsPage() {
                           disabled={rejectingId === user.id}
                           className="bg-red-600 hover:bg-red-700"
                         >
-                          {rejectingId === user.id ? 'Rejecting...' : 'Confirm Rejection'}
+                          {rejectingId === user.id ? 'Rechazando...' : 'Confirmar Rechazo'}
                         </Button>
                         <Button
                           onClick={() => setShowRejectReason(null)}
                           variant="secondary"
                         >
-                          Cancel
+                          Cancelar
                         </Button>
                       </div>
                     </div>
