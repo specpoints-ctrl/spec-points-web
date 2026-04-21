@@ -23,6 +23,15 @@ const getAppliedMigrations = async (): Promise<Set<string>> => {
   return new Set(rows.map((r: { filename: string }) => r.filename));
 };
 
+// Returns true if the DB has existing tables (pre-migration-tracking deploy)
+const isPreExistingDatabase = async (): Promise<boolean> => {
+  const result = await db.oneOrNone(`
+    SELECT 1 FROM information_schema.tables
+    WHERE table_schema = 'public' AND table_name = 'users'
+  `);
+  return !!result;
+};
+
 export const runMigrations = async () => {
   try {
     logger.info('Running database migrations...');
@@ -35,6 +44,24 @@ export const runMigrations = async () => {
       .readdirSync(migrationsDir)
       .filter((file) => file.endsWith('.sql'))
       .sort();
+
+    // Baseline migration: if schema_migrations is empty but the DB already has tables,
+    // the schema was created before migration tracking was introduced.
+    // Mark all current migration files as applied so they are not re-executed.
+    if (applied.size === 0 && (await isPreExistingDatabase())) {
+      logger.warn('Pre-existing database detected with no migration history. Seeding baseline migrations...');
+      await db.tx(async (t) => {
+        for (const file of files) {
+          await t.none(
+            `INSERT INTO schema_migrations (filename) VALUES ($1) ON CONFLICT DO NOTHING`,
+            [file]
+          );
+          logger.info(`  ✓ Baseline registered: ${file}`);
+        }
+      });
+      logger.info('Baseline seeding complete. Future migrations will run normally.');
+      return;
+    }
 
     let ran = 0;
     for (const file of files) {
