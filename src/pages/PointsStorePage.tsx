@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react';
 import { api, getMyActiveCampaigns, getMyRedemptions, requestRedemption, MyCampaign } from '../lib/api';
-import { Card, CardContent, CardHeader, CardTitle, Badge, Dialog, DialogContent, DialogHeader, DialogTitle, Button } from '../components/ui';
+import { Card, CardContent, CardHeader, CardTitle, Dialog, DialogContent, DialogHeader, DialogTitle, Button } from '../components/ui';
 import {
-  Gift, Star, ShoppingBag, Trophy, Zap, Clock, CheckCircle2,
-  Package, AlertCircle, Loader2, Calendar,
+  Gift, Star, ShoppingBag, Zap, Clock, CheckCircle2,
+  Package, AlertCircle, Loader2, Calendar, Trophy, Sparkles, Phone,
 } from 'lucide-react';
 
 interface Prize {
@@ -48,7 +48,8 @@ export default function PointsStorePage() {
   const [selectedPrize, setSelectedPrize] = useState<Prize | null>(null);
   const [requesting, setRequesting] = useState(false);
   const [reqError, setReqError] = useState<string | null>(null);
-  const [reqSuccess, setReqSuccess] = useState<string | null>(null);
+
+  const [celebrationPrize, setCelebrationPrize] = useState<Prize | null>(null);
 
   useEffect(() => {
     loadAll();
@@ -59,13 +60,13 @@ export default function PointsStorePage() {
     try {
       const [archRes, prizesRes, redemptionsRes, campaignsRes] = await Promise.all([
         api.get('/architects/me'),
-        api.get('/prizes'),
+        api.get('/prizes/active'),
         getMyRedemptions(),
         getMyActiveCampaigns(),
       ]);
 
       if (archRes.data?.success) setArchProfile(archRes.data.data);
-      if (prizesRes.data?.success) setPrizes((prizesRes.data.data || []).filter((p: Prize) => p.active));
+      if (prizesRes.data?.success) setPrizes(prizesRes.data.data || []);
       if (redemptionsRes.success) setRedemptions(redemptionsRes.data || []);
       if (campaignsRes.success) setCampaigns(campaignsRes.data || []);
     } finally {
@@ -77,13 +78,14 @@ export default function PointsStorePage() {
 
   async function handleRequestRedemption() {
     if (!selectedPrize) return;
-    setRequesting(true); setReqError(null); setReqSuccess(null);
+    setRequesting(true); setReqError(null);
     try {
       const res = await requestRedemption(selectedPrize.id);
       if (res.success) {
-        setReqSuccess(`¡Solicitud enviada! Espere la aprobación del administrador.`);
+        const prize = selectedPrize;
+        setSelectedPrize(null);
         await loadAll();
-        setTimeout(() => setSelectedPrize(null), 2000);
+        setCelebrationPrize(prize);
       } else {
         setReqError(res.error || 'Error al solicitar canje');
       }
@@ -312,11 +314,6 @@ export default function PointsStorePage() {
                   <AlertCircle className="w-4 h-4 shrink-0" />{reqError}
                 </div>
               )}
-              {reqSuccess && (
-                <div className="flex items-center gap-2 p-3 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-700 text-sm">
-                  <CheckCircle2 className="w-4 h-4 shrink-0" />{reqSuccess}
-                </div>
-              )}
 
               <p className="text-xs text-muted-foreground text-center">
                 El administrador aprobará y entregará el premio. Plazo de 30 días para retiro.
@@ -327,6 +324,80 @@ export default function PointsStorePage() {
                 <Button className="flex-1" onClick={handleRequestRedemption} disabled={requesting}>
                   {requesting ? <><Loader2 className="w-4 h-4 animate-spin mr-1" />Enviando...</> : 'Confirmar Canje'}
                 </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Celebration dialog */}
+      <Dialog open={!!celebrationPrize} onOpenChange={open => !open && setCelebrationPrize(null)}>
+        <DialogContent className="max-w-sm p-0 overflow-hidden border-0">
+          {celebrationPrize && (
+            <div className="relative">
+              {/* Gold gradient header */}
+              <div className="relative overflow-hidden px-6 pt-8 pb-6 text-center"
+                style={{ background: 'linear-gradient(135deg,#071519 0%,#0e2e35 50%,#1a4a4f 100%)' }}>
+                {/* Sparkle dots */}
+                <span className="absolute top-4 left-8 text-[#f0c060] text-xl animate-bounce" style={{animationDelay:'0s'}}>✦</span>
+                <span className="absolute top-6 right-10 text-[#d4a574] text-sm animate-bounce" style={{animationDelay:'0.3s'}}>✦</span>
+                <span className="absolute bottom-4 left-12 text-[#f0c060] text-xs animate-bounce" style={{animationDelay:'0.6s'}}>✦</span>
+                <span className="absolute bottom-6 right-8 text-[#d4a574] text-base animate-bounce" style={{animationDelay:'0.15s'}}>✦</span>
+                <span className="absolute top-10 left-1/4 text-[#f7b871] text-xs animate-bounce" style={{animationDelay:'0.45s'}}>✦</span>
+
+                {/* Trophy icon */}
+                <div className="relative inline-flex items-center justify-center w-20 h-20 rounded-full mb-4 mx-auto"
+                  style={{ background: 'linear-gradient(135deg,#f0c060,#c8902a)', boxShadow: '0 0 32px rgba(240,192,96,0.4)' }}>
+                  <Trophy className="w-10 h-10 text-[#071519]" />
+                </div>
+
+                <h2 className="text-2xl font-extrabold text-white mb-1">¡Felicitaciones!</h2>
+                <p className="text-sm font-medium" style={{color:'rgba(240,192,96,0.85)'}}>
+                  Tu solicitud de canje fue enviada
+                </p>
+              </div>
+
+              {/* Content */}
+              <div className="px-6 py-5 space-y-4 bg-white">
+                {/* Prize card */}
+                <div className="flex items-center gap-3 p-3 rounded-xl border border-amber-100 bg-amber-50/50">
+                  <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
+                    style={{ background: 'linear-gradient(135deg,#f0c060,#c8902a)' }}>
+                    <Gift className="w-5 h-5 text-white" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-bold text-foreground text-sm truncate">{celebrationPrize.name}</p>
+                    <p className="text-xs text-amber-700 font-semibold">
+                      {Number(celebrationPrize.points_required).toLocaleString('es-PY')} puntos canjeados
+                    </p>
+                  </div>
+                </div>
+
+                {/* What happens next */}
+                <div className="space-y-2">
+                  <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">¿Qué sigue?</p>
+                  <div className="space-y-2">
+                    {[
+                      { icon: CheckCircle2, color: 'text-emerald-500', text: 'Tu solicitud fue registrada con éxito' },
+                      { icon: Phone, color: 'text-blue-500', text: 'El administrador se pondrá en contacto contigo' },
+                      { icon: Package, color: 'text-amber-500', text: 'Tienes 30 días para retirar tu premio' },
+                    ].map((step, i) => (
+                      <div key={i} className="flex items-start gap-2.5">
+                        <step.icon className={`w-4 h-4 shrink-0 mt-0.5 ${step.color}`} />
+                        <p className="text-sm text-muted-foreground">{step.text}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <button
+                  onClick={() => setCelebrationPrize(null)}
+                  className="w-full py-3 rounded-xl text-sm font-bold text-white transition-all hover:-translate-y-0.5"
+                  style={{ background: 'linear-gradient(135deg,#0b6e78,#134e56)' }}
+                >
+                  <Sparkles className="w-4 h-4 inline mr-1.5" />
+                  ¡Entendido!
+                </button>
               </div>
             </div>
           )}
