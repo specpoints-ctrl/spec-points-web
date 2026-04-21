@@ -108,7 +108,7 @@ export default function SalesPage() {
       const camps: Campaign[] = campaignsResponse.data || [];
       setActiveCampaign(camps.length > 0 ? camps[0] : null);
     } catch (error) {
-      console.error('Erro ao carregar dados de vendas:', error);
+      console.error('Error al cargar datos de ventas:', error);
       setSales([]); setArchitects([]); setStores([]);
     } finally {
       setLoading(false);
@@ -148,7 +148,7 @@ export default function SalesPage() {
       resetForm();
       await loadInitialData();
     } catch (error: any) {
-      setSubmitError(error?.response?.data?.error || 'Erro ao salvar venda');
+      setSubmitError(error?.response?.data?.error || 'Error al guardar venta');
     }
   };
 
@@ -169,12 +169,12 @@ export default function SalesPage() {
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Tem certeza que deseja deletar esta venda?')) return;
+    if (!confirm('¿Está seguro de que desea eliminar esta venta?')) return;
     try {
       await api.delete(`/sales/${id}`);
       await loadInitialData();
     } catch (error) {
-      console.error('Erro ao deletar venda:', error);
+      console.error('Error al eliminar venta:', error);
     }
   };
 
@@ -182,33 +182,31 @@ export default function SalesPage() {
     <div className="flex-1 p-4 sm:p-6 space-y-6">
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-foreground">Vendas</h1>
-          <p className="text-sm text-muted-foreground mt-1">Registre e acompanhe vendas pontuadas</p>
+          <h1 className="text-2xl sm:text-3xl font-bold text-foreground">Ventas</h1>
+          <p className="text-sm text-muted-foreground mt-1">Registre y haga seguimiento de ventas puntuadas</p>
         </div>
 
-        {/* Active campaign banner */}
         {activeCampaign && (
           <div className="flex items-center gap-2 px-4 py-2 rounded-xl bg-amber-50 border border-amber-200 text-amber-800 text-sm font-semibold">
             <Zap className="w-4 h-4 text-amber-600" />
-            Campanha ativa: <span className="font-extrabold">{activeCampaign.title}</span> — {activeCampaign.points_multiplier}x pts/$
+            Campaña activa: <span className="font-extrabold">{activeCampaign.title}</span> — {activeCampaign.points_multiplier}x pts/$
           </div>
         )}
 
         <Dialog open={openDialog} onOpenChange={setOpenDialog}>
           <Button className="w-full sm:w-auto" onClick={() => { resetForm(); setOpenDialog(true); }}>
-            <Plus className="w-4 h-4 mr-2" /> Nova Venda
+            <Plus className="w-4 h-4 mr-2" /> Nueva Venta
           </Button>
 
           <DialogContent className="max-w-lg">
             <DialogHeader>
-              <DialogTitle>{editingId ? 'Editar Venda' : 'Nova Venda'}</DialogTitle>
+              <DialogTitle>{editingId ? 'Editar Venta' : 'Nueva Venta'}</DialogTitle>
             </DialogHeader>
 
-            {/* Campaign banner in dialog */}
             {activeCampaign && !editingId && (
               <div className="flex items-center gap-2 px-3 py-2.5 rounded-xl bg-amber-50 border border-amber-200 text-amber-800 text-xs font-semibold">
                 <Zap className="w-3.5 h-3.5 text-amber-600 shrink-0" />
-                <span>Campanha ativa: <strong>{activeCampaign.title}</strong> — {activeCampaign.points_multiplier}x pontos por dólar</span>
+                <span>Campaña activa: <strong>{activeCampaign.title}</strong> — {activeCampaign.points_multiplier}x puntos por dólar</span>
               </div>
             )}
 
@@ -220,27 +218,26 @@ export default function SalesPage() {
               )}
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {/* Architect — only active+complete */}
                 <div>
-                  <label className="block text-sm font-medium text-foreground mb-2">Arquiteto *</label>
+                  <label className="block text-sm font-medium text-foreground mb-2">Arquitecto *</label>
                   <select name="architect_id" value={formData.architect_id} onChange={handleInputChange}
                     className={selectCls} required>
-                    <option value="">Selecione o arquiteto</option>
+                    <option value="">Seleccione el arquitecto</option>
                     {architects.map(a => (
                       <option key={a.id} value={a.id}>{a.nome}</option>
                     ))}
                   </select>
                   {architects.length === 0 && (
-                    <p className="text-xs text-muted-foreground mt-1">Nenhum arquiteto com perfil completo e ativo</p>
+                    <p className="text-xs text-muted-foreground mt-1">Ningún arquitecto con perfil completo y activo</p>
                   )}
                 </div>
 
                 {!isLojista && (
                   <div>
-                    <label className="block text-sm font-medium text-foreground mb-2">Loja *</label>
+                    <label className="block text-sm font-medium text-foreground mb-2">Tienda *</label>
                     <select name="store_id" value={formData.store_id} onChange={handleInputChange}
                       className={selectCls} required>
-                      <option value="">Selecione a loja</option>
+                      <option value="">Seleccione la tienda</option>
                       {stores.map(s => (
                         <option key={s.id} value={s.id}>{s.nome}</option>
                       ))}
@@ -248,49 +245,47 @@ export default function SalesPage() {
                   </div>
                 )}
 
-                <Input label="Nome do Cliente" name="client_name" value={formData.client_name} onChange={handleInputChange} placeholder="Nome do cliente" />
-                <Input label="Telefone do Cliente" name="client_phone" value={formData.client_phone} onChange={handleInputChange} placeholder="+595..." />
+                <Input label="Nombre del Cliente" name="client_name" value={formData.client_name} onChange={handleInputChange} placeholder="Nombre del cliente" />
+                <Input label="Teléfono del Cliente" name="client_phone" value={formData.client_phone} onChange={handleInputChange} placeholder="+595..." />
 
-                <Input label="Produto *" name="product_name" value={formData.product_name} onChange={handleInputChange}
-                  placeholder="Nome do produto" required />
-                <Input label="Quantidade *" type="number" min="1" name="quantity" value={formData.quantity}
+                <Input label="Producto *" name="product_name" value={formData.product_name} onChange={handleInputChange}
+                  placeholder="Nombre del producto" required />
+                <Input label="Cantidad *" type="number" min="1" name="quantity" value={formData.quantity}
                   onChange={handleInputChange} required />
 
                 <Input label="Valor Total (USD) *" type="number" step="0.01" min="0" name="amount_usd"
                   value={formData.amount_usd} onChange={handleInputChange} required />
 
-                {/* Points preview */}
                 <div className="rounded-xl border border-border/60 p-3 flex items-center justify-between min-h-[44px]"
                   style={activeCampaign && !editingId ? { background: '#fffbeb', borderColor: '#fcd34d' } : {}}>
                   <div>
-                    <span className="text-sm text-muted-foreground">Pontos gerados</span>
+                    <span className="text-sm text-muted-foreground">Puntos generados</span>
                     {activeCampaign && !editingId && (
                       <p className="text-xs text-amber-600 font-semibold flex items-center gap-1">
                         <Zap className="w-3 h-3" />{activeCampaign.points_multiplier}x multiplicador
                       </p>
                     )}
                   </div>
-                  <span className="text-xl font-extrabold text-primary">{predictedPoints.toLocaleString('pt-BR')}</span>
+                  <span className="text-xl font-extrabold text-primary">{predictedPoints.toLocaleString('es-PY')}</span>
                 </div>
               </div>
 
-              <Textarea label="Descrição" name="description" value={formData.description}
+              <Textarea label="Descripción" name="description" value={formData.description}
                 onChange={handleInputChange} rows={2} />
 
               <div className="flex flex-col-reverse sm:flex-row gap-2 sm:justify-end">
                 <Button type="button" variant="outline" onClick={() => setOpenDialog(false)} className="w-full sm:w-auto">Cancelar</Button>
-                <Button type="submit" className="w-full sm:w-auto">{editingId ? 'Atualizar' : 'Registrar Venda'}</Button>
+                <Button type="submit" className="w-full sm:w-auto">{editingId ? 'Actualizar' : 'Registrar Venta'}</Button>
               </div>
             </form>
           </DialogContent>
         </Dialog>
       </div>
 
-      {/* Stats */}
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
         <Card>
           <CardContent className="pt-6 text-center">
-            <p className="text-sm text-muted-foreground">Total de Vendas</p>
+            <p className="text-sm text-muted-foreground">Total de Ventas</p>
             <p className="text-2xl font-bold text-primary">{sales.length}</p>
           </CardContent>
         </Card>
@@ -304,33 +299,33 @@ export default function SalesPage() {
         </Card>
         <Card>
           <CardContent className="pt-6 text-center">
-            <p className="text-sm text-muted-foreground">Pontos Distribuídos</p>
+            <p className="text-sm text-muted-foreground">Puntos Distribuidos</p>
             <p className="text-2xl font-bold text-warning">
-              {sales.reduce((sum, s) => sum + Number(s.points_generated || 0), 0).toLocaleString('pt-BR')}
+              {sales.reduce((sum, s) => sum + Number(s.points_generated || 0), 0).toLocaleString('es-PY')}
             </p>
           </CardContent>
         </Card>
       </div>
 
       <Card>
-        <CardHeader><CardTitle>Lista de Vendas</CardTitle></CardHeader>
+        <CardHeader><CardTitle>Lista de Ventas</CardTitle></CardHeader>
         <CardContent>
           {loading ? (
-            <div className="text-center py-8 text-muted-foreground">Carregando...</div>
+            <div className="text-center py-8 text-muted-foreground">Cargando...</div>
           ) : sales.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">Nenhuma venda registrada</div>
+            <div className="text-center py-8 text-muted-foreground">Ninguna venta registrada</div>
           ) : (
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Arquiteto</TableHead>
-                  <TableHead>Loja</TableHead>
-                  <TableHead>Produto</TableHead>
+                  <TableHead>Arquitecto</TableHead>
+                  <TableHead>Tienda</TableHead>
+                  <TableHead>Producto</TableHead>
                   <TableHead>Cliente</TableHead>
                   <TableHead>Valor</TableHead>
-                  <TableHead>Pontos</TableHead>
-                  <TableHead>Campanha</TableHead>
-                  {!isLojista && <TableHead>Ações</TableHead>}
+                  <TableHead>Puntos</TableHead>
+                  <TableHead>Campaña</TableHead>
+                  {!isLojista && <TableHead>Acciones</TableHead>}
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -342,7 +337,7 @@ export default function SalesPage() {
                       <div>
                         <p className="text-sm">{sale.product_name || '-'}</p>
                         {sale.quantity && sale.quantity > 1 && (
-                          <p className="text-xs text-muted-foreground">Qtd: {sale.quantity}</p>
+                          <p className="text-xs text-muted-foreground">Cant: {sale.quantity}</p>
                         )}
                       </div>
                     </TableCell>
@@ -350,7 +345,7 @@ export default function SalesPage() {
                     <TableCell>US$ {Number(sale.amount_usd || 0).toFixed(2)}</TableCell>
                     <TableCell>
                       <div className="flex items-center gap-1.5">
-                        <span className="text-primary font-semibold">{Number(sale.points_generated || 0).toLocaleString('pt-BR')}</span>
+                        <span className="text-primary font-semibold">{Number(sale.points_generated || 0).toLocaleString('es-PY')}</span>
                         {sale.campaign_title && sale.points_multiplier && sale.points_multiplier > 1 && (
                           <span className="inline-flex items-center gap-0.5 text-xs bg-amber-50 text-amber-700 px-1.5 py-0.5 rounded-full font-bold">
                             <Zap className="w-2.5 h-2.5" />{sale.points_multiplier}x
@@ -371,7 +366,7 @@ export default function SalesPage() {
                             <Edit2 className="w-4 h-4" />
                           </button>
                           <button onClick={() => handleDelete(sale.id)}
-                            className="inline-flex items-center justify-center rounded-md h-8 w-8 text-destructive hover:bg-destructive/10 transition-colors" title="Deletar">
+                            className="inline-flex items-center justify-center rounded-md h-8 w-8 text-destructive hover:bg-destructive/10 transition-colors" title="Eliminar">
                             <Trash2 className="w-4 h-4" />
                           </button>
                         </div>

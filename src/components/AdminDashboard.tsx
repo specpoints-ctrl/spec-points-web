@@ -13,12 +13,12 @@ const MEDAL_COLORS = [
 function relativeTime(dateStr: string): string {
   const diff = Date.now() - new Date(dateStr).getTime();
   const m = Math.floor(diff / 60000);
-  if (m < 1)  return 'agora';
-  if (m < 60) return `${m}min atrás`;
+  if (m < 1)  return 'ahora';
+  if (m < 60) return `hace ${m}min`;
   const h = Math.floor(m / 60);
-  if (h < 24) return `${h}h atrás`;
+  if (h < 24) return `hace ${h}h`;
   const d = Math.floor(h / 24);
-  return `${d}d atrás`;
+  return `hace ${d}d`;
 }
 
 function getInitial(name: string) {
@@ -33,7 +33,7 @@ const AVATAR_GRADIENTS = [
   'from-sky-500 to-cyan-400',
 ];
 
-/** Avatar with photo fallback to gradient + initial */function Avatar({
+function Avatar({
   src,
   name,
   size = 'md',
@@ -64,7 +64,6 @@ const AVATAR_GRADIENTS = [
   );
 }
 
-/** Store logo with fallback to building icon */
 function StoreLogo({ src, name }: { src?: string | null; name: string }) {
   const [imgError, setImgError] = useState(false);
   if (src && !imgError) {
@@ -106,7 +105,7 @@ export const AdminDashboard = () => {
     return (
       <div className="flex flex-col items-center justify-center py-24 gap-3">
         <div className="w-10 h-10 rounded-full border-2 border-primary/30 border-t-primary animate-spin" />
-        <p className="text-sm text-muted-foreground font-medium">Carregando dados...</p>
+        <p className="text-sm text-muted-foreground font-medium">Cargando datos...</p>
       </div>
     );
   }
@@ -114,7 +113,7 @@ export const AdminDashboard = () => {
   const kpiCards = [
     {
       icon: Users,
-      label: 'Arquitetos',
+      label: 'Arquitectos',
       value: stats?.architects ?? 0,
       iconBg: 'bg-gradient-to-br from-teal-500 to-emerald-400',
       shadow: 'shadow-[0_8px_24px_rgba(20,184,166,0.25)]',
@@ -122,7 +121,7 @@ export const AdminDashboard = () => {
     },
     {
       icon: Store,
-      label: 'Lojas Parceiras',
+      label: 'Tiendas Asociadas',
       value: stats?.stores ?? 0,
       iconBg: 'bg-gradient-to-br from-violet-500 to-indigo-400',
       shadow: 'shadow-[0_8px_24px_rgba(139,92,246,0.25)]',
@@ -130,7 +129,7 @@ export const AdminDashboard = () => {
     },
     {
       icon: ShoppingCart,
-      label: 'Total de Vendas',
+      label: 'Total de Ventas',
       value: stats?.sales ?? 0,
       iconBg: 'bg-gradient-to-br from-orange-500 to-amber-400',
       shadow: 'shadow-[0_8px_24px_rgba(249,115,22,0.25)]',
@@ -138,7 +137,7 @@ export const AdminDashboard = () => {
     },
     {
       icon: TrendingUp,
-      label: 'Pontos Emitidos',
+      label: 'Puntos Emitidos',
       value: stats?.totalPoints ?? 0,
       iconBg: 'bg-gradient-to-br from-rose-500 to-pink-400',
       shadow: 'shadow-[0_8px_24px_rgba(244,63,94,0.25)]',
@@ -154,11 +153,8 @@ export const AdminDashboard = () => {
   return (
     <div className="p-4 sm:p-6 space-y-6">
 
-      {/* ── Hero ─────────────────────────────────────────────────────── */}
       <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#0b2024] via-[#0e3a40] to-[#1a4a4f] p-6 sm:p-8 shadow-[0_24px_56px_rgba(7,24,27,0.38)]">
-        {/* dot pattern */}
         <div className="dot-pattern absolute inset-0 opacity-30" />
-        {/* glow orbs */}
         <div className="absolute -top-16 -right-16 w-64 h-64 rounded-full bg-[hsl(var(--sidebar-accent)/0.12)] blur-3xl" />
         <div className="absolute -bottom-12 -left-12 w-48 h-48 rounded-full bg-teal-500/10 blur-2xl" />
 
@@ -169,28 +165,27 @@ export const AdminDashboard = () => {
                 <span className="block w-1.5 h-1.5 rounded-full bg-emerald-400 animate-live" />
                 Live
               </span>
-              <span className="text-white/40 text-[11px] uppercase tracking-widest">Visão Geral</span>
+              <span className="text-white/40 text-[11px] uppercase tracking-widest">Vista General</span>
             </div>
             <h1 className="text-2xl sm:text-3xl font-extrabold text-white leading-tight">
-              Dashboard Administrativo
+              Panel Administrativo
             </h1>
             <p className="mt-2 text-white/55 text-sm max-w-md">
-              Indicadores em tempo real, performance comercial e evolução do programa de pontos.
+              Indicadores en tiempo real, rendimiento comercial y evolución del programa de puntos.
             </p>
           </div>
           <div className="hidden sm:flex items-center gap-3 bg-white/8 border border-white/12 rounded-xl px-4 py-3">
             <Award className="w-5 h-5 text-[hsl(var(--sidebar-accent))]" />
             <div>
-              <p className="text-[10px] uppercase tracking-widest text-white/40">Total de Pontos</p>
+              <p className="text-[10px] uppercase tracking-widest text-white/40">Total de Puntos</p>
               <p className="text-lg font-extrabold text-white tabular-nums">
-                {(stats?.totalPoints ?? 0).toLocaleString('pt-BR')}
+                {(stats?.totalPoints ?? 0).toLocaleString('es-PY')}
               </p>
             </div>
           </div>
         </div>
       </div>
 
-      {/* ── KPI Cards ────────────────────────────────────────────────── */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {kpiCards.map((card, i) => {
           const Icon = card.icon;
@@ -199,7 +194,6 @@ export const AdminDashboard = () => {
               key={i}
               className="group relative overflow-hidden rounded-2xl bg-white/72 border border-white/55 backdrop-blur-md p-5 transition-all duration-300 hover:-translate-y-1 hover:shadow-card-hover shadow-card"
             >
-              {/* subtle top-right gradient accent */}
               <div className="absolute -top-6 -right-6 w-20 h-20 rounded-full bg-gradient-to-br from-white/40 to-transparent blur-xl" />
               <div className="relative flex items-start justify-between">
                 <div className={`p-2.5 rounded-xl ${card.iconBg} ${card.shadow}`}>
@@ -213,7 +207,7 @@ export const AdminDashboard = () => {
               <div className="mt-4">
                 <p className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground">{card.label}</p>
                 <p className="text-2xl sm:text-3xl font-extrabold text-foreground mt-1 tabular-nums">
-                  {card.value.toLocaleString('pt-BR')}
+                  {card.value.toLocaleString('es-PY')}
                 </p>
               </div>
             </div>
@@ -221,13 +215,11 @@ export const AdminDashboard = () => {
         })}
       </div>
 
-      {/* ── Bottom Grid ──────────────────────────────────────────────── */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
 
-        {/* Top Architects — Ranking Visual */}
         <Card>
           <CardHeader>
-            <CardTitle>Top Arquitetos</CardTitle>
+            <CardTitle>Top Arquitectos</CardTitle>
           </CardHeader>
           <CardContent>
             {topArchitects.length > 0 ? (
@@ -237,11 +229,9 @@ export const AdminDashboard = () => {
                   const medal = MEDAL_COLORS[idx] ?? null;
                   return (
                     <div key={idx} className="group flex items-center gap-3 p-3 rounded-xl hover:bg-muted/30 transition-all duration-200">
-                      {/* rank badge */}
                       <div className={`w-6 h-6 rounded-full ring-1 flex items-center justify-center shrink-0 text-[11px] font-bold ${medal ? `${medal.ring} ${medal.bg} ${medal.text}` : 'bg-muted ring-border text-muted-foreground'}`}>
                         {medal ? medal.label : idx + 1}
                       </div>
-                      {/* architect photo */}
                       <Avatar
                         src={arch.avatar_url}
                         name={arch.name}
@@ -252,7 +242,7 @@ export const AdminDashboard = () => {
                         <div className="flex items-center justify-between mb-1">
                           <p className="text-sm font-semibold text-foreground truncate">{arch.name}</p>
                           <p className="text-sm font-bold text-primary tabular-nums shrink-0 ml-2">
-                            {arch.total_points.toLocaleString('pt-BR')}
+                            {arch.total_points.toLocaleString('es-PY')}
                           </p>
                         </div>
                         <div className="h-1.5 rounded-full bg-muted overflow-hidden">
@@ -269,16 +259,15 @@ export const AdminDashboard = () => {
             ) : (
               <div className="py-12 flex flex-col items-center gap-2 text-muted-foreground">
                 <Users className="w-8 h-8 opacity-30" />
-                <p className="text-sm">Nenhum arquiteto cadastrado</p>
+                <p className="text-sm">Ningún arquitecto registrado</p>
               </div>
             )}
           </CardContent>
         </Card>
 
-        {/* Recent Sales */}
         <Card>
           <CardHeader>
-            <CardTitle>Últimas Vendas</CardTitle>
+            <CardTitle>Últimas Ventas</CardTitle>
           </CardHeader>
           <CardContent>
             {recentSales.length > 0 ? (
@@ -288,7 +277,6 @@ export const AdminDashboard = () => {
                     key={idx}
                     className="flex items-center gap-3 p-3 rounded-xl border border-border/40 bg-white/50 backdrop-blur-sm hover:bg-white/80 hover:border-border/70 transition-all duration-200"
                   >
-                    {/* architect avatar */}
                     <Avatar
                       src={sale.architect_avatar}
                       name={sale.architect_name}
@@ -302,7 +290,7 @@ export const AdminDashboard = () => {
                       </div>
                     </div>
                     <div className="text-right shrink-0">
-                      <p className="text-sm font-bold text-emerald-600 tabular-nums">+{sale.points_generated.toLocaleString('pt-BR')} pts</p>
+                      <p className="text-sm font-bold text-emerald-600 tabular-nums">+{sale.points_generated.toLocaleString('es-PY')} pts</p>
                       <p className="text-[11px] text-muted-foreground tabular-nums">
                         {sale.created_at ? relativeTime(sale.created_at) : `US$${Number(sale.value).toFixed(2)}`}
                       </p>
@@ -313,7 +301,7 @@ export const AdminDashboard = () => {
             ) : (
               <div className="py-12 flex flex-col items-center gap-2 text-muted-foreground">
                 <ShoppingCart className="w-8 h-8 opacity-30" />
-                <p className="text-sm">Nenhuma venda registrada</p>
+                <p className="text-sm">Ninguna venta registrada</p>
               </div>
             )}
           </CardContent>

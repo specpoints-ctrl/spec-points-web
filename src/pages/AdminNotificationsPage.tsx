@@ -11,24 +11,24 @@ import { Badge, Card, CardContent, CardHeader, CardTitle, Table, TableBody, Tabl
 function relativeTime(dateStr: string): string {
   const diff = Date.now() - new Date(dateStr).getTime();
   const m = Math.floor(diff / 60000);
-  if (m < 1) return 'agora';
-  if (m < 60) return `${m}min atrás`;
+  if (m < 1) return 'ahora';
+  if (m < 60) return `hace ${m}min`;
   const h = Math.floor(m / 60);
-  if (h < 24) return `${h}h atrás`;
+  if (h < 24) return `hace ${h}h`;
   const d = Math.floor(h / 24);
-  return `${d}d atrás`;
+  return `hace ${d}d`;
 }
 
 const TYPE_OPTIONS = [
-  { value: 'general', label: 'Geral', icon: Info },
+  { value: 'general', label: 'General', icon: Info },
   { value: 'offer', label: 'Oferta', icon: Tag },
-  { value: 'campaign', label: 'Campanha', icon: Megaphone },
+  { value: 'campaign', label: 'Campaña', icon: Megaphone },
 ];
 
 const TARGET_OPTIONS = [
   { value: 'all', label: 'Todos', icon: Globe },
-  { value: 'architect', label: 'Arquitetos', icon: Users },
-  { value: 'lojista', label: 'Lojistas', icon: Store },
+  { value: 'architect', label: 'Arquitectos', icon: Users },
+  { value: 'lojista', label: 'Comerciantes', icon: Store },
 ];
 
 const TYPE_BADGE: Record<string, 'default' | 'warning' | 'secondary'> = {
@@ -80,36 +80,34 @@ export default function AdminNotificationsPage() {
     try {
       const res = await createNotification({ title: title.trim(), message: message.trim(), type, target_role: targetRole });
       if (res.success) {
-        setSuccess('Notificação enviada com sucesso!');
+        setSuccess('¡Notificación enviada con éxito!');
         setTitle('');
         setMessage('');
         setType('general');
         setTargetRole('all');
       } else {
-        setError(res.error ?? 'Erro ao enviar notificação');
+        setError(res.error ?? 'Error al enviar notificación');
       }
     } catch {
-      setError('Erro ao enviar notificação');
+      setError('Error al enviar notificación');
     } finally {
       setSending(false);
     }
   };
 
   const handleDelete = async (id: number) => {
-    if (!confirm('Excluir esta notificação?')) return;
+    if (!confirm('¿Eliminar esta notificación?')) return;
     await deleteNotification(id);
     setHistory((prev) => prev.filter((n) => n.id !== id));
   };
 
   return (
     <div className="p-4 sm:p-6 space-y-6">
-      {/* Header */}
       <div>
-        <h1 className="text-2xl font-extrabold text-foreground tracking-tight">Notificações</h1>
-        <p className="text-sm text-muted-foreground mt-1">Envie ofertas e campanhas para arquitetos e lojistas</p>
+        <h1 className="text-2xl font-extrabold text-foreground tracking-tight">Notificaciones</h1>
+        <p className="text-sm text-muted-foreground mt-1">Envíe ofertas y campañas a arquitectos y comerciantes</p>
       </div>
 
-      {/* Tabs */}
       <div className="flex gap-1.5 p-1 bg-muted/60 rounded-xl border border-border/30 w-fit">
         {(['send', 'history'] as Tab[]).map((t) => (
           <button
@@ -122,16 +120,15 @@ export default function AdminNotificationsPage() {
                 : 'text-muted-foreground hover:text-foreground',
             ].join(' ')}
           >
-            {t === 'send' ? 'Enviar' : 'Histórico'}
+            {t === 'send' ? 'Enviar' : 'Historial'}
           </button>
         ))}
       </div>
 
-      {/* ── SEND TAB ── */}
       {tab === 'send' && (
         <Card className="max-w-2xl">
           <CardHeader>
-            <CardTitle>Nova Notificação</CardTitle>
+            <CardTitle>Nueva Notificación</CardTitle>
           </CardHeader>
           <CardContent>
             {error && (
@@ -148,7 +145,6 @@ export default function AdminNotificationsPage() {
             )}
 
             <form onSubmit={handleSend} className="space-y-4">
-              {/* Type */}
               <div className="space-y-2">
                 <label className="block text-[11px] font-bold uppercase tracking-widest text-muted-foreground">Tipo</label>
                 <div className="flex gap-2 flex-wrap">
@@ -174,9 +170,8 @@ export default function AdminNotificationsPage() {
                 </div>
               </div>
 
-              {/* Target */}
               <div className="space-y-2">
-                <label className="block text-[11px] font-bold uppercase tracking-widest text-muted-foreground">Público-alvo</label>
+                <label className="block text-[11px] font-bold uppercase tracking-widest text-muted-foreground">Destinatarios</label>
                 <div className="flex gap-2 flex-wrap">
                   {TARGET_OPTIONS.map((opt) => {
                     const Icon = opt.icon;
@@ -200,7 +195,6 @@ export default function AdminNotificationsPage() {
                 </div>
               </div>
 
-              {/* Title */}
               <div className="space-y-1">
                 <label className="block text-[11px] font-bold uppercase tracking-widest text-muted-foreground">Título</label>
                 <input
@@ -209,20 +203,19 @@ export default function AdminNotificationsPage() {
                   onChange={(e) => setTitle(e.target.value)}
                   required
                   maxLength={255}
-                  placeholder="Ex: Promoção de abril"
+                  placeholder="Ej: Promoción de abril"
                   className="w-full px-4 py-3 rounded-xl border border-border/60 bg-white/80 backdrop-blur-sm text-sm text-foreground placeholder:text-muted-foreground/60 focus:outline-none focus:border-primary focus:shadow-[0_0_0_3px_hsl(var(--primary)/0.12)] transition-all duration-200"
                 />
               </div>
 
-              {/* Message */}
               <div className="space-y-1">
-                <label className="block text-[11px] font-bold uppercase tracking-widest text-muted-foreground">Mensagem</label>
+                <label className="block text-[11px] font-bold uppercase tracking-widest text-muted-foreground">Mensaje</label>
                 <textarea
                   value={message}
                   onChange={(e) => setMessage(e.target.value)}
                   required
                   rows={4}
-                  placeholder="Escreva a mensagem da notificação..."
+                  placeholder="Escriba el mensaje de la notificación..."
                   className="w-full px-4 py-3 rounded-xl border border-border/60 bg-white/80 backdrop-blur-sm text-sm text-foreground placeholder:text-muted-foreground/60 focus:outline-none focus:border-primary focus:shadow-[0_0_0_3px_hsl(var(--primary)/0.12)] transition-all duration-200 resize-none"
                 />
               </div>
@@ -233,14 +226,13 @@ export default function AdminNotificationsPage() {
                 className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-primary to-[hsl(var(--primary)/0.82)] text-primary-foreground text-sm font-bold shadow-btn-primary hover:shadow-btn-hover hover:-translate-y-0.5 active:scale-[0.97] transition-all duration-200 disabled:opacity-60 disabled:pointer-events-none border-t border-white/15"
               >
                 {sending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
-                {sending ? 'Enviando...' : 'Enviar notificação'}
+                {sending ? 'Enviando...' : 'Enviar notificación'}
               </button>
             </form>
           </CardContent>
         </Card>
       )}
 
-      {/* ── HISTORY TAB ── */}
       {tab === 'history' && (
         <div>
           {loadingHistory ? (
@@ -250,7 +242,7 @@ export default function AdminNotificationsPage() {
           ) : history.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-20 gap-2 text-muted-foreground">
               <Megaphone className="w-8 h-8 opacity-30" />
-              <p className="text-sm">Nenhuma notificação enviada ainda</p>
+              <p className="text-sm">Ninguna notificación enviada aún</p>
             </div>
           ) : (
             <Table>
@@ -258,7 +250,7 @@ export default function AdminNotificationsPage() {
                 <TableRow>
                   <TableHead>Título</TableHead>
                   <TableHead>Tipo</TableHead>
-                  <TableHead>Público</TableHead>
+                  <TableHead>Destinatario</TableHead>
                   <TableHead>Enviado</TableHead>
                   <TableHead />
                 </TableRow>

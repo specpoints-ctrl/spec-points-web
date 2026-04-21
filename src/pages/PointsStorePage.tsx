@@ -33,9 +33,9 @@ interface ArchitectProfile {
 }
 
 const statusMap = {
-  pending: { label: 'Aguardando', color: 'bg-amber-100 text-amber-700', icon: Clock },
-  approved: { label: 'Aprovado', color: 'bg-blue-100 text-blue-700', icon: CheckCircle2 },
-  delivered: { label: 'Entregue', color: 'bg-emerald-100 text-emerald-700', icon: Package },
+  pending: { label: 'En espera', color: 'bg-amber-100 text-amber-700', icon: Clock },
+  approved: { label: 'Aprobado', color: 'bg-blue-100 text-blue-700', icon: CheckCircle2 },
+  delivered: { label: 'Entregado', color: 'bg-emerald-100 text-emerald-700', icon: Package },
 };
 
 export default function PointsStorePage() {
@@ -45,7 +45,6 @@ export default function PointsStorePage() {
   const [campaigns, setCampaigns] = useState<MyCampaign[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Redemption dialog
   const [selectedPrize, setSelectedPrize] = useState<Prize | null>(null);
   const [requesting, setRequesting] = useState(false);
   const [reqError, setReqError] = useState<string | null>(null);
@@ -82,14 +81,14 @@ export default function PointsStorePage() {
     try {
       const res = await requestRedemption(selectedPrize.id);
       if (res.success) {
-        setReqSuccess(`Solicitação enviada! Aguarde aprovação do administrador.`);
+        setReqSuccess(`¡Solicitud enviada! Espere la aprobación del administrador.`);
         await loadAll();
         setTimeout(() => setSelectedPrize(null), 2000);
       } else {
-        setReqError(res.error || 'Erro ao solicitar resgate');
+        setReqError(res.error || 'Error al solicitar canje');
       }
     } catch (e: any) {
-      setReqError(e?.response?.data?.error || e.message || 'Erro ao solicitar resgate');
+      setReqError(e?.response?.data?.error || e.message || 'Error al solicitar canje');
     } finally {
       setRequesting(false);
     }
@@ -107,13 +106,11 @@ export default function PointsStorePage() {
 
   return (
     <div className="p-4 sm:p-6 space-y-6 max-w-5xl">
-      {/* Header */}
       <div>
-        <h1 className="text-2xl font-extrabold text-foreground tracking-tight">Lojinha de Pontos</h1>
-        <p className="text-sm text-muted-foreground mt-0.5">Troque seus pontos por prêmios exclusivos</p>
+        <h1 className="text-2xl font-extrabold text-foreground tracking-tight">Tienda de Puntos</h1>
+        <p className="text-sm text-muted-foreground mt-0.5">Canjee sus puntos por premios exclusivos</p>
       </div>
 
-      {/* Points hero */}
       <Card className="overflow-hidden">
         <CardContent className="p-0">
           <div className="relative p-6 flex items-center gap-5"
@@ -123,23 +120,22 @@ export default function PointsStorePage() {
               <Star className="w-8 h-8" style={{ color: '#c4b5a0' }} />
             </div>
             <div className="flex-1">
-              <p className="text-sm font-medium" style={{ color: 'rgba(196,181,160,0.6)' }}>Pontos disponíveis</p>
+              <p className="text-sm font-medium" style={{ color: 'rgba(196,181,160,0.6)' }}>Puntos disponibles</p>
               <p className="text-4xl font-extrabold text-white tracking-tight">
-                {availablePoints.toLocaleString('pt-BR')}
+                {availablePoints.toLocaleString('es-PY')}
               </p>
               <p className="text-xs mt-1" style={{ color: 'rgba(196,181,160,0.5)' }}>
-                {(archProfile?.points_total || 0).toLocaleString('pt-BR')} ganhos · {(archProfile?.points_redeemed || 0).toLocaleString('pt-BR')} resgatados
+                {(archProfile?.points_total || 0).toLocaleString('es-PY')} ganados · {(archProfile?.points_redeemed || 0).toLocaleString('es-PY')} canjeados
               </p>
             </div>
           </div>
         </CardContent>
       </Card>
 
-      {/* Active campaigns */}
       {campaigns.length > 0 && (
         <div>
           <h2 className="text-base font-bold text-foreground mb-3 flex items-center gap-2">
-            <Zap className="w-4 h-4 text-amber-500" /> Campanhas Ativas
+            <Zap className="w-4 h-4 text-amber-500" /> Campañas Activas
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             {campaigns.map(c => (
@@ -152,12 +148,12 @@ export default function PointsStorePage() {
                     <p className="font-semibold text-foreground text-sm truncate">{c.title}</p>
                     {c.subtitle && <p className="text-xs text-muted-foreground truncate">{c.subtitle}</p>}
                     <p className="text-xs text-muted-foreground mt-0.5">
-                      Até {new Date(c.end_date).toLocaleDateString('pt-BR')}
+                      Hasta {new Date(c.end_date).toLocaleDateString('es-PY')}
                     </p>
                   </div>
                   <div className="text-right shrink-0">
-                    <p className="text-lg font-extrabold text-amber-600">{Number(c.points_earned || 0).toLocaleString('pt-BR')}</p>
-                    <p className="text-xs text-muted-foreground">pts ganhos</p>
+                    <p className="text-lg font-extrabold text-amber-600">{Number(c.points_earned || 0).toLocaleString('es-PY')}</p>
+                    <p className="text-xs text-muted-foreground">pts ganados</p>
                     <span className="inline-flex items-center gap-0.5 text-xs font-bold text-amber-700 bg-amber-50 px-2 py-0.5 rounded-full mt-1">
                       <Zap className="w-3 h-3" />{c.points_multiplier}x pts/$
                     </span>
@@ -169,16 +165,15 @@ export default function PointsStorePage() {
         </div>
       )}
 
-      {/* Prize catalog */}
       <div>
         <h2 className="text-base font-bold text-foreground mb-3 flex items-center gap-2">
-          <Gift className="w-4 h-4 text-primary" /> Prêmios Disponíveis
+          <Gift className="w-4 h-4 text-primary" /> Premios Disponibles
         </h2>
         {prizes.length === 0 ? (
           <Card>
             <CardContent className="py-12 flex flex-col items-center text-muted-foreground gap-2">
               <Gift className="w-8 h-8 opacity-30" />
-              <p>Nenhum prêmio disponível no momento</p>
+              <p>Ningún premio disponible por el momento</p>
             </CardContent>
           </Card>
         ) : (
@@ -201,11 +196,11 @@ export default function PointsStorePage() {
                     {prize.description && <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{prize.description}</p>}
                     <div className="flex items-center justify-between mt-3">
                       <div>
-                        <p className="text-lg font-extrabold text-primary">{Number(prize.points_required).toLocaleString('pt-BR')}</p>
-                        <p className="text-xs text-muted-foreground">pontos</p>
+                        <p className="text-lg font-extrabold text-primary">{Number(prize.points_required).toLocaleString('es-PY')}</p>
+                        <p className="text-xs text-muted-foreground">puntos</p>
                       </div>
                       <div className="text-right">
-                        <p className="text-xs text-muted-foreground">Estoque: {prize.stock}</p>
+                        <p className="text-xs text-muted-foreground">Stock: {prize.stock}</p>
                       </div>
                     </div>
                     <button
@@ -221,10 +216,10 @@ export default function PointsStorePage() {
                       }}
                     >
                       {!can && availablePoints < prize.points_required
-                        ? `Faltam ${(prize.points_required - availablePoints).toLocaleString('pt-BR')} pts`
+                        ? `Faltan ${(prize.points_required - availablePoints).toLocaleString('es-PY')} pts`
                         : !can && prize.stock <= 0
-                        ? 'Sem estoque'
-                        : 'Resgatar'}
+                        ? 'Sin stock'
+                        : 'Canjear'}
                     </button>
                   </CardContent>
                 </Card>
@@ -234,16 +229,15 @@ export default function PointsStorePage() {
         )}
       </div>
 
-      {/* My redemptions */}
       <div>
         <h2 className="text-base font-bold text-foreground mb-3 flex items-center gap-2">
-          <ShoppingBag className="w-4 h-4 text-primary" /> Meus Resgates
+          <ShoppingBag className="w-4 h-4 text-primary" /> Mis Canjes
         </h2>
         {redemptions.length === 0 ? (
           <Card>
             <CardContent className="py-8 flex flex-col items-center text-muted-foreground gap-2">
               <ShoppingBag className="w-8 h-8 opacity-30" />
-              <p>Nenhum resgate solicitado ainda</p>
+              <p>Ningún canje solicitado aún</p>
             </CardContent>
           </Card>
         ) : (
@@ -265,16 +259,16 @@ export default function PointsStorePage() {
                       <div className="flex-1 min-w-0">
                         <p className="font-semibold text-foreground text-sm truncate">{r.prize_name}</p>
                         <p className="text-xs text-muted-foreground">
-                          {Number(r.points_required).toLocaleString('pt-BR')} pontos · {new Date(r.created_at).toLocaleDateString('pt-BR')}
+                          {Number(r.points_required).toLocaleString('es-PY')} puntos · {new Date(r.created_at).toLocaleDateString('es-PY')}
                         </p>
                         {r.deadline_at && r.status !== 'delivered' && (
                           <p className="text-xs text-amber-600 flex items-center gap-1 mt-0.5">
-                            <Clock className="w-3 h-3" />Prazo: {new Date(r.deadline_at).toLocaleDateString('pt-BR')}
+                            <Clock className="w-3 h-3" />Plazo: {new Date(r.deadline_at).toLocaleDateString('es-PY')}
                           </p>
                         )}
                         {r.delivered_at && (
                           <p className="text-xs text-emerald-600 flex items-center gap-1 mt-0.5">
-                            <Calendar className="w-3 h-3" />Entregue em: {new Date(r.delivered_at).toLocaleDateString('pt-BR')}
+                            <Calendar className="w-3 h-3" />Entregado el: {new Date(r.delivered_at).toLocaleDateString('es-PY')}
                           </p>
                         )}
                       </div>
@@ -290,12 +284,11 @@ export default function PointsStorePage() {
         )}
       </div>
 
-      {/* Redemption confirmation dialog */}
       <Dialog open={!!selectedPrize} onOpenChange={open => !open && setSelectedPrize(null)}>
         <DialogContent className="max-w-sm">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <Gift className="w-5 h-5" /> Confirmar Resgate
+              <Gift className="w-5 h-5" /> Confirmar Canje
             </DialogTitle>
           </DialogHeader>
           {selectedPrize && (
@@ -307,10 +300,10 @@ export default function PointsStorePage() {
               <div className="p-4 rounded-xl bg-muted/30 border border-border/50 text-center">
                 <p className="font-bold text-foreground text-lg">{selectedPrize.name}</p>
                 <p className="text-2xl font-extrabold text-primary mt-1">
-                  {Number(selectedPrize.points_required).toLocaleString('pt-BR')} pts
+                  {Number(selectedPrize.points_required).toLocaleString('es-PY')} pts
                 </p>
                 <p className="text-xs text-muted-foreground mt-1">
-                  Após o resgate: {(availablePoints - selectedPrize.points_required).toLocaleString('pt-BR')} pts restantes
+                  Tras el canje: {(availablePoints - selectedPrize.points_required).toLocaleString('es-PY')} pts restantes
                 </p>
               </div>
 
@@ -326,13 +319,13 @@ export default function PointsStorePage() {
               )}
 
               <p className="text-xs text-muted-foreground text-center">
-                O administrador irá aprovar e entregar o prêmio. Prazo de 30 dias para retirada.
+                El administrador aprobará y entregará el premio. Plazo de 30 días para retiro.
               </p>
 
               <div className="flex gap-3">
                 <Button variant="ghost" className="flex-1" onClick={() => setSelectedPrize(null)}>Cancelar</Button>
                 <Button className="flex-1" onClick={handleRequestRedemption} disabled={requesting}>
-                  {requesting ? <><Loader2 className="w-4 h-4 animate-spin mr-1" />Enviando...</> : 'Confirmar Resgate'}
+                  {requesting ? <><Loader2 className="w-4 h-4 animate-spin mr-1" />Enviando...</> : 'Confirmar Canje'}
                 </Button>
               </div>
             </div>

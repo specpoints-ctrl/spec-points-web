@@ -51,13 +51,11 @@ export default function AuthPage({ onLoginSuccess }: AuthPageProps) {
   const [mode, setMode] = useState<Mode>('login');
   const [step, setStep] = useState<RegisterStep>(1);
 
-  // Step 1 fields
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPwd, setShowPwd] = useState(false);
   const [role, setRole] = useState<'architect' | 'lojista'>('architect');
 
-  // Step 2 — architect fields
   const [name, setName] = useState('');
   const [documentCi, setDocumentCi] = useState('');
   const [ruc, setRuc] = useState('');
@@ -68,7 +66,6 @@ export default function AuthPage({ onLoginSuccess }: AuthPageProps) {
   const [city, setCity] = useState('');
   const [birthday, setBirthday] = useState('');
 
-  // Step 2 — lojista fields
   const [storeName, setStoreName] = useState('');
   const [cnpj, setCnpj] = useState('');
   const [ownerName, setOwnerName] = useState('');
@@ -80,7 +77,6 @@ export default function AuthPage({ onLoginSuccess }: AuthPageProps) {
   const [storeCity, setStoreCity] = useState('');
   const [ownerBirthday, setOwnerBirthday] = useState('');
 
-  // Forgot password
   const [forgotEmail, setForgotEmail] = useState('');
 
   const [loading, setLoading] = useState(false);
@@ -103,14 +99,14 @@ export default function AuthPage({ onLoginSuccess }: AuthPageProps) {
       const statusResponse = await validateLoginStatus(email);
       if (!statusResponse.success) {
         await signOut(auth);
-        setError(statusResponse.error || 'Falha ao validar status do usuário.');
+        setError(statusResponse.error || 'Error al validar estado del usuario.');
         return;
       }
-      setSuccess('Login realizado com sucesso!');
+      setSuccess('¡Inicio de sesión exitoso!');
       onLoginSuccess();
     } catch (err: unknown) {
       await signOut(auth).catch(() => {});
-      setError(getApiErrorMessage(err, 'Não foi possível realizar o login.'));
+      setError(getApiErrorMessage(err, 'No fue posible iniciar sesión.'));
     } finally {
       setLoading(false);
     }
@@ -119,8 +115,8 @@ export default function AuthPage({ onLoginSuccess }: AuthPageProps) {
   const handleRegisterStep1 = (e: FormEvent) => {
     e.preventDefault();
     setError(null);
-    if (!email || !password) { setError('Email e senha são obrigatórios'); return; }
-    if (password.length < 8) { setError('Senha deve ter no mínimo 8 caracteres'); return; }
+    if (!email || !password) { setError('Correo y contraseña son obligatorios'); return; }
+    if (password.length < 8) { setError('La contraseña debe tener al menos 8 caracteres'); return; }
     setStep(2);
   };
 
@@ -143,14 +139,14 @@ export default function AuthPage({ onLoginSuccess }: AuthPageProps) {
 
       const response = await registerUser(payload);
       if (!response.success) {
-        setError(response.error || 'Não foi possível registrar usuário.');
+        setError(response.error || 'No fue posible registrar el usuario.');
         return;
       }
-      setSuccess(response.message || 'Conta criada! Aguarde aprovação do administrador.');
+      setSuccess(response.message || '¡Cuenta creada! Espere la aprobación del administrador.');
       switchMode('login');
       setPassword('');
     } catch (err: unknown) {
-      setError(getApiErrorMessage(err, 'Erro ao registrar usuário.'));
+      setError(getApiErrorMessage(err, 'Error al registrar usuario.'));
     } finally {
       setLoading(false);
     }
@@ -158,13 +154,13 @@ export default function AuthPage({ onLoginSuccess }: AuthPageProps) {
 
   const handleForgotPassword = async (e: FormEvent) => {
     e.preventDefault();
-    if (!forgotEmail) { setError('Informe seu email'); return; }
+    if (!forgotEmail) { setError('Ingrese su correo'); return; }
     setLoading(true); setError(null); setSuccess(null);
     try {
       await sendPasswordResetEmail(auth, forgotEmail);
-      setSuccess('Email de recuperação enviado! Verifique sua caixa de entrada.');
+      setSuccess('¡Correo de recuperación enviado! Verifique su bandeja de entrada.');
     } catch {
-      setError('Não foi possível enviar o email. Verifique se o endereço está correto.');
+      setError('No fue posible enviar el correo. Verifique si la dirección es correcta.');
     } finally {
       setLoading(false);
     }
@@ -184,24 +180,24 @@ export default function AuthPage({ onLoginSuccess }: AuthPageProps) {
       const response = await googleLoginUpsert(displayName);
       if (!response.success) {
         await signOut(auth);
-        setError(response.error || 'Não foi possível acessar a plataforma com esta conta Google.');
+        setError(response.error || 'No fue posible acceder a la plataforma con esta cuenta Google.');
         return;
       }
       if (response.data?.status === 'pending') {
         await signOut(auth);
-        setSuccess('Conta criada! Aguarde a aprovação do administrador para acessar.');
+        setSuccess('¡Cuenta creada! Espere la aprobación del administrador para acceder.');
         return;
       }
       if (response.data?.status === 'blocked') {
         await signOut(auth);
-        setError('Sua conta está bloqueada. Entre em contato com o suporte.');
+        setError('Su cuenta está bloqueada. Contacte al soporte.');
         return;
       }
-      setSuccess('Login realizado com sucesso!');
+      setSuccess('¡Inicio de sesión exitoso!');
       onLoginSuccess();
     } catch (err: unknown) {
       await signOut(auth).catch(() => {});
-      setError(getApiErrorMessage(err, 'Não foi possível fazer login com Google.'));
+      setError(getApiErrorMessage(err, 'No fue posible iniciar sesión con Google.'));
     } finally {
       setLoading(false);
     }
@@ -212,7 +208,6 @@ export default function AuthPage({ onLoginSuccess }: AuthPageProps) {
     setError(null); setSuccess(null);
   };
 
-  // ── Shared feedback ──────────────────────────────────────────────────────
   const Feedback = () => (
     <>
       {error && (
@@ -237,14 +232,14 @@ export default function AuthPage({ onLoginSuccess }: AuthPageProps) {
       className="w-full h-12 rounded-xl font-bold text-white text-sm flex items-center justify-center gap-2 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_8px_24px_rgba(11,110,120,0.35)] active:scale-[0.98] disabled:opacity-60 disabled:pointer-events-none mt-2"
       style={{ background: 'linear-gradient(135deg,#0b6e78 0%,#134e56 100%)' }}
     >
-      {loading ? <><Loader2 className="w-4 h-4 animate-spin" /> Processando...</> : label}
+      {loading ? <><Loader2 className="w-4 h-4 animate-spin" /> Procesando...</> : label}
     </button>
   );
 
   return (
     <div className="min-h-screen flex flex-col lg:flex-row">
 
-      {/* ── LEFT BRAND PANEL ─────────────────────────────────────────── */}
+      {/* ── PANEL DE MARCA IZQUIERDO ─────────────────────────────────── */}
       <div
         className="hidden lg:flex lg:w-[48%] relative flex-col items-center justify-center p-14 overflow-hidden"
         style={{ background: 'linear-gradient(145deg, #071519 0%, #0b2228 45%, #0f2d35 75%, #071c22 100%)' }}
@@ -269,17 +264,17 @@ export default function AuthPage({ onLoginSuccess }: AuthPageProps) {
               style={{ filter: 'invert(1) brightness(0.88)' }} />
           </div>
           <h2 className="text-[1.75rem] font-extrabold text-white leading-tight mb-4">
-            O programa de fidelidade para{' '}
+            El programa de fidelidad para{' '}
             <span style={{ background: 'linear-gradient(90deg,#f7b871,#d4a574)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
-              arquitetos de alto padrão.
+              arquitectos de alto nivel.
             </span>
           </h2>
           <p className="text-white/40 text-[0.9rem] leading-relaxed mb-12">
-            Cada projeto especificado vira pontos reais.<br />
-            Troque por prêmios exclusivos e experiências únicas.
+            Cada proyecto especificado se convierte en puntos reales.<br />
+            Canjéalos por premios exclusivos y experiencias únicas.
           </p>
           <div className="flex flex-col gap-3 text-left">
-            {['Pontos em cada especificação de produto', 'Prêmios exclusivos e viagens internacionais', 'Painel de controle em tempo real'].map((label, i) => (
+            {['Puntos en cada especificación de producto', 'Premios exclusivos y viajes internacionales', 'Panel de control en tiempo real'].map((label, i) => (
               <div key={i} className="flex items-center gap-3 rounded-2xl px-4 py-3.5"
                 style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)' }}>
                 <span className="text-[#d4a574] text-[10px]">◆</span>
@@ -292,16 +287,16 @@ export default function AuthPage({ onLoginSuccess }: AuthPageProps) {
           <span className="flex items-center gap-2 text-[10px] uppercase tracking-[0.15em] text-white/30 px-5 py-2 rounded-full"
             style={{ border: '1px solid rgba(255,255,255,0.08)', background: 'rgba(255,255,255,0.03)' }}>
             <span className="block w-1.5 h-1.5 rounded-full bg-emerald-400 animate-live" />
-            Sistema ativo
+            Sistema activo
           </span>
         </div>
       </div>
 
-      {/* ── RIGHT FORM PANEL ─────────────────────────────────────────── */}
+      {/* ── PANEL DE FORMULARIO DERECHO ──────────────────────────────── */}
       <div className="flex-1 flex items-center justify-center bg-white px-6 py-12 sm:px-16 overflow-y-auto">
         <div className="w-full max-w-[440px] animate-fade-in-up">
 
-          {/* Mobile logo */}
+          {/* Logo móvil */}
           <div className="lg:hidden flex flex-col items-center gap-3 mb-10">
             <div className="flex items-center gap-2.5">
               <Logo />
@@ -312,34 +307,34 @@ export default function AuthPage({ onLoginSuccess }: AuthPageProps) {
             <img src="/moducasa-logo.png" alt="Grupo Moducasa" className="h-7 w-auto" style={{ filter: 'brightness(0)' }} />
           </div>
 
-          {/* ── FORGOT PASSWORD ─────────────────────────────────────── */}
+          {/* ── RECUPERAR CONTRASEÑA ─────────────────────────────────── */}
           {mode === 'forgot' && (
             <>
               <button type="button" onClick={() => switchMode('login')}
                 className="flex items-center gap-1.5 text-sm text-[#0b6e78] mb-6 hover:underline">
-                <ArrowLeft className="w-4 h-4" /> Voltar ao login
+                <ArrowLeft className="w-4 h-4" /> Volver al inicio de sesión
               </button>
               <div className="mb-8">
-                <h1 className="text-2xl font-extrabold text-[#071519]">Recuperar senha</h1>
-                <p className="text-[#7a9099] text-sm mt-1.5">Enviaremos um link de redefinição para seu email.</p>
+                <h1 className="text-2xl font-extrabold text-[#071519]">Recuperar contraseña</h1>
+                <p className="text-[#7a9099] text-sm mt-1.5">Enviaremos un enlace de restablecimiento a su correo.</p>
               </div>
               <form onSubmit={handleForgotPassword} className="space-y-5">
-                <Field label="E-mail" icon={Mail}>
+                <Field label="Correo electrónico" icon={Mail}>
                   <input type="email" value={forgotEmail} onChange={e => setForgotEmail(e.target.value)}
-                    required placeholder="voce@empresa.com" className={inputCls} />
+                    required placeholder="usted@empresa.com" className={inputCls} />
                 </Field>
                 <Feedback />
-                <SubmitBtn label="Enviar link de recuperação" />
+                <SubmitBtn label="Enviar enlace de recuperación" />
               </form>
             </>
           )}
 
-          {/* ── LOGIN ───────────────────────────────────────────────── */}
+          {/* ── INICIO DE SESIÓN ─────────────────────────────────────── */}
           {mode === 'login' && (
             <>
               <div className="mb-8">
-                <h1 className="text-[1.85rem] font-extrabold text-[#071519] leading-tight tracking-tight">Bem-vindo de volta.</h1>
-                <p className="text-[#7a9099] text-sm mt-1.5">Acesse seu painel CONNECTUS</p>
+                <h1 className="text-[1.85rem] font-extrabold text-[#071519] leading-tight tracking-tight">Bienvenido de vuelta.</h1>
+                <p className="text-[#7a9099] text-sm mt-1.5">Acceda a su panel CONNECTUS</p>
               </div>
 
               <div className="flex gap-6 mb-8 border-b border-gray-100">
@@ -347,17 +342,17 @@ export default function AuthPage({ onLoginSuccess }: AuthPageProps) {
                   <button key={m} type="button" onClick={() => switchMode(m)}
                     className={['pb-3 text-sm font-bold transition-all duration-200 border-b-2 -mb-[1px]',
                       mode === m ? 'border-[#0b6e78] text-[#071519]' : 'border-transparent text-[#a0b4ba] hover:text-[#071519]'].join(' ')}>
-                    {m === 'login' ? 'Entrar' : 'Criar conta'}
+                    {m === 'login' ? 'Ingresar' : 'Crear cuenta'}
                   </button>
                 ))}
               </div>
 
               <form onSubmit={onSubmit} className="space-y-5">
-                <Field label="E-mail" icon={Mail}>
-                  <input type="email" value={email} onChange={e => setEmail(e.target.value)} required placeholder="voce@empresa.com" className={inputCls} />
+                <Field label="Correo electrónico" icon={Mail}>
+                  <input type="email" value={email} onChange={e => setEmail(e.target.value)} required placeholder="usted@empresa.com" className={inputCls} />
                 </Field>
                 <div className="space-y-1.5">
-                  <label className="block text-[11px] font-bold uppercase tracking-[0.12em] text-[#0b6e78]">Senha</label>
+                  <label className="block text-[11px] font-bold uppercase tracking-[0.12em] text-[#0b6e78]">Contraseña</label>
                   <div className="relative">
                     <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-[15px] h-[15px] text-[#8fadb4]" strokeWidth={2} />
                     <input type={showPwd ? 'text' : 'password'} value={password} onChange={e => setPassword(e.target.value)}
@@ -371,18 +366,18 @@ export default function AuthPage({ onLoginSuccess }: AuthPageProps) {
                   <div className="text-right">
                     <button type="button" onClick={() => switchMode('forgot')}
                       className="text-xs text-[#0b6e78] hover:underline mt-1">
-                      Esqueceu sua senha?
+                      ¿Olvidó su contraseña?
                     </button>
                   </div>
                 </div>
 
                 <Feedback />
-                <SubmitBtn label="Entrar na plataforma" />
+                <SubmitBtn label="Ingresar a la plataforma" />
               </form>
 
               <div className="flex items-center gap-3 my-6">
                 <div className="flex-1 h-px bg-gray-100" />
-                <span className="text-[11px] text-gray-300 uppercase tracking-widest">ou</span>
+                <span className="text-[11px] text-gray-300 uppercase tracking-widest">o</span>
                 <div className="flex-1 h-px bg-gray-100" />
               </div>
               <button type="button" onClick={handleGoogleLogin} disabled={loading}
@@ -393,17 +388,17 @@ export default function AuthPage({ onLoginSuccess }: AuthPageProps) {
                   <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
                   <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.31-8.16 2.31-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
                 </svg>
-                Continuar com Google
+                Continuar con Google
               </button>
             </>
           )}
 
-          {/* ── REGISTER STEP 1 ─────────────────────────────────────── */}
+          {/* ── REGISTRO PASO 1 ──────────────────────────────────────── */}
           {mode === 'register' && step === 1 && (
             <>
               <div className="mb-8">
-                <h1 className="text-[1.85rem] font-extrabold text-[#071519] leading-tight tracking-tight">Crie sua conta.</h1>
-                <p className="text-[#7a9099] text-sm mt-1.5">Passo 1 de 2 — Dados de acesso</p>
+                <h1 className="text-[1.85rem] font-extrabold text-[#071519] leading-tight tracking-tight">Crea tu cuenta.</h1>
+                <p className="text-[#7a9099] text-sm mt-1.5">Paso 1 de 2 — Datos de acceso</p>
               </div>
 
               <div className="flex gap-6 mb-8 border-b border-gray-100">
@@ -411,17 +406,17 @@ export default function AuthPage({ onLoginSuccess }: AuthPageProps) {
                   <button key={m} type="button" onClick={() => switchMode(m)}
                     className={['pb-3 text-sm font-bold transition-all duration-200 border-b-2 -mb-[1px]',
                       mode === m ? 'border-[#0b6e78] text-[#071519]' : 'border-transparent text-[#a0b4ba] hover:text-[#071519]'].join(' ')}>
-                    {m === 'login' ? 'Entrar' : 'Criar conta'}
+                    {m === 'login' ? 'Ingresar' : 'Crear cuenta'}
                   </button>
                 ))}
               </div>
 
               <form onSubmit={handleRegisterStep1} className="space-y-5">
-                <Field label="E-mail" icon={Mail}>
-                  <input type="email" value={email} onChange={e => setEmail(e.target.value)} required placeholder="voce@empresa.com" className={inputCls} />
+                <Field label="Correo electrónico" icon={Mail}>
+                  <input type="email" value={email} onChange={e => setEmail(e.target.value)} required placeholder="usted@empresa.com" className={inputCls} />
                 </Field>
                 <div className="space-y-1.5">
-                  <label className="block text-[11px] font-bold uppercase tracking-[0.12em] text-[#0b6e78]">Senha</label>
+                  <label className="block text-[11px] font-bold uppercase tracking-[0.12em] text-[#0b6e78]">Contraseña</label>
                   <div className="relative">
                     <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-[15px] h-[15px] text-[#8fadb4]" strokeWidth={2} />
                     <input type={showPwd ? 'text' : 'password'} value={password} onChange={e => setPassword(e.target.value)}
@@ -436,124 +431,124 @@ export default function AuthPage({ onLoginSuccess }: AuthPageProps) {
                 <Field label="Perfil" icon={Briefcase}>
                   <select value={role} onChange={e => setRole(e.target.value as 'architect' | 'lojista')}
                     className={inputCls + ' appearance-none cursor-pointer'}>
-                    <option value="architect">Arquiteto</option>
-                    <option value="lojista">Lojista</option>
+                    <option value="architect">Arquitecto</option>
+                    <option value="lojista">Comerciante</option>
                   </select>
                 </Field>
                 <Feedback />
                 <button type="submit" disabled={loading}
                   className="w-full h-12 rounded-xl font-bold text-white text-sm flex items-center justify-center gap-2 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_8px_24px_rgba(11,110,120,0.35)] active:scale-[0.98] disabled:opacity-60 disabled:pointer-events-none mt-2"
                   style={{ background: 'linear-gradient(135deg,#0b6e78 0%,#134e56 100%)' }}>
-                  Próximo <ChevronRight className="w-4 h-4" />
+                  Siguiente <ChevronRight className="w-4 h-4" />
                 </button>
               </form>
             </>
           )}
 
-          {/* ── REGISTER STEP 2 ─────────────────────────────────────── */}
+          {/* ── REGISTRO PASO 2 ──────────────────────────────────────── */}
           {mode === 'register' && step === 2 && (
             <>
               <div className="flex items-center gap-3 mb-6">
                 <button type="button" onClick={() => { setStep(1); setError(null); }}
                   className="flex items-center gap-1.5 text-sm text-[#0b6e78] hover:underline">
-                  <ArrowLeft className="w-4 h-4" /> Voltar
+                  <ArrowLeft className="w-4 h-4" /> Volver
                 </button>
                 <div className="flex-1 h-px bg-gray-100" />
-                <span className="text-xs text-[#7a9099]">Passo 2 de 2</span>
+                <span className="text-xs text-[#7a9099]">Paso 2 de 2</span>
               </div>
 
               <div className="mb-6">
                 <h1 className="text-2xl font-extrabold text-[#071519] leading-tight">
-                  {role === 'architect' ? 'Dados do Arquiteto' : 'Dados do Lojista'}
+                  {role === 'architect' ? 'Datos del Arquitecto' : 'Datos del Comerciante'}
                 </h1>
-                <p className="text-[#7a9099] text-sm mt-1">Complete seu perfil profissional</p>
+                <p className="text-[#7a9099] text-sm mt-1">Complete su perfil profesional</p>
               </div>
 
               {role === 'architect' ? (
                 <form onSubmit={handleRegisterStep2} className="space-y-4">
                   <div className="grid grid-cols-1 gap-4">
-                    <Field label="Nome Completo *" icon={User}>
-                      <input type="text" value={name} onChange={e => setName(e.target.value)} required placeholder="Nome completo do arquiteto" className={inputCls} />
+                    <Field label="Nombre Completo *" icon={User}>
+                      <input type="text" value={name} onChange={e => setName(e.target.value)} required placeholder="Nombre completo del arquitecto" className={inputCls} />
                     </Field>
                     <div className="grid grid-cols-2 gap-3">
-                      <Field label="Número CI *" icon={CreditCard}>
-                        <input type="text" value={documentCi} onChange={e => setDocumentCi(e.target.value)} required placeholder="CI do arquiteto" className={inputCls} />
+                      <Field label="N.° CI *" icon={CreditCard}>
+                        <input type="text" value={documentCi} onChange={e => setDocumentCi(e.target.value)} required placeholder="CI del arquitecto" className={inputCls} />
                       </Field>
-                      <Field label="RUC Escritório *" icon={CreditCard}>
+                      <Field label="RUC Oficina *" icon={CreditCard}>
                         <input type="text" value={ruc} onChange={e => setRuc(e.target.value)} required placeholder="RUC" className={inputCls} />
                       </Field>
                     </div>
-                    <Field label="Escritório / Empresa *" icon={Building2}>
-                      <input type="text" value={company} onChange={e => setCompany(e.target.value)} required placeholder="Nome do escritório" className={inputCls} />
+                    <Field label="Oficina / Empresa *" icon={Building2}>
+                      <input type="text" value={company} onChange={e => setCompany(e.target.value)} required placeholder="Nombre de la oficina" className={inputCls} />
                     </Field>
                     <div className="grid grid-cols-2 gap-3">
-                      <Field label="Tel. Arquiteto *" icon={Phone}>
+                      <Field label="Tel. Arquitecto *" icon={Phone}>
                         <input type="tel" value={telefone} onChange={e => setTelefone(e.target.value)} required placeholder="+595..." className={inputCls} />
                       </Field>
-                      <Field label="Tel. Escritório" icon={Phone}>
+                      <Field label="Tel. Oficina" icon={Phone}>
                         <input type="tel" value={officePhone} onChange={e => setOfficePhone(e.target.value)} placeholder="+595..." className={inputCls} />
                       </Field>
                     </div>
-                    <Field label="Endereço do Escritório" icon={MapPin}>
-                      <input type="text" value={address} onChange={e => setAddress(e.target.value)} placeholder="Rua, número, bairro" className={inputCls} />
+                    <Field label="Dirección de la Oficina" icon={MapPin}>
+                      <input type="text" value={address} onChange={e => setAddress(e.target.value)} placeholder="Calle, número, barrio" className={inputCls} />
                     </Field>
-                    <Field label="Cidade" icon={MapPin}>
+                    <Field label="Ciudad" icon={MapPin}>
                       <input type="text" value={city} onChange={e => setCity(e.target.value)} placeholder="Ciudad" className={inputCls} />
                     </Field>
-                    <Field label="Data de Aniversário *" icon={Calendar}>
+                    <Field label="Fecha de Cumpleaños *" icon={Calendar}>
                       <input type="date" value={birthday} onChange={e => setBirthday(e.target.value)} required className={inputCls} />
                     </Field>
                   </div>
                   <Feedback />
-                  <SubmitBtn label="Criar conta" />
+                  <SubmitBtn label="Crear cuenta" />
                 </form>
               ) : (
                 <form onSubmit={handleRegisterStep2} className="space-y-4">
                   <div className="grid grid-cols-1 gap-4">
-                    <Field label="Nome do Responsável *" icon={User}>
-                      <input type="text" value={ownerName} onChange={e => setOwnerName(e.target.value)} required placeholder="Nome completo" className={inputCls} />
+                    <Field label="Nombre del Responsable *" icon={User}>
+                      <input type="text" value={ownerName} onChange={e => setOwnerName(e.target.value)} required placeholder="Nombre completo" className={inputCls} />
                     </Field>
                     <div className="grid grid-cols-2 gap-3">
-                      <Field label="CI do Responsável *" icon={CreditCard}>
+                      <Field label="CI del Responsable *" icon={CreditCard}>
                         <input type="text" value={ownerCi} onChange={e => setOwnerCi(e.target.value)} required placeholder="CI" className={inputCls} />
                       </Field>
-                      <Field label="RUC da Loja *" icon={CreditCard}>
+                      <Field label="RUC de la Tienda *" icon={CreditCard}>
                         <input type="text" value={storeRuc} onChange={e => setStoreRuc(e.target.value)} required placeholder="RUC" className={inputCls} />
                       </Field>
                     </div>
-                    <Field label="Nome da Loja *" icon={Building2}>
-                      <input type="text" value={storeName} onChange={e => setStoreName(e.target.value)} required placeholder="Nome da loja" className={inputCls} />
+                    <Field label="Nombre de la Tienda *" icon={Building2}>
+                      <input type="text" value={storeName} onChange={e => setStoreName(e.target.value)} required placeholder="Nombre de la tienda" className={inputCls} />
                     </Field>
-                    <Field label="CNPJ / RUC Empresa" icon={CreditCard}>
-                      <input type="text" value={cnpj} onChange={e => setCnpj(e.target.value)} placeholder="CNPJ ou RUC da empresa" className={inputCls} />
+                    <Field label="RUC Empresa" icon={CreditCard}>
+                      <input type="text" value={cnpj} onChange={e => setCnpj(e.target.value)} placeholder="RUC de la empresa" className={inputCls} />
                     </Field>
                     <div className="grid grid-cols-2 gap-3">
-                      <Field label="Tel. Responsável *" icon={Phone}>
+                      <Field label="Tel. Responsable *" icon={Phone}>
                         <input type="tel" value={storePhone} onChange={e => setStorePhone(e.target.value)} required placeholder="+595..." className={inputCls} />
                       </Field>
-                      <Field label="Tel. Loja" icon={Phone}>
+                      <Field label="Tel. Tienda" icon={Phone}>
                         <input type="tel" value={storeOfficePhone} onChange={e => setStoreOfficePhone(e.target.value)} placeholder="+595..." className={inputCls} />
                       </Field>
                     </div>
-                    <Field label="Endereço da Loja" icon={MapPin}>
-                      <input type="text" value={storeAddress} onChange={e => setStoreAddress(e.target.value)} placeholder="Endereço completo" className={inputCls} />
+                    <Field label="Dirección de la Tienda" icon={MapPin}>
+                      <input type="text" value={storeAddress} onChange={e => setStoreAddress(e.target.value)} placeholder="Dirección completa" className={inputCls} />
                     </Field>
-                    <Field label="Cidade" icon={MapPin}>
+                    <Field label="Ciudad" icon={MapPin}>
                       <input type="text" value={storeCity} onChange={e => setStoreCity(e.target.value)} placeholder="Ciudad" className={inputCls} />
                     </Field>
-                    <Field label="Data de Aniversário *" icon={Calendar}>
+                    <Field label="Fecha de Cumpleaños *" icon={Calendar}>
                       <input type="date" value={ownerBirthday} onChange={e => setOwnerBirthday(e.target.value)} required className={inputCls} />
                     </Field>
                   </div>
                   <Feedback />
-                  <SubmitBtn label="Criar conta" />
+                  <SubmitBtn label="Crear cuenta" />
                 </form>
               )}
             </>
           )}
 
           <p className="mt-5 text-center text-[11px] text-gray-300">
-            Ao continuar, você concorda com os termos de uso da plataforma CONNECTUS.
+            Al continuar, acepta los términos de uso de la plataforma CONNECTUS.
           </p>
         </div>
       </div>

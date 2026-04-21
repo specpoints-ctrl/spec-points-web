@@ -33,7 +33,7 @@ const emptyPrize = (): CampaignPrize => ({
 });
 
 function focusLabel(focus: string) {
-  return focus === 'architect' ? 'Arquitetos' : focus === 'lojista' ? 'Lojistas' : 'Todos';
+  return focus === 'architect' ? 'Arquitectos' : focus === 'lojista' ? 'Comerciantes' : 'Todos';
 }
 
 function focusBadge(focus: string) {
@@ -54,12 +54,10 @@ export default function CampaignsPage() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Ranking modal
   const [rankingOpen, setRankingOpen] = useState(false);
   const [rankingData, setRankingData] = useState<{ campaign: Campaign; ranking: any[] } | null>(null);
   const [rankingLoading, setRankingLoading] = useState(false);
 
-  // Stats
   const total = campaigns.length;
   const active = campaigns.filter(c => c.active && new Date(c.end_date) >= new Date()).length;
   const ended = campaigns.filter(c => !c.active || new Date(c.end_date) < new Date()).length;
@@ -128,19 +126,19 @@ export default function CampaignsPage() {
       setDialogOpen(false);
       await load();
     } catch (e: any) {
-      setError(e?.response?.data?.error || e.message || 'Erro ao salvar campanha');
+      setError(e?.response?.data?.error || e.message || 'Error al guardar campaña');
     } finally {
       setSaving(false);
     }
   }
 
   async function handleDelete(id: number) {
-    if (!confirm('Excluir esta campanha?')) return;
+    if (!confirm('¿Eliminar esta campaña?')) return;
     try {
       await deleteCampaign(id);
       await load();
     } catch {
-      alert('Erro ao excluir campanha');
+      alert('Error al eliminar campaña');
     }
   }
 
@@ -158,23 +156,21 @@ export default function CampaignsPage() {
 
   return (
     <div className="p-4 sm:p-6 space-y-6">
-      {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-extrabold text-foreground tracking-tight">Campanhas</h1>
-          <p className="text-sm text-muted-foreground mt-0.5">Gerencie campanhas com multiplicadores de pontos e prêmios exclusivos</p>
+          <h1 className="text-2xl font-extrabold text-foreground tracking-tight">Campañas</h1>
+          <p className="text-sm text-muted-foreground mt-0.5">Administre campañas con multiplicadores de puntos y premios exclusivos</p>
         </div>
         <Button onClick={openCreate} className="flex items-center gap-2">
-          <Plus className="w-4 h-4" /> Nova Campanha
+          <Plus className="w-4 h-4" /> Nueva Campaña
         </Button>
       </div>
 
-      {/* Stats */}
       <div className="grid grid-cols-3 gap-4">
         {[
           { label: 'Total', value: total, icon: Target, color: '#0b6e78' },
-          { label: 'Ativas', value: active, icon: Zap, color: '#10b981' },
-          { label: 'Encerradas', value: ended, icon: BarChart2, color: '#6b7280' },
+          { label: 'Activas', value: active, icon: Zap, color: '#10b981' },
+          { label: 'Finalizadas', value: ended, icon: BarChart2, color: '#6b7280' },
         ].map(({ label, value, icon: Icon, color }) => (
           <Card key={label}>
             <CardContent className="p-4 flex items-center gap-3">
@@ -190,28 +186,27 @@ export default function CampaignsPage() {
         ))}
       </div>
 
-      {/* Table */}
       <Card>
-        <CardHeader><CardTitle className="flex items-center gap-2"><Trophy className="w-4 h-4" /> Lista de Campanhas</CardTitle></CardHeader>
+        <CardHeader><CardTitle className="flex items-center gap-2"><Trophy className="w-4 h-4" /> Lista de Campañas</CardTitle></CardHeader>
         <CardContent>
           {loading ? (
-            <div className="flex items-center justify-center py-12 text-muted-foreground">Carregando...</div>
+            <div className="flex items-center justify-center py-12 text-muted-foreground">Cargando...</div>
           ) : campaigns.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-12 text-muted-foreground gap-2">
               <Trophy className="w-8 h-8 opacity-30" />
-              <p>Nenhuma campanha cadastrada</p>
+              <p>Ninguna campaña registrada</p>
             </div>
           ) : (
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Campanha</TableHead>
-                  <TableHead>Foco</TableHead>
+                  <TableHead>Campaña</TableHead>
+                  <TableHead>Enfoque</TableHead>
                   <TableHead>Multiplicador</TableHead>
                   <TableHead>Período</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Prêmios</TableHead>
-                  <TableHead>Ações</TableHead>
+                  <TableHead>Estado</TableHead>
+                  <TableHead>Premios</TableHead>
+                  <TableHead>Acciones</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -235,13 +230,13 @@ export default function CampaignsPage() {
                     </TableCell>
                     <TableCell>
                       <div className="text-xs text-muted-foreground">
-                        <p>{new Date(c.start_date).toLocaleDateString('pt-BR')}</p>
-                        <p>até {new Date(c.end_date).toLocaleDateString('pt-BR')}</p>
+                        <p>{new Date(c.start_date).toLocaleDateString('es-PY')}</p>
+                        <p>hasta {new Date(c.end_date).toLocaleDateString('es-PY')}</p>
                       </div>
                     </TableCell>
                     <TableCell>
                       <Badge variant={isActive(c) ? 'default' : 'secondary'}>
-                        {isActive(c) ? 'Ativa' : 'Encerrada'}
+                        {isActive(c) ? 'Activa' : 'Finalizada'}
                       </Badge>
                     </TableCell>
                     <TableCell>
@@ -258,7 +253,7 @@ export default function CampaignsPage() {
                           <Edit2 className="w-4 h-4" />
                         </button>
                         <button onClick={() => handleDelete(c.id)}
-                          className="p-1.5 rounded-lg hover:bg-red-50 text-red-600 transition-colors" title="Excluir">
+                          className="p-1.5 rounded-lg hover:bg-red-50 text-red-600 transition-colors" title="Eliminar">
                           <Trash2 className="w-4 h-4" />
                         </button>
                       </div>
@@ -271,11 +266,10 @@ export default function CampaignsPage() {
         </CardContent>
       </Card>
 
-      {/* Create/Edit Dialog */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>{editingId ? 'Editar Campanha' : 'Nova Campanha'}</DialogTitle>
+            <DialogTitle>{editingId ? 'Editar Campaña' : 'Nueva Campaña'}</DialogTitle>
           </DialogHeader>
 
           <div className="space-y-5 pt-2">
@@ -286,24 +280,24 @@ export default function CampaignsPage() {
             <div className="grid grid-cols-2 gap-4">
               <div className="col-span-2">
                 <label className="block text-xs font-bold uppercase tracking-wider text-muted-foreground mb-1.5">Título *</label>
-                <Input value={form.title} onChange={e => setForm(f => ({ ...f, title: e.target.value }))} placeholder="Ex: Campanha Verão 2026" />
+                <Input value={form.title} onChange={e => setForm(f => ({ ...f, title: e.target.value }))} placeholder="Ej: Campaña Verano 2026" />
               </div>
               <div className="col-span-2">
                 <label className="block text-xs font-bold uppercase tracking-wider text-muted-foreground mb-1.5">Subtítulo</label>
-                <Input value={form.subtitle || ''} onChange={e => setForm(f => ({ ...f, subtitle: e.target.value }))} placeholder="Descrição curta da campanha" />
+                <Input value={form.subtitle || ''} onChange={e => setForm(f => ({ ...f, subtitle: e.target.value }))} placeholder="Descripción corta de la campaña" />
               </div>
               <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-muted-foreground mb-1.5">Foco</label>
+                <label className="block text-xs font-bold uppercase tracking-wider text-muted-foreground mb-1.5">Enfoque</label>
                 <select value={form.focus} onChange={e => setForm(f => ({ ...f, focus: e.target.value as any }))}
                   className="w-full px-3 py-2.5 rounded-xl border border-border/60 bg-background text-sm focus:outline-none focus:border-primary transition-all">
                   <option value="all">Todos</option>
-                  <option value="architect">Arquitetos</option>
-                  <option value="lojista">Lojistas</option>
+                  <option value="architect">Arquitectos</option>
+                  <option value="lojista">Comerciantes</option>
                 </select>
               </div>
               <div>
                 <label className="block text-xs font-bold uppercase tracking-wider text-muted-foreground mb-1.5">
-                  Multiplicador (pontos por $)
+                  Multiplicador (puntos por $)
                 </label>
                 <Input type="number" min="0.1" step="0.1"
                   value={form.points_multiplier}
@@ -311,41 +305,40 @@ export default function CampaignsPage() {
                   placeholder="1.0" />
               </div>
               <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-muted-foreground mb-1.5">Data de Início *</label>
+                <label className="block text-xs font-bold uppercase tracking-wider text-muted-foreground mb-1.5">Fecha de Inicio *</label>
                 <Input type="date" value={form.start_date} onChange={e => setForm(f => ({ ...f, start_date: e.target.value }))} />
               </div>
               <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-muted-foreground mb-1.5">Data de Fim *</label>
+                <label className="block text-xs font-bold uppercase tracking-wider text-muted-foreground mb-1.5">Fecha de Fin *</label>
                 <Input type="date" value={form.end_date} onChange={e => setForm(f => ({ ...f, end_date: e.target.value }))} />
               </div>
               <div className="col-span-2 flex items-center gap-3">
                 <input type="checkbox" id="active-toggle" checked={form.active ?? true}
                   onChange={e => setForm(f => ({ ...f, active: e.target.checked }))}
                   className="w-4 h-4 accent-primary" />
-                <label htmlFor="active-toggle" className="text-sm text-foreground cursor-pointer">Campanha ativa</label>
+                <label htmlFor="active-toggle" className="text-sm text-foreground cursor-pointer">Campaña activa</label>
               </div>
             </div>
 
-            {/* Prizes section */}
             <div>
               <div className="flex items-center justify-between mb-3">
-                <label className="text-sm font-bold text-foreground">Prêmios da Campanha</label>
+                <label className="text-sm font-bold text-foreground">Premios de la Campaña</label>
                 <button onClick={addPrize}
                   className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-primary/10 text-primary text-xs font-semibold hover:bg-primary/20 transition-colors">
-                  <Plus className="w-3.5 h-3.5" /> Adicionar Prêmio
+                  <Plus className="w-3.5 h-3.5" /> Agregar Premio
                 </button>
               </div>
 
               {(form.prizes || []).length === 0 ? (
                 <div className="rounded-xl border border-dashed border-border p-6 text-center text-sm text-muted-foreground">
-                  Nenhum prêmio adicionado
+                  Ningún premio agregado
                 </div>
               ) : (
                 <div className="space-y-3">
                   {(form.prizes || []).map((prize, idx) => (
                     <div key={idx} className="rounded-xl border border-border/60 p-4 bg-muted/20">
                       <div className="flex items-center justify-between mb-3">
-                        <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Prêmio {idx + 1}</span>
+                        <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Premio {idx + 1}</span>
                         <button onClick={() => removePrize(idx)}
                           className="p-1 rounded-lg hover:bg-red-50 text-red-500 transition-colors">
                           <X className="w-3.5 h-3.5" />
@@ -353,28 +346,28 @@ export default function CampaignsPage() {
                       </div>
                       <div className="grid grid-cols-2 gap-3">
                         <div className="col-span-2">
-                          <label className="block text-xs text-muted-foreground mb-1">Nome do Produto</label>
-                          <Input value={prize.name} onChange={e => updatePrize(idx, 'name', e.target.value)} placeholder="Ex: Cadeira Ergonômica" />
+                          <label className="block text-xs text-muted-foreground mb-1">Nombre del Producto</label>
+                          <Input value={prize.name} onChange={e => updatePrize(idx, 'name', e.target.value)} placeholder="Ej: Silla Ergonómica" />
                         </div>
                         <div>
-                          <label className="block text-xs text-muted-foreground mb-1">Pontos Necessários</label>
+                          <label className="block text-xs text-muted-foreground mb-1">Puntos Requeridos</label>
                           <Input type="number" min="1" value={prize.points_required || ''}
                             onChange={e => updatePrize(idx, 'points_required', parseInt(e.target.value) || 0)}
                             placeholder="5000" />
                         </div>
                         <div>
-                          <label className="block text-xs text-muted-foreground mb-1">Estoque</label>
+                          <label className="block text-xs text-muted-foreground mb-1">Stock</label>
                           <Input type="number" min="0" value={prize.stock || ''}
                             onChange={e => updatePrize(idx, 'stock', parseInt(e.target.value) || 0)}
                             placeholder="10" />
                         </div>
                         <div className="col-span-2">
-                          <label className="block text-xs text-muted-foreground mb-1">Imagem do Produto</label>
+                          <label className="block text-xs text-muted-foreground mb-1">Imagen del Producto</label>
                           <ImageUploader
                             folder="prizes"
                             currentUrl={prize.image_url}
                             onUploaded={(url: string) => updatePrize(idx, 'image_url', url)}
-                            placeholder="Imagem do prêmio"
+                            placeholder="Imagen del premio"
                           />
                         </div>
                       </div>
@@ -387,14 +380,13 @@ export default function CampaignsPage() {
             <div className="flex gap-3 justify-end pt-2">
               <Button variant="ghost" onClick={() => setDialogOpen(false)}>Cancelar</Button>
               <Button onClick={handleSave} disabled={saving || !form.title || !form.start_date || !form.end_date}>
-                {saving ? 'Salvando...' : editingId ? 'Salvar Alterações' : 'Criar Campanha'}
+                {saving ? 'Guardando...' : editingId ? 'Guardar Cambios' : 'Crear Campaña'}
               </Button>
             </div>
           </div>
         </DialogContent>
       </Dialog>
 
-      {/* Ranking Dialog */}
       <Dialog open={rankingOpen} onOpenChange={setRankingOpen}>
         <DialogContent className="max-w-lg">
           <DialogHeader>
@@ -404,11 +396,11 @@ export default function CampaignsPage() {
             </DialogTitle>
           </DialogHeader>
           {rankingLoading ? (
-            <div className="py-8 text-center text-muted-foreground">Carregando ranking...</div>
+            <div className="py-8 text-center text-muted-foreground">Cargando ranking...</div>
           ) : !rankingData?.ranking.length ? (
             <div className="py-8 text-center text-muted-foreground">
               <Trophy className="w-8 h-8 mx-auto mb-2 opacity-30" />
-              <p>Nenhuma venda registrada nesta campanha ainda.</p>
+              <p>Ninguna venta registrada en esta campaña aún.</p>
             </div>
           ) : (
             <div className="space-y-2 mt-2">
@@ -427,8 +419,8 @@ export default function CampaignsPage() {
                     <p className="font-semibold text-foreground text-sm">{r.architect_name}</p>
                   </div>
                   <div className="text-right">
-                    <p className="font-bold text-foreground">{Number(r.campaign_points).toLocaleString('pt-BR')}</p>
-                    <p className="text-xs text-muted-foreground">pontos</p>
+                    <p className="font-bold text-foreground">{Number(r.campaign_points).toLocaleString('es-PY')}</p>
+                    <p className="text-xs text-muted-foreground">puntos</p>
                   </div>
                 </div>
               ))}

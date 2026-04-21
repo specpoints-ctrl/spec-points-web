@@ -24,7 +24,6 @@ export default function SettingsPage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { refreshProfile } = useProfile();
 
-  // Password change state
   const [currentPwd, setCurrentPwd] = useState('');
   const [newPwd, setNewPwd] = useState('');
   const [confirmPwd, setConfirmPwd] = useState('');
@@ -32,7 +31,6 @@ export default function SettingsPage() {
   const [pwdError, setPwdError] = useState<string | null>(null);
   const [pwdSuccess, setPwdSuccess] = useState<string | null>(null);
 
-  // Email change state
   const [newEmail, setNewEmail] = useState('');
   const [emailPwd, setEmailPwd] = useState('');
   const [savingEmail, setSavingEmail] = useState(false);
@@ -61,11 +59,11 @@ export default function SettingsPage() {
       const res = await updateProfile({ avatar_url: url });
       if (res.success) {
         setProfile((prev) => prev ? { ...prev, avatar_url: url } : prev);
-        setSuccess('Foto atualizada com sucesso!');
+        setSuccess('¡Foto actualizada con éxito!');
         await refreshProfile();
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Erro ao fazer upload da foto.');
+      setError(err instanceof Error ? err.message : 'Error al subir la foto.');
     } finally {
       setUploading(false); setUploadProgress(0);
       if (fileInputRef.current) fileInputRef.current.value = '';
@@ -78,12 +76,12 @@ export default function SettingsPage() {
     try {
       const res = await updateProfile({ display_name: displayName.trim() });
       if (res.success) {
-        setSuccess('Nome atualizado com sucesso!');
+        setSuccess('¡Nombre actualizado con éxito!');
         setProfile((prev) => prev ? { ...prev, display_name: displayName.trim() } : prev);
         await refreshProfile();
       }
     } catch {
-      setError('Erro ao salvar nome.');
+      setError('Error al guardar nombre.');
     } finally {
       setSavingName(false);
     }
@@ -92,22 +90,22 @@ export default function SettingsPage() {
   const handleChangePassword = async (e: React.FormEvent) => {
     e.preventDefault();
     setPwdError(null); setPwdSuccess(null);
-    if (newPwd.length < 8) { setPwdError('Nova senha deve ter no mínimo 8 caracteres'); return; }
-    if (newPwd !== confirmPwd) { setPwdError('As senhas não coincidem'); return; }
+    if (newPwd.length < 8) { setPwdError('La nueva contraseña debe tener al menos 8 caracteres'); return; }
+    if (newPwd !== confirmPwd) { setPwdError('Las contraseñas no coinciden'); return; }
     setSavingPwd(true);
     try {
       const user = auth.currentUser;
-      if (!user || !user.email) throw new Error('Usuário não autenticado');
+      if (!user || !user.email) throw new Error('Usuario no autenticado');
       const credential = EmailAuthProvider.credential(user.email, currentPwd);
       await reauthenticateWithCredential(user, credential);
       await fbUpdatePassword(user, newPwd);
-      setPwdSuccess('Senha alterada com sucesso!');
+      setPwdSuccess('¡Contraseña cambiada con éxito!');
       setCurrentPwd(''); setNewPwd(''); setConfirmPwd('');
     } catch (err: any) {
       if (err.code === 'auth/wrong-password' || err.code === 'auth/invalid-credential') {
-        setPwdError('Senha atual incorreta.');
+        setPwdError('Contraseña actual incorrecta.');
       } else {
-        setPwdError(err.message || 'Erro ao alterar senha.');
+        setPwdError(err.message || 'Error al cambiar contraseña.');
       }
     } finally {
       setSavingPwd(false);
@@ -117,26 +115,26 @@ export default function SettingsPage() {
   const handleChangeEmail = async (e: React.FormEvent) => {
     e.preventDefault();
     setEmailError(null); setEmailSuccess(null);
-    if (!newEmail.includes('@')) { setEmailError('Email inválido'); return; }
+    if (!newEmail.includes('@')) { setEmailError('Correo inválido'); return; }
     setSavingEmail(true);
     try {
       const user = auth.currentUser;
-      if (!user || !user.email) throw new Error('Usuário não autenticado');
+      if (!user || !user.email) throw new Error('Usuario no autenticado');
       const credential = EmailAuthProvider.credential(user.email, emailPwd);
       await reauthenticateWithCredential(user, credential);
       await fbUpdateEmail(user, newEmail);
       await updateEmailApi(newEmail);
-      setEmailSuccess('Email alterado com sucesso!');
+      setEmailSuccess('¡Correo cambiado con éxito!');
       setProfile((prev) => prev ? { ...prev, email: newEmail } : prev);
       setNewEmail(''); setEmailPwd('');
       await refreshProfile();
     } catch (err: any) {
       if (err.code === 'auth/wrong-password' || err.code === 'auth/invalid-credential') {
-        setEmailError('Senha incorreta.');
+        setEmailError('Contraseña incorrecta.');
       } else if (err.code === 'auth/email-already-in-use') {
-        setEmailError('Este email já está em uso.');
+        setEmailError('Este correo ya está en uso.');
       } else {
-        setEmailError(err.message || 'Erro ao alterar email.');
+        setEmailError(err.message || 'Error al cambiar correo.');
       }
     } finally {
       setSavingEmail(false);
@@ -151,11 +149,10 @@ export default function SettingsPage() {
   return (
     <div className="p-4 sm:p-6 space-y-6 max-w-2xl">
       <div>
-        <h1 className="text-2xl font-extrabold text-foreground tracking-tight">Configurações</h1>
-        <p className="text-sm text-muted-foreground mt-1">Gerencie seu perfil e preferências</p>
+        <h1 className="text-2xl font-extrabold text-foreground tracking-tight">Configuraciones</h1>
+        <p className="text-sm text-muted-foreground mt-1">Administre su perfil y preferencias</p>
       </div>
 
-      {/* Global feedback */}
       {error && (
         <div className="flex items-center gap-2.5 p-3.5 rounded-xl bg-red-50 border border-red-200 text-red-700 text-sm animate-fade-in">
           <AlertCircle className="w-4 h-4 shrink-0" />{error}
@@ -167,7 +164,6 @@ export default function SettingsPage() {
         </div>
       )}
 
-      {/* Avatar */}
       <Card>
         <CardHeader><CardTitle>Foto de Perfil</CardTitle></CardHeader>
         <CardContent>
@@ -185,29 +181,28 @@ export default function SettingsPage() {
               )}
             </div>
             <div className="flex-1">
-              <p className="text-sm text-muted-foreground mb-3">JPG, PNG ou WebP. Máximo 5MB.</p>
+              <p className="text-sm text-muted-foreground mb-3">JPG, PNG o WebP. Máximo 5MB.</p>
               <input ref={fileInputRef} type="file" accept="image/jpeg,image/png,image/webp" onChange={handlePhotoChange} className="hidden" />
               <button onClick={() => fileInputRef.current?.click()} disabled={uploading} className={btnCls}>
                 {uploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Camera className="w-4 h-4" />}
-                {uploading ? `Enviando ${uploadProgress}%...` : 'Alterar foto'}
+                {uploading ? `Subiendo ${uploadProgress}%...` : 'Cambiar foto'}
               </button>
             </div>
           </div>
         </CardContent>
       </Card>
 
-      {/* Display name */}
       <Card>
-        <CardHeader><CardTitle>Nome de Exibição</CardTitle></CardHeader>
+        <CardHeader><CardTitle>Nombre para mostrar</CardTitle></CardHeader>
         <CardContent>
           <div className="space-y-4">
             <div className="space-y-1">
-              <label className="block text-[11px] font-bold uppercase tracking-widest text-muted-foreground">Nome</label>
+              <label className="block text-[11px] font-bold uppercase tracking-widest text-muted-foreground">Nombre</label>
               <input type="text" value={displayName} onChange={e => setDisplayName(e.target.value)}
-                placeholder="Seu nome" maxLength={255} className={inputCls} />
+                placeholder="Su nombre" maxLength={255} className={inputCls} />
             </div>
             <div className="space-y-1">
-              <label className="block text-[11px] font-bold uppercase tracking-widest text-muted-foreground">E-mail</label>
+              <label className="block text-[11px] font-bold uppercase tracking-widest text-muted-foreground">Correo</label>
               <input type="text" value={profile?.email ?? ''} disabled
                 className="w-full px-4 py-3 rounded-xl border border-border/40 bg-muted/30 text-sm text-muted-foreground cursor-not-allowed" />
             </div>
@@ -220,16 +215,15 @@ export default function SettingsPage() {
             </div>
             <button onClick={handleSaveName} disabled={savingName || !displayName.trim()} className={btnCls}>
               {savingName ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4" />}
-              {savingName ? 'Salvando...' : 'Salvar nome'}
+              {savingName ? 'Guardando...' : 'Guardar nombre'}
             </button>
           </div>
         </CardContent>
       </Card>
 
-      {/* Change password */}
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2"><Lock className="w-4 h-4" /> Alterar Senha</CardTitle>
+          <CardTitle className="flex items-center gap-2"><Lock className="w-4 h-4" /> Cambiar Contraseña</CardTitle>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleChangePassword} className="space-y-4">
@@ -244,32 +238,31 @@ export default function SettingsPage() {
               </div>
             )}
             <div className="space-y-1">
-              <label className="block text-[11px] font-bold uppercase tracking-widest text-muted-foreground">Senha Atual</label>
+              <label className="block text-[11px] font-bold uppercase tracking-widest text-muted-foreground">Contraseña Actual</label>
               <input type="password" value={currentPwd} onChange={e => setCurrentPwd(e.target.value)} required
-                placeholder="Sua senha atual" className={inputCls} />
+                placeholder="Su contraseña actual" className={inputCls} />
             </div>
             <div className="space-y-1">
-              <label className="block text-[11px] font-bold uppercase tracking-widest text-muted-foreground">Nova Senha</label>
+              <label className="block text-[11px] font-bold uppercase tracking-widest text-muted-foreground">Nueva Contraseña</label>
               <input type="password" value={newPwd} onChange={e => setNewPwd(e.target.value)} required minLength={8}
                 placeholder="Mínimo 8 caracteres" className={inputCls} />
             </div>
             <div className="space-y-1">
-              <label className="block text-[11px] font-bold uppercase tracking-widest text-muted-foreground">Confirmar Nova Senha</label>
+              <label className="block text-[11px] font-bold uppercase tracking-widest text-muted-foreground">Confirmar Nueva Contraseña</label>
               <input type="password" value={confirmPwd} onChange={e => setConfirmPwd(e.target.value)} required
-                placeholder="Repita a nova senha" className={inputCls} />
+                placeholder="Repita la nueva contraseña" className={inputCls} />
             </div>
             <button type="submit" disabled={savingPwd || !currentPwd || !newPwd || !confirmPwd} className={btnCls}>
               {savingPwd ? <Loader2 className="w-4 h-4 animate-spin" /> : <Lock className="w-4 h-4" />}
-              {savingPwd ? 'Alterando...' : 'Alterar senha'}
+              {savingPwd ? 'Cambiando...' : 'Cambiar contraseña'}
             </button>
           </form>
         </CardContent>
       </Card>
 
-      {/* Change email */}
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2"><Mail className="w-4 h-4" /> Alterar Email</CardTitle>
+          <CardTitle className="flex items-center gap-2"><Mail className="w-4 h-4" /> Cambiar Correo</CardTitle>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleChangeEmail} className="space-y-4">
@@ -284,18 +277,18 @@ export default function SettingsPage() {
               </div>
             )}
             <div className="space-y-1">
-              <label className="block text-[11px] font-bold uppercase tracking-widest text-muted-foreground">Novo Email</label>
+              <label className="block text-[11px] font-bold uppercase tracking-widest text-muted-foreground">Nuevo Correo</label>
               <input type="email" value={newEmail} onChange={e => setNewEmail(e.target.value)} required
-                placeholder="novo@email.com" className={inputCls} />
+                placeholder="nuevo@correo.com" className={inputCls} />
             </div>
             <div className="space-y-1">
-              <label className="block text-[11px] font-bold uppercase tracking-widest text-muted-foreground">Confirmar com Senha</label>
+              <label className="block text-[11px] font-bold uppercase tracking-widest text-muted-foreground">Confirmar con Contraseña</label>
               <input type="password" value={emailPwd} onChange={e => setEmailPwd(e.target.value)} required
-                placeholder="Sua senha atual" className={inputCls} />
+                placeholder="Su contraseña actual" className={inputCls} />
             </div>
             <button type="submit" disabled={savingEmail || !newEmail || !emailPwd} className={btnCls}>
               {savingEmail ? <Loader2 className="w-4 h-4 animate-spin" /> : <Mail className="w-4 h-4" />}
-              {savingEmail ? 'Alterando...' : 'Alterar email'}
+              {savingEmail ? 'Cambiando...' : 'Cambiar correo'}
             </button>
           </form>
         </CardContent>

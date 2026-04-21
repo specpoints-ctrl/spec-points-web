@@ -75,7 +75,7 @@ export default function PrizesPage() {
       const response = await api.get<ApiListResponse<Prize>>('/prizes');
       setPrizes(response.data.data || []);
     } catch (error) {
-      console.error('Erro ao carregar premios:', error);
+      console.error('Error al cargar premios:', error);
       setPrizes([]);
     } finally {
       setLoading(false);
@@ -115,7 +115,7 @@ export default function PrizesPage() {
       resetForm();
       await loadPrizes();
     } catch (error) {
-      console.error('Erro ao salvar premio:', error);
+      console.error('Error al guardar premio:', error);
     }
   };
 
@@ -133,13 +133,13 @@ export default function PrizesPage() {
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Tem certeza que deseja deletar este premio?')) return;
+    if (!confirm('¿Está seguro de que desea eliminar este premio?')) return;
 
     try {
       await api.delete(`/prizes/${id}`);
       await loadPrizes();
     } catch (error) {
-      console.error('Erro ao deletar premio:', error);
+      console.error('Error al eliminar premio:', error);
     }
   };
 
@@ -148,7 +148,7 @@ export default function PrizesPage() {
       await api.patch(`/prizes/${id}/active`, { active });
       await loadPrizes();
     } catch (error) {
-      console.error('Erro ao atualizar status do premio:', error);
+      console.error('Error al actualizar estado del premio:', error);
     }
   };
 
@@ -157,7 +157,7 @@ export default function PrizesPage() {
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl sm:text-3xl font-bold text-foreground">Premios</h1>
-          <p className="text-sm text-muted-foreground mt-1">Gerencie o catalogo de premios</p>
+          <p className="text-sm text-muted-foreground mt-1">Administre el catálogo de premios</p>
         </div>
 
         <Dialog open={openDialog} onOpenChange={setOpenDialog}>
@@ -169,19 +169,19 @@ export default function PrizesPage() {
             }}
           >
             <Plus className="w-4 h-4 mr-2" />
-            Novo Premio
+            Nuevo Premio
           </Button>
 
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>{editingId ? 'Editar Premio' : 'Novo Premio'}</DialogTitle>
+              <DialogTitle>{editingId ? 'Editar Premio' : 'Nuevo Premio'}</DialogTitle>
             </DialogHeader>
 
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <Input label="Nome" name="name" value={formData.name} onChange={handleInputChange} required />
+                <Input label="Nombre" name="name" value={formData.name} onChange={handleInputChange} required />
                 <Input
-                  label="Pontos Necessarios"
+                  label="Puntos Requeridos"
                   name="points_required"
                   type="number"
                   min="1"
@@ -190,7 +190,7 @@ export default function PrizesPage() {
                   required
                 />
                 <Input
-                  label="Estoque"
+                  label="Stock"
                   name="stock"
                   type="number"
                   min="0"
@@ -199,7 +199,7 @@ export default function PrizesPage() {
                   required
                 />
                 <Input
-                  label="Validade"
+                  label="Vencimiento"
                   name="expires_at"
                   type="date"
                   value={formData.expires_at}
@@ -207,23 +207,26 @@ export default function PrizesPage() {
                 />
               </div>
 
-            <div className="space-y-1.5">
-              <label className="block text-[11px] font-bold uppercase tracking-widest text-muted-foreground">
-                Imagem do Prêmio
-              </label>
-              <ImageUploader
-                currentUrl={formData.image_url}
-                folder="prizes"
-                onUploaded={(url) => setFormData((prev) => ({ ...prev, image_url: url }))}
-                label="Enviar imagem"
-                shape="square"
-              />
-            </div>
+              <Textarea label="Descripción" name="description" value={formData.description} onChange={handleInputChange} rows={2} />
+
+              <div className="space-y-1.5">
+                <label className="block text-[11px] font-bold uppercase tracking-widest text-muted-foreground">
+                  Imagen del Premio
+                </label>
+                <ImageUploader
+                  currentUrl={formData.image_url}
+                  folder="prizes"
+                  onUploaded={(url) => setFormData((prev) => ({ ...prev, image_url: url }))}
+                  label="Subir imagen"
+                  shape="square"
+                />
+              </div>
+
               <div className="flex flex-col-reverse sm:flex-row gap-2 sm:justify-end">
                 <Button type="button" variant="outline" onClick={() => setOpenDialog(false)} className="w-full sm:w-auto">
                   Cancelar
                 </Button>
-                <Button type="submit" className="w-full sm:w-auto">{editingId ? 'Atualizar' : 'Criar'}</Button>
+                <Button type="submit" className="w-full sm:w-auto">{editingId ? 'Actualizar' : 'Crear'}</Button>
               </div>
             </form>
           </DialogContent>
@@ -239,19 +242,19 @@ export default function PrizesPage() {
         </Card>
         <Card>
           <CardContent className="pt-6 text-center">
-            <p className="text-sm text-muted-foreground">Ativos</p>
+            <p className="text-sm text-muted-foreground">Activos</p>
             <p className="text-2xl font-bold text-success">{prizes.filter((p) => p.active).length}</p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="pt-6 text-center">
-            <p className="text-sm text-muted-foreground">Inativos</p>
+            <p className="text-sm text-muted-foreground">Inactivos</p>
             <p className="text-2xl font-bold text-destructive">{prizes.filter((p) => !p.active).length}</p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="pt-6 text-center">
-            <p className="text-sm text-muted-foreground">Estoque Total</p>
+            <p className="text-sm text-muted-foreground">Stock Total</p>
             <p className="text-2xl font-bold text-warning">{prizes.reduce((sum, p) => sum + Number(p.stock || 0), 0)}</p>
           </CardContent>
         </Card>
@@ -263,18 +266,18 @@ export default function PrizesPage() {
         </CardHeader>
         <CardContent>
           {loading ? (
-            <div className="text-center py-8 text-muted-foreground">Carregando...</div>
+            <div className="text-center py-8 text-muted-foreground">Cargando...</div>
           ) : prizes.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">Nenhum premio cadastrado</div>
+            <div className="text-center py-8 text-muted-foreground">Ningún premio registrado</div>
           ) : (
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Nome</TableHead>
-                  <TableHead>Pontos</TableHead>
-                  <TableHead>Estoque</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Acoes</TableHead>
+                  <TableHead>Nombre</TableHead>
+                  <TableHead>Puntos</TableHead>
+                  <TableHead>Stock</TableHead>
+                  <TableHead>Estado</TableHead>
+                  <TableHead>Acciones</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -285,7 +288,7 @@ export default function PrizesPage() {
                     <TableCell>{prize.stock}</TableCell>
                     <TableCell>
                       <Badge variant={prize.active ? 'success' : 'destructive'}>
-                        {prize.active ? 'Ativo' : 'Inativo'}
+                        {prize.active ? 'Activo' : 'Inactivo'}
                       </Badge>
                     </TableCell>
                     <TableCell>
@@ -294,7 +297,7 @@ export default function PrizesPage() {
                           <button
                             onClick={() => handleToggleActive(prize.id, false)}
                             className="inline-flex items-center justify-center rounded-md h-11 w-11 min-h-[44px] min-w-[44px] text-destructive hover:bg-destructive/10 transition-colors"
-                            title="Desativar"
+                            title="Desactivar"
                           >
                             <X className="w-4 h-4" />
                           </button>
@@ -302,7 +305,7 @@ export default function PrizesPage() {
                           <button
                             onClick={() => handleToggleActive(prize.id, true)}
                             className="inline-flex items-center justify-center rounded-md h-11 w-11 min-h-[44px] min-w-[44px] text-success hover:bg-success/10 transition-colors"
-                            title="Ativar"
+                            title="Activar"
                           >
                             <Check className="w-4 h-4" />
                           </button>
@@ -318,7 +321,7 @@ export default function PrizesPage() {
                         <button
                           onClick={() => handleDelete(prize.id)}
                           className="inline-flex items-center justify-center rounded-md h-11 w-11 min-h-[44px] min-w-[44px] text-destructive hover:bg-destructive/10 transition-colors"
-                          title="Deletar"
+                          title="Eliminar"
                         >
                           <Trash2 className="w-4 h-4" />
                         </button>

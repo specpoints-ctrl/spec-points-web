@@ -9,8 +9,6 @@ interface DashboardPageProps {
   onLogout: () => Promise<void>;
 }
 
-// ── Architect Dashboard ────────────────────────────────────────────────────
-
 function ArchitectDashboard() {
   const [architect, setArchitect] = useState<ArchitectProfile | null>(null);
   const [sales, setSales] = useState<any[]>([]);
@@ -46,52 +44,49 @@ function ArchitectDashboard() {
 
   return (
     <div className="p-4 sm:p-6 space-y-6">
-      {/* Hero */}
       <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#0b2024] via-[#0e3a40] to-[#1a4a4f] p-6 sm:p-8 shadow-[0_24px_56px_rgba(7,24,27,0.38)]">
         <div className="dot-pattern absolute inset-0 opacity-30" />
         <div className="absolute -top-12 -right-12 w-48 h-48 rounded-full bg-[hsl(var(--sidebar-accent)/0.10)] blur-3xl" />
         <div className="relative">
-          <p className="text-[11px] uppercase tracking-widest text-white/40 mb-2">Meu Painel</p>
+          <p className="text-[11px] uppercase tracking-widest text-white/40 mb-2">Mi Panel</p>
           <h1 className="text-2xl sm:text-3xl font-extrabold text-white">
-            Olá, {architect?.name?.split(' ')[0] ?? 'Arquiteto'}!
+            ¡Hola, {architect?.name?.split(' ')[0] ?? 'Arquitecto'}!
           </h1>
-          <p className="text-white/50 text-sm mt-1">Acompanhe seus pontos e vendas em tempo real.</p>
+          <p className="text-white/50 text-sm mt-1">Siga sus puntos y ventas en tiempo real.</p>
 
-          {/* Points highlight */}
           <div className="mt-6 inline-flex items-center gap-4 bg-white/10 border border-white/15 rounded-2xl px-5 py-4">
             <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[hsl(var(--sidebar-accent))] to-[#c4956a] flex items-center justify-center">
               <Star className="w-5 h-5 text-white" />
             </div>
             <div>
-              <p className="text-[10px] uppercase tracking-widest text-white/40">Pontos disponíveis</p>
+              <p className="text-[10px] uppercase tracking-widest text-white/40">Puntos disponibles</p>
               <p className="text-3xl font-extrabold text-white tabular-nums leading-none mt-0.5">
-                {available.toLocaleString('pt-BR')}
+                {available.toLocaleString('es-PY')}
               </p>
             </div>
           </div>
         </div>
       </div>
 
-      {/* KPI Cards */}
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
         {[
           {
-            label: 'Total de pontos',
-            value: (architect?.points_total ?? 0).toLocaleString('pt-BR'),
+            label: 'Total de puntos',
+            value: (architect?.points_total ?? 0).toLocaleString('es-PY'),
             icon: TrendingUp,
             bg: 'bg-gradient-to-br from-teal-500 to-emerald-400',
             shadow: 'shadow-[0_8px_24px_rgba(20,184,166,0.25)]',
           },
           {
-            label: 'Pontos resgatados',
-            value: (architect?.points_redeemed ?? 0).toLocaleString('pt-BR'),
+            label: 'Puntos canjeados',
+            value: (architect?.points_redeemed ?? 0).toLocaleString('es-PY'),
             icon: Award,
             bg: 'bg-gradient-to-br from-violet-500 to-indigo-400',
             shadow: 'shadow-[0_8px_24px_rgba(139,92,246,0.25)]',
           },
           {
-            label: 'Vendas registradas',
-            value: sales.length.toLocaleString('pt-BR'),
+            label: 'Ventas registradas',
+            value: sales.length.toLocaleString('es-PY'),
             icon: ShoppingCart,
             bg: 'bg-gradient-to-br from-orange-500 to-amber-400',
             shadow: 'shadow-[0_8px_24px_rgba(249,115,22,0.25)]',
@@ -117,11 +112,10 @@ function ArchitectDashboard() {
         })}
       </div>
 
-      {/* Active Campaigns */}
       {campaigns.length > 0 && (
         <div>
           <h2 className="text-sm font-bold uppercase tracking-widest text-muted-foreground mb-3 flex items-center gap-2">
-            <Zap className="w-4 h-4 text-amber-500" /> Campanhas Ativas
+            <Zap className="w-4 h-4 text-amber-500" /> Campañas Activas
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             {campaigns.map(c => (
@@ -133,12 +127,12 @@ function ArchitectDashboard() {
                   <p className="font-semibold text-foreground text-sm truncate">{c.title}</p>
                   {c.subtitle && <p className="text-xs text-muted-foreground truncate">{c.subtitle}</p>}
                   <p className="text-xs text-muted-foreground mt-0.5">
-                    Até {new Date(c.end_date).toLocaleDateString('pt-BR')}
+                    Hasta {new Date(c.end_date).toLocaleDateString('es-PY')}
                   </p>
                 </div>
                 <div className="text-right shrink-0">
-                  <p className="text-lg font-extrabold text-amber-600">{Number(c.points_earned || 0).toLocaleString('pt-BR')}</p>
-                  <p className="text-xs text-muted-foreground">pts ganhos</p>
+                  <p className="text-lg font-extrabold text-amber-600">{Number(c.points_earned || 0).toLocaleString('es-PY')}</p>
+                  <p className="text-xs text-muted-foreground">pts ganados</p>
                   <span className="inline-flex items-center gap-0.5 text-xs font-bold text-amber-700 bg-amber-100 px-2 py-0.5 rounded-full mt-1">
                     <Zap className="w-3 h-3" />{c.points_multiplier}x pts/$
                   </span>
@@ -149,11 +143,10 @@ function ArchitectDashboard() {
         </div>
       )}
 
-      {/* Partner Stores */}
       {stores.length > 0 && (
         <div>
           <h2 className="text-sm font-bold uppercase tracking-widest text-muted-foreground mb-3 flex items-center gap-2">
-            <Store className="w-4 h-4 text-teal-500" /> Lojas Parceiras
+            <Store className="w-4 h-4 text-teal-500" /> Tiendas Asociadas
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             {stores.map(s => (
@@ -182,16 +175,15 @@ function ArchitectDashboard() {
         </div>
       )}
 
-      {/* Recent Sales */}
       <Card>
         <CardHeader>
-          <CardTitle>Minhas Vendas Recentes</CardTitle>
+          <CardTitle>Mis Ventas Recientes</CardTitle>
         </CardHeader>
         <CardContent>
           {sales.length === 0 ? (
             <div className="py-10 flex flex-col items-center gap-2 text-muted-foreground">
               <ShoppingCart className="w-8 h-8 opacity-30" />
-              <p className="text-sm">Nenhuma venda registrada ainda</p>
+              <p className="text-sm">Ninguna venta registrada aún</p>
             </div>
           ) : (
             <div className="space-y-2.5">
@@ -201,11 +193,11 @@ function ArchitectDashboard() {
                     <ShoppingCart className="w-4 h-4 text-white" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold text-foreground truncate">{sale.store_name ?? 'Loja'}</p>
+                    <p className="text-sm font-semibold text-foreground truncate">{sale.store_name ?? 'Tienda'}</p>
                     <p className="text-xs text-muted-foreground">{sale.client_name ?? 'Cliente'}</p>
                   </div>
                   <div className="text-right shrink-0">
-                    <p className="text-sm font-bold text-emerald-600 tabular-nums">+{parseInt(sale.points_generated ?? 0).toLocaleString('pt-BR')} pts</p>
+                    <p className="text-sm font-bold text-emerald-600 tabular-nums">+{parseInt(sale.points_generated ?? 0).toLocaleString('es-PY')} pts</p>
                     <p className="text-[11px] text-muted-foreground">US${parseFloat(sale.amount_usd ?? 0).toFixed(2)}</p>
                   </div>
                 </div>
@@ -214,7 +206,7 @@ function ArchitectDashboard() {
           )}
           {sales.length > 0 && (
             <div className="mt-4 pt-4 border-t border-border/30 flex justify-between items-center">
-              <p className="text-xs text-muted-foreground">Total em vendas</p>
+              <p className="text-xs text-muted-foreground">Total en ventas</p>
               <p className="text-sm font-bold text-foreground tabular-nums">US${totalSalesValue.toFixed(2)}</p>
             </div>
           )}
@@ -224,12 +216,9 @@ function ArchitectDashboard() {
   );
 }
 
-// ── Lojista Dashboard ──────────────────────────────────────────────────────
-
 function LojistaDashboard({ profile }: { profile: BackendUserProfile | null }) {
   return (
     <div className="p-4 sm:p-6 space-y-6">
-      {/* Hero */}
       <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#0b2024] via-[#0e3a40] to-[#1a4a4f] p-6 sm:p-8 shadow-[0_24px_56px_rgba(7,24,27,0.38)]">
         <div className="dot-pattern absolute inset-0 opacity-30" />
         <div className="absolute -top-12 -right-12 w-48 h-48 rounded-full bg-[hsl(var(--sidebar-accent)/0.10)] blur-3xl" />
@@ -237,27 +226,26 @@ function LojistaDashboard({ profile }: { profile: BackendUserProfile | null }) {
           <div className="flex items-center gap-2 mb-3">
             <span className="flex items-center gap-1.5 bg-emerald-500/20 border border-emerald-500/30 text-emerald-300 text-[10px] font-bold uppercase tracking-widest px-2.5 py-1 rounded-full">
               <span className="block w-1.5 h-1.5 rounded-full bg-emerald-400 animate-live" />
-              Ativo
+              Activo
             </span>
           </div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-white">Bem-vindo, Lojista!</h1>
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-white">¡Bienvenido, Comerciante!</h1>
           <p className="text-white/50 text-sm mt-1 max-w-md">
-            Seu painel de controle CONNECTUS. Acompanhe as vendas e especificações dos arquitetos.
+            Su panel de control CONNECTUS. Siga las ventas y especificaciones de los arquitectos.
           </p>
         </div>
       </div>
 
-      {/* Info card */}
       <Card>
         <CardHeader>
-          <CardTitle>Conta</CardTitle>
+          <CardTitle>Cuenta</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="space-y-3">
             {[
-              { label: 'E-mail', value: profile?.email ?? '—' },
-              { label: 'Status', value: 'Ativo' },
-              { label: 'Perfil', value: 'Lojista' },
+              { label: 'Correo', value: profile?.email ?? '—' },
+              { label: 'Estado', value: 'Activo' },
+              { label: 'Perfil', value: 'Comerciante' },
             ].map((item) => (
               <div key={item.label} className="flex items-center justify-between py-2.5 border-b border-border/30 last:border-0">
                 <span className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground">{item.label}</span>
@@ -268,21 +256,18 @@ function LojistaDashboard({ profile }: { profile: BackendUserProfile | null }) {
         </CardContent>
       </Card>
 
-      {/* CTA */}
       <div className="flex items-center gap-4 p-4 rounded-2xl border border-primary/20 bg-primary/[0.04]">
         <div className="p-3 rounded-xl bg-primary/10">
           <ArrowUpRight className="w-5 h-5 text-primary" />
         </div>
         <div>
-          <p className="text-sm font-semibold text-foreground">Registre vendas</p>
-          <p className="text-xs text-muted-foreground">Cada venda gera pontos para os arquitetos parceiros</p>
+          <p className="text-sm font-semibold text-foreground">Registre ventas</p>
+          <p className="text-xs text-muted-foreground">Cada venta genera puntos para los arquitectos asociados</p>
         </div>
       </div>
     </div>
   );
 }
-
-// ── Main DashboardPage ─────────────────────────────────────────────────────
 
 export default function DashboardPage({ profile }: DashboardPageProps) {
   const userRole = profile?.role ?? profile?.user_roles?.[0]?.role ?? 'architect';
@@ -293,7 +278,7 @@ export default function DashboardPage({ profile }: DashboardPageProps) {
 
   return (
     <div className="p-6 flex items-center justify-center min-h-64">
-      <p className="text-muted-foreground text-sm">Carregando perfil...</p>
+      <p className="text-muted-foreground text-sm">Cargando perfil...</p>
     </div>
   );
 }

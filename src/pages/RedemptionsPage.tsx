@@ -86,7 +86,7 @@ export default function RedemptionsPage() {
       setArchitects(architectsResponse.data.data || []);
       setPrizes(prizesResponse.data.data || []);
     } catch (error) {
-      console.error('Erro ao carregar resgates:', error);
+      console.error('Error al cargar canjes:', error);
       setRedemptions([]);
     } finally {
       setLoading(false);
@@ -122,7 +122,7 @@ export default function RedemptionsPage() {
       resetForm();
       await loadInitialData();
     } catch (error) {
-      console.error('Erro ao salvar resgate:', error);
+      console.error('Error al guardar canje:', error);
     }
   };
 
@@ -137,12 +137,12 @@ export default function RedemptionsPage() {
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Tem certeza que deseja deletar este resgate?')) return;
+    if (!confirm('¿Está seguro de que desea eliminar este canje?')) return;
     try {
       await api.delete(`/redemptions/${id}`);
       await loadInitialData();
     } catch (error) {
-      console.error('Erro ao deletar resgate:', error);
+      console.error('Error al eliminar canje:', error);
     }
   };
 
@@ -151,7 +151,7 @@ export default function RedemptionsPage() {
       await approveRedemption(Number(id));
       await loadInitialData();
     } catch (error) {
-      console.error('Erro ao aprovar resgate:', error);
+      console.error('Error al aprobar canje:', error);
     }
   };
 
@@ -160,7 +160,7 @@ export default function RedemptionsPage() {
       await deliverRedemption(Number(id));
       await loadInitialData();
     } catch (error) {
-      console.error('Erro ao marcar entrega:', error);
+      console.error('Error al marcar entrega:', error);
     }
   };
 
@@ -171,17 +171,17 @@ export default function RedemptionsPage() {
   };
 
   const statusLabel = (status: Redemption['status']) => {
-    if (status === 'approved') return 'Aprovado';
-    if (status === 'delivered') return 'Entregue';
-    return 'Pendente';
+    if (status === 'approved') return 'Aprobado';
+    if (status === 'delivered') return 'Entregado';
+    return 'Pendiente';
   };
 
   return (
     <div className="flex-1 p-4 sm:p-6 space-y-6">
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-foreground">Resgates</h1>
-          <p className="text-sm text-muted-foreground mt-1">Gerencie solicitacoes de resgate</p>
+          <h1 className="text-2xl sm:text-3xl font-bold text-foreground">Canjes</h1>
+          <p className="text-sm text-muted-foreground mt-1">Administre solicitudes de canje</p>
         </div>
 
         <Dialog open={openDialog} onOpenChange={setOpenDialog}>
@@ -193,17 +193,17 @@ export default function RedemptionsPage() {
             }}
           >
             <Plus className="w-4 h-4 mr-2" />
-            Novo Resgate
+            Nuevo Canje
           </Button>
 
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>{editingId ? 'Editar Resgate' : 'Novo Resgate'}</DialogTitle>
+              <DialogTitle>{editingId ? 'Editar Canje' : 'Nuevo Canje'}</DialogTitle>
             </DialogHeader>
 
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-foreground mb-2">Arquiteto</label>
+                <label className="block text-sm font-medium text-foreground mb-2">Arquitecto</label>
                 <select
                   name="architect_id"
                   value={formData.architect_id}
@@ -211,7 +211,7 @@ export default function RedemptionsPage() {
                   className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm min-h-[44px]"
                   required
                 >
-                  <option value="">Selecione</option>
+                  <option value="">Seleccione</option>
                   {architects.map((architect) => (
                     <option key={architect.id} value={architect.id}>
                       {architect.nome}
@@ -229,7 +229,7 @@ export default function RedemptionsPage() {
                   className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm min-h-[44px]"
                   required
                 >
-                  <option value="">Selecione</option>
+                  <option value="">Seleccione</option>
                   {prizes.map((prize) => (
                     <option key={prize.id} value={prize.id}>
                       {prize.name}
@@ -239,16 +239,16 @@ export default function RedemptionsPage() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-foreground mb-2">Status</label>
+                <label className="block text-sm font-medium text-foreground mb-2">Estado</label>
                 <select
                   name="status"
                   value={formData.status}
                   onChange={handleInputChange}
                   className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm min-h-[44px]"
                 >
-                  <option value="pending">Pendente</option>
-                  <option value="approved">Aprovado</option>
-                  <option value="delivered">Entregue</option>
+                  <option value="pending">Pendiente</option>
+                  <option value="approved">Aprobado</option>
+                  <option value="delivered">Entregado</option>
                 </select>
               </div>
 
@@ -256,7 +256,7 @@ export default function RedemptionsPage() {
                 <Button type="button" variant="outline" onClick={() => setOpenDialog(false)} className="w-full sm:w-auto">
                   Cancelar
                 </Button>
-                <Button type="submit" className="w-full sm:w-auto">{editingId ? 'Atualizar' : 'Criar'}</Button>
+                <Button type="submit" className="w-full sm:w-auto">{editingId ? 'Actualizar' : 'Crear'}</Button>
               </div>
             </form>
           </DialogContent>
@@ -272,19 +272,19 @@ export default function RedemptionsPage() {
         </Card>
         <Card>
           <CardContent className="pt-6 text-center">
-            <p className="text-sm text-muted-foreground">Pendentes</p>
+            <p className="text-sm text-muted-foreground">Pendientes</p>
             <p className="text-2xl font-bold text-warning">{redemptions.filter((r) => r.status === 'pending').length}</p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="pt-6 text-center">
-            <p className="text-sm text-muted-foreground">Aprovados</p>
+            <p className="text-sm text-muted-foreground">Aprobados</p>
             <p className="text-2xl font-bold text-success">{redemptions.filter((r) => r.status === 'approved').length}</p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="pt-6 text-center">
-            <p className="text-sm text-muted-foreground">Entregues</p>
+            <p className="text-sm text-muted-foreground">Entregados</p>
             <p className="text-2xl font-bold text-secondary">{redemptions.filter((r) => r.status === 'delivered').length}</p>
           </CardContent>
         </Card>
@@ -292,24 +292,24 @@ export default function RedemptionsPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Lista de Resgates</CardTitle>
+          <CardTitle>Lista de Canjes</CardTitle>
         </CardHeader>
         <CardContent>
           {loading ? (
-            <div className="text-center py-8 text-muted-foreground">Carregando...</div>
+            <div className="text-center py-8 text-muted-foreground">Cargando...</div>
           ) : redemptions.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">Nenhum resgate cadastrado</div>
+            <div className="text-center py-8 text-muted-foreground">Ningún canje registrado</div>
           ) : (
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Arquiteto</TableHead>
-                  <TableHead>Prêmio</TableHead>
-                  <TableHead>Pontos</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Prazo</TableHead>
-                  <TableHead>Entregue em</TableHead>
-                  <TableHead>Ações</TableHead>
+                  <TableHead>Arquitecto</TableHead>
+                  <TableHead>Premio</TableHead>
+                  <TableHead>Puntos</TableHead>
+                  <TableHead>Estado</TableHead>
+                  <TableHead>Plazo</TableHead>
+                  <TableHead>Entregado el</TableHead>
+                  <TableHead>Acciones</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -317,7 +317,7 @@ export default function RedemptionsPage() {
                   <TableRow key={redemption.id}>
                     <TableCell className="font-medium">{redemption.architect_name || '-'}</TableCell>
                     <TableCell>{redemption.prize_name || '-'}</TableCell>
-                    <TableCell>{Number(redemption.points_required || 0).toLocaleString('pt-BR')}</TableCell>
+                    <TableCell>{Number(redemption.points_required || 0).toLocaleString('es-PY')}</TableCell>
                     <TableCell>
                       <Badge variant={statusVariant(redemption.status)}>{statusLabel(redemption.status)}</Badge>
                     </TableCell>
@@ -325,14 +325,14 @@ export default function RedemptionsPage() {
                       {redemption.deadline_at ? (
                         <span className="text-xs text-amber-600 flex items-center gap-1">
                           <Clock className="w-3 h-3" />
-                          {new Date(redemption.deadline_at).toLocaleDateString('pt-BR')}
+                          {new Date(redemption.deadline_at).toLocaleDateString('es-PY')}
                         </span>
                       ) : '-'}
                     </TableCell>
                     <TableCell>
                       {redemption.delivered_at ? (
                         <span className="text-xs text-emerald-600">
-                          {new Date(redemption.delivered_at).toLocaleDateString('pt-BR')}
+                          {new Date(redemption.delivered_at).toLocaleDateString('es-PY')}
                         </span>
                       ) : '-'}
                     </TableCell>
@@ -342,7 +342,7 @@ export default function RedemptionsPage() {
                           <button
                             onClick={() => handleApprove(redemption.id)}
                             className="inline-flex items-center justify-center rounded-md h-9 w-9 text-success hover:bg-success/10 transition-colors"
-                            title="Aprovar"
+                            title="Aprobar"
                           >
                             <Check className="w-4 h-4" />
                           </button>
@@ -351,7 +351,7 @@ export default function RedemptionsPage() {
                           <button
                             onClick={() => handleDeliver(redemption.id)}
                             className="inline-flex items-center justify-center rounded-md h-9 w-9 text-blue-600 hover:bg-blue-50 transition-colors"
-                            title="Marcar como entregue"
+                            title="Marcar como entregado"
                           >
                             <Package className="w-4 h-4" />
                           </button>
@@ -366,7 +366,7 @@ export default function RedemptionsPage() {
                         <button
                           onClick={() => handleDelete(redemption.id)}
                           className="inline-flex items-center justify-center rounded-md h-9 w-9 text-destructive hover:bg-destructive/10 transition-colors"
-                          title="Deletar"
+                          title="Eliminar"
                         >
                           <Trash2 className="w-4 h-4" />
                         </button>
