@@ -206,7 +206,7 @@ export default function PointsStorePage() {
                       </div>
                     </div>
                     <button
-                      onClick={() => { setSelectedPrize(prize); setReqError(null); setReqSuccess(null); }}
+                      onClick={() => { setSelectedPrize(prize); setReqError(null); }}
                       disabled={!can}
                       className="w-full mt-3 h-9 rounded-xl text-sm font-semibold transition-all duration-200 disabled:cursor-not-allowed"
                       style={can ? {
