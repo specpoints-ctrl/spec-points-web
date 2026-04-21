@@ -1,8 +1,8 @@
 import { FormEvent, useState, useEffect } from 'react';
 import { isAxiosError } from 'axios';
 import {
-  signInWithEmailAndPassword, signOut, signInWithRedirect,
-  getRedirectResult, GoogleAuthProvider, sendPasswordResetEmail,
+  signInWithEmailAndPassword, signOut, signInWithPopup,
+  GoogleAuthProvider, sendPasswordResetEmail,
 } from 'firebase/auth';
 import {
   Loader2, AlertCircle, CheckCircle2, Eye, EyeOff,
@@ -179,48 +179,33 @@ export default function AuthPage({ onLoginSuccess }: AuthPageProps) {
     setLoading(true); setError(null); setSuccess(null);
     try {
       const provider = new GoogleAuthProvider();
-      await signInWithRedirect(auth, provider);
+      const result = await signInWithPopup(auth, provider);
+      const displayName = result.user.displayName ?? result.user.email ?? '';
+      const response = await googleLoginUpsert(displayName);
+      if (!response.success) {
+        await signOut(auth);
+        setError(response.error || 'Não foi possível acessar a plataforma com esta conta Google.');
+        return;
+      }
+      if (response.data?.status === 'pending') {
+        await signOut(auth);
+        setSuccess('Conta criada! Aguarde a aprovação do administrador para acessar.');
+        return;
+      }
+      if (response.data?.status === 'blocked') {
+        await signOut(auth);
+        setError('Sua conta está bloqueada. Entre em contato com o suporte.');
+        return;
+      }
+      setSuccess('Login realizado com sucesso!');
+      onLoginSuccess();
     } catch (err: unknown) {
-      setError(getApiErrorMessage(err, 'Não foi possível iniciar login com Google.'));
+      await signOut(auth).catch(() => {});
+      setError(getApiErrorMessage(err, 'Não foi possível fazer login com Google.'));
+    } finally {
       setLoading(false);
     }
   };
-
-  useEffect(() => {
-    getRedirectResult(auth).then(async (result) => {
-      if (!result) return;
-      setLoading(true);
-      try {
-        const displayName = result.user.displayName ?? result.user.email ?? '';
-        const response = await googleLoginUpsert(displayName);
-        if (!response.success) {
-          await signOut(auth);
-          setError(response.error || 'Não foi possível acessar a plataforma com esta conta Google.');
-          return;
-        }
-        if (response.data?.status === 'pending') {
-          await signOut(auth);
-          setSuccess('Conta criada! Aguarde a aprovação do administrador para acessar.');
-          return;
-        }
-        if (response.data?.status === 'blocked') {
-          await signOut(auth);
-          setError('Sua conta está bloqueada. Entre em contato com o suporte.');
-          return;
-        }
-        setSuccess('Login realizado com sucesso!');
-        onLoginSuccess();
-      } catch (err: unknown) {
-        await signOut(auth).catch(() => {});
-        setError(getApiErrorMessage(err, 'Não foi possível fazer login com Google.'));
-      } finally {
-        setLoading(false);
-      }
-    }).catch((err: unknown) => {
-      setError(getApiErrorMessage(err, 'Erro ao processar login com Google.'));
-    });
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
   const switchMode = (m: Mode) => {
     setMode(m); setStep(1);
