@@ -146,10 +146,10 @@ CREATE TABLE IF NOT EXISTS admin_approvals (
 );
 
 -- Add foreign key constraints for user_roles (after architects and stores exist)
-ALTER TABLE user_roles ADD CONSTRAINT fk_user_roles_architect 
+ALTER TABLE user_roles ADD CONSTRAINT IF NOT EXISTS fk_user_roles_architect
   FOREIGN KEY (architect_id) REFERENCES architects(id) ON DELETE CASCADE;
 
-ALTER TABLE user_roles ADD CONSTRAINT fk_user_roles_store 
+ALTER TABLE user_roles ADD CONSTRAINT IF NOT EXISTS fk_user_roles_store
   FOREIGN KEY (store_id) REFERENCES stores(id) ON DELETE CASCADE;
 
 -- Create indexes for performance
@@ -195,36 +195,43 @@ END;
 $$ LANGUAGE plpgsql;
 
 -- Apply update_updated_at trigger to relevant tables
+DROP TRIGGER IF EXISTS update_users_updated_at ON users;
 CREATE TRIGGER update_users_updated_at
   BEFORE UPDATE ON users
   FOR EACH ROW
   EXECUTE FUNCTION update_updated_at_column();
 
+DROP TRIGGER IF EXISTS update_architects_updated_at ON architects;
 CREATE TRIGGER update_architects_updated_at
   BEFORE UPDATE ON architects
   FOR EACH ROW
   EXECUTE FUNCTION update_updated_at_column();
 
+DROP TRIGGER IF EXISTS update_stores_updated_at ON stores;
 CREATE TRIGGER update_stores_updated_at
   BEFORE UPDATE ON stores
   FOR EACH ROW
   EXECUTE FUNCTION update_updated_at_column();
 
+DROP TRIGGER IF EXISTS update_sales_updated_at ON sales;
 CREATE TRIGGER update_sales_updated_at
   BEFORE UPDATE ON sales
   FOR EACH ROW
   EXECUTE FUNCTION update_updated_at_column();
 
+DROP TRIGGER IF EXISTS update_prizes_updated_at ON prizes;
 CREATE TRIGGER update_prizes_updated_at
   BEFORE UPDATE ON prizes
   FOR EACH ROW
   EXECUTE FUNCTION update_updated_at_column();
 
+DROP TRIGGER IF EXISTS update_redemptions_updated_at ON redemptions;
 CREATE TRIGGER update_redemptions_updated_at
   BEFORE UPDATE ON redemptions
   FOR EACH ROW
   EXECUTE FUNCTION update_updated_at_column();
 
+DROP TRIGGER IF EXISTS update_dashboard_configs_updated_at ON dashboard_configs;
 CREATE TRIGGER update_dashboard_configs_updated_at
   BEFORE UPDATE ON dashboard_configs
   FOR EACH ROW

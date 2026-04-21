@@ -6,15 +6,29 @@ import { useNotifications } from '../../contexts/NotificationsContext';
 import { useProfile } from '../../contexts/ProfileContext';
 
 const Logo = () => (
-  <svg width="26" height="26" viewBox="0 0 28 28" fill="none" aria-hidden>
-    <polygon points="14,2 26,8 26,20 14,26 2,20 2,8" fill="none" stroke="url(#lgl)" strokeWidth="1.5" />
-    <circle cx="14" cy="14" r="2.5" fill="url(#lgl)" />
+  <svg width="32" height="32" viewBox="0 0 32 32" fill="none" aria-hidden>
     <defs>
-      <linearGradient id="lgl" x1="2" y1="2" x2="26" y2="26" gradientUnits="userSpaceOnUse">
-        <stop stopColor="#f7b871" />
-        <stop offset="1" stopColor="#d4a574" />
+      <linearGradient id="lg-c" x1="4" y1="3" x2="28" y2="29" gradientUnits="userSpaceOnUse">
+        <stop offset="0%" stopColor="#fff3cc" />
+        <stop offset="28%" stopColor="#f0c060" />
+        <stop offset="65%" stopColor="#c8902a" />
+        <stop offset="100%" stopColor="#8b5e1a" />
       </linearGradient>
+      <radialGradient id="lg-glow-c" cx="42%" cy="35%" r="55%">
+        <stop offset="0%" stopColor="#ffe8a0" stopOpacity="0.45" />
+        <stop offset="100%" stopColor="#c8902a" stopOpacity="0" />
+      </radialGradient>
+      <filter id="lg-drop-c" x="-30%" y="-30%" width="160%" height="160%">
+        <feDropShadow dx="0" dy="0" stdDeviation="1.8" floodColor="#d4a020" floodOpacity="0.55" />
+      </filter>
     </defs>
+    <circle cx="16" cy="16" r="14" fill="url(#lg-glow-c)" />
+    <polygon points="16,3 27,9.5 27,22.5 16,29 5,22.5 5,9.5"
+      fill="none" stroke="url(#lg-c)" strokeWidth="1.1" filter="url(#lg-drop-c)" />
+    <polygon points="16,8.5 22,12 22,20 16,23.5 10,20 10,12"
+      fill="url(#lg-c)" opacity="0.16" />
+    <circle cx="16" cy="16" r="3" fill="url(#lg-c)" filter="url(#lg-drop-c)" />
+    <circle cx="15.1" cy="15.1" r="1.1" fill="#fff8e0" opacity="0.75" />
   </svg>
 );
 
@@ -43,10 +57,11 @@ export const LojistaLayout = ({ children }: { children: ReactNode }) => {
         <div className="flex items-center gap-3">
           <Logo />
           <div>
-            <h1 className="text-xl font-extrabold text-gradient-gold leading-none">CONNECTUS</h1>
-            <p className="text-[10px] uppercase tracking-[0.18em] text-sidebar-foreground/50 mt-0.5">Comerciante</p>
+            <h1 className="text-xl font-extrabold text-gradient-gold leading-none tracking-widest">CONNECTUS</h1>
+            <p className="text-[9px] uppercase tracking-[0.22em] text-sidebar-foreground/45 mt-1 font-medium">Comerciante</p>
           </div>
         </div>
+        <div className="mt-3 h-px bg-gradient-to-r from-transparent via-[#d4a574]/25 to-transparent" />
       </div>
 
       <nav className="flex-1 overflow-y-auto py-3 px-3">
@@ -97,7 +112,7 @@ export const LojistaLayout = ({ children }: { children: ReactNode }) => {
           className="w-full flex items-center justify-center gap-2 bg-white/8 hover:bg-white/15 text-sidebar-foreground/85 hover:text-sidebar-foreground text-sm font-semibold py-2.5 rounded-xl transition-all duration-200 min-h-[44px]"
         >
           <LogOut className="w-4 h-4" />
-          Sair
+          Salir
         </button>
       </div>
     </div>
