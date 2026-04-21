@@ -146,11 +146,27 @@ CREATE TABLE IF NOT EXISTS admin_approvals (
 );
 
 -- Add foreign key constraints for user_roles (after architects and stores exist)
-ALTER TABLE user_roles ADD CONSTRAINT IF NOT EXISTS fk_user_roles_architect
-  FOREIGN KEY (architect_id) REFERENCES architects(id) ON DELETE CASCADE;
+DO $body$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.table_constraints
+    WHERE constraint_name = 'fk_user_roles_architect' AND table_name = 'user_roles'
+  ) THEN
+    ALTER TABLE user_roles ADD CONSTRAINT fk_user_roles_architect
+      FOREIGN KEY (architect_id) REFERENCES architects(id) ON DELETE CASCADE;
+  END IF;
+END $body$;
 
-ALTER TABLE user_roles ADD CONSTRAINT IF NOT EXISTS fk_user_roles_store
-  FOREIGN KEY (store_id) REFERENCES stores(id) ON DELETE CASCADE;
+DO $body$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.table_constraints
+    WHERE constraint_name = 'fk_user_roles_store' AND table_name = 'user_roles'
+  ) THEN
+    ALTER TABLE user_roles ADD CONSTRAINT fk_user_roles_store
+      FOREIGN KEY (store_id) REFERENCES stores(id) ON DELETE CASCADE;
+  END IF;
+END $body$;
 
 -- Create indexes for performance
 CREATE INDEX IF NOT EXISTS idx_users_firebase_uid ON users(firebase_uid);
