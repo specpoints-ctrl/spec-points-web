@@ -12,6 +12,20 @@ interface PrizeData {
   expires_at?: string | null;
 }
 
+export async function listActivePrizes(_req: Request, res: Response) {
+  try {
+    const prizes = await db.manyOrNone(
+      `SELECT id, name, description, image_url, points_required, stock, active
+       FROM prizes
+       WHERE active = TRUE AND stock > 0 AND (expires_at IS NULL OR expires_at > NOW())
+       ORDER BY points_required ASC`
+    );
+    return res.json({ success: true, data: prizes || [] });
+  } catch (error) {
+    throw new AppError('Erro ao listar premios ativos', 400, error);
+  }
+}
+
 export async function listPrizes(_req: Request, res: Response) {
   try {
     const prizes = await db.manyOrNone(

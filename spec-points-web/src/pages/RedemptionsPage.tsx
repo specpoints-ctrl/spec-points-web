@@ -18,13 +18,15 @@ import {
   TableRow,
 } from '../components/ui';
 import { api, approveRedemption, deliverRedemption } from '../lib/api';
-import { Check, Edit2, Plus, Trash2, Package, Clock } from 'lucide-react';
+import { Check, Edit2, Plus, Trash2, Package, Clock, Phone, Mail, PackageCheck } from 'lucide-react';
 
 interface Redemption {
   id: string;
   architect_id: string;
   prize_id: string;
   architect_name?: string;
+  architect_email?: string;
+  architect_phone?: string;
   prize_name?: string;
   points_required?: number;
   status: 'pending' | 'approved' | 'delivered';
@@ -308,15 +310,28 @@ export default function RedemptionsPage() {
                   <TableHead>Puntos</TableHead>
                   <TableHead>Estado</TableHead>
                   <TableHead>Plazo</TableHead>
-                  <TableHead>Entregado el</TableHead>
                   <TableHead>Acciones</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {redemptions.map((redemption) => (
                   <TableRow key={redemption.id}>
-                    <TableCell className="font-medium">{redemption.architect_name || '-'}</TableCell>
-                    <TableCell>{redemption.prize_name || '-'}</TableCell>
+                    <TableCell>
+                      <p className="font-semibold text-foreground">{redemption.architect_name || '-'}</p>
+                      {redemption.architect_phone && (
+                        <a href={`tel:${redemption.architect_phone}`}
+                          className="flex items-center gap-1 text-xs text-blue-600 hover:underline mt-0.5">
+                          <Phone className="w-3 h-3" />{redemption.architect_phone}
+                        </a>
+                      )}
+                      {redemption.architect_email && (
+                        <a href={`mailto:${redemption.architect_email}`}
+                          className="flex items-center gap-1 text-xs text-muted-foreground hover:underline mt-0.5">
+                          <Mail className="w-3 h-3" />{redemption.architect_email}
+                        </a>
+                      )}
+                    </TableCell>
+                    <TableCell className="font-medium">{redemption.prize_name || '-'}</TableCell>
                     <TableCell>{Number(redemption.points_required || 0).toLocaleString('es-PY')}</TableCell>
                     <TableCell>
                       <Badge variant={statusVariant(redemption.status)}>{statusLabel(redemption.status)}</Badge>
@@ -330,45 +345,42 @@ export default function RedemptionsPage() {
                       ) : '-'}
                     </TableCell>
                     <TableCell>
-                      {redemption.delivered_at ? (
-                        <span className="text-xs text-emerald-600">
-                          {new Date(redemption.delivered_at).toLocaleDateString('es-PY')}
-                        </span>
-                      ) : '-'}
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex gap-2">
+                      <div className="flex flex-wrap gap-2 items-center">
                         {redemption.status === 'pending' && (
                           <button
                             onClick={() => handleApprove(redemption.id)}
-                            className="inline-flex items-center justify-center rounded-md h-9 w-9 text-success hover:bg-success/10 transition-colors"
-                            title="Aprobar"
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200 transition-colors"
                           >
-                            <Check className="w-4 h-4" />
+                            <Check className="w-3.5 h-3.5" /> Aprobar
                           </button>
                         )}
                         {redemption.status === 'approved' && (
                           <button
                             onClick={() => handleDeliver(redemption.id)}
-                            className="inline-flex items-center justify-center rounded-md h-9 w-9 text-blue-600 hover:bg-blue-50 transition-colors"
-                            title="Marcar como entregado"
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-gradient-to-r from-[#0b6e78] to-[#134e56] text-white hover:opacity-90 shadow-sm transition-all hover:-translate-y-0.5"
                           >
-                            <Package className="w-4 h-4" />
+                            <PackageCheck className="w-3.5 h-3.5" /> ¡Premio Entregado!
                           </button>
+                        )}
+                        {redemption.status === 'delivered' && (
+                          <span className="inline-flex items-center gap-1 text-xs font-semibold text-emerald-600">
+                            <PackageCheck className="w-3.5 h-3.5" />
+                            {redemption.delivered_at ? new Date(redemption.delivered_at).toLocaleDateString('es-PY') : 'Entregado'}
+                          </span>
                         )}
                         <button
                           onClick={() => handleEdit(redemption)}
-                          className="inline-flex items-center justify-center rounded-md h-9 w-9 text-primary hover:bg-primary/10 transition-colors"
+                          className="inline-flex items-center justify-center rounded-lg h-7 w-7 text-muted-foreground hover:bg-muted transition-colors"
                           title="Editar"
                         >
-                          <Edit2 className="w-4 h-4" />
+                          <Edit2 className="w-3.5 h-3.5" />
                         </button>
                         <button
                           onClick={() => handleDelete(redemption.id)}
-                          className="inline-flex items-center justify-center rounded-md h-9 w-9 text-destructive hover:bg-destructive/10 transition-colors"
+                          className="inline-flex items-center justify-center rounded-lg h-7 w-7 text-destructive hover:bg-destructive/10 transition-colors"
                           title="Eliminar"
                         >
-                          <Trash2 className="w-4 h-4" />
+                          <Trash2 className="w-3.5 h-3.5" />
                         </button>
                       </div>
                     </TableCell>

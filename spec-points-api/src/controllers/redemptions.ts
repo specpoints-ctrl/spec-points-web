@@ -20,6 +20,8 @@ const REDEMPTION_SELECT = `
     r.created_at,
     r.updated_at,
     a.name as architect_name,
+    a.email as architect_email,
+    a.phone as architect_phone,
     p.name as prize_name,
     p.points_required,
     p.image_url as prize_image
@@ -108,7 +110,7 @@ export async function requestRedemption(req: AuthRequest, res: Response) {
     if (!userRole?.architect_id) throw new AppError('Perfil de arquiteto não encontrado', 404);
 
     const architect = await db.oneOrNone(
-      `SELECT id, points_total, points_redeemed FROM architects WHERE id = $1`,
+      `SELECT id, name, email, phone, points_total, points_redeemed FROM architects WHERE id = $1`,
       [userRole.architect_id]
     );
     if (!architect) throw new AppError('Arquiteto não encontrado', 404);
@@ -135,6 +137,21 @@ export async function requestRedemption(req: AuthRequest, res: Response) {
        RETURNING *`,
       [userRole.architect_id, prize_id]
     );
+
+    // Notify admins with full architect contact details
+    const contact = [
+      architect.email ? `Email: ${architect.email}` : null,
+      architect.phone ? `Tel: ${architect.phone}` : null,
+    ].filter(Boolean).join(' · ');
+
+    await db.none(
+      `INSERT INTO notifications (title, message, type, target_role)
+       VALUES ($1, $2, 'general', 'admin')`,
+      [
+        `Solicitud de canje: ${prize.name}`,
+        `${architect.name} solicitó el premio "${prize.name}" (${prize.points_required} pts). ${contact || 'Sin datos de contacto adicionales.'} Ingrese a Canjes para aprobar.`,
+      ]
+    ).catch(() => { /* non-critical */ });
 
     return res.status(201).json({
       success: true,
