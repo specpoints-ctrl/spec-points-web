@@ -37,7 +37,7 @@ const Logo = () => (
 const menuItems = [
   { icon: Home,        label: 'Dashboard',          path: '/' },
   { icon: Users,       label: 'Arquitectos',         path: '/architects' },
-  { icon: Store,       label: 'Tiendas',             path: '/stores' },
+  { icon: Store,       label: 'Socios Exclusivos',             path: '/stores' },
   { icon: ShoppingCart,label: 'Ventas',              path: '/sales' },
   { icon: Gift,        label: 'Premios',             path: '/prizes' },
   { icon: RotateCcw,   label: 'Canjes',              path: '/redemptions' },

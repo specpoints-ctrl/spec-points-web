@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Button, Card, CardContent, CardHeader, CardTitle, Input, Badge, Table, TableBody, TableCell, TableHead, TableHeader, TableRow, Dialog, DialogContent, DialogHeader, DialogTitle, Textarea } from '../components/ui';
-import { Plus, Edit2, Trash2, Check, X } from 'lucide-react';
+import { Plus, Edit2, Trash2, Check, X, Phone } from 'lucide-react';
 import { api } from '../lib/api';
 
 interface Architect {
@@ -9,6 +9,7 @@ interface Architect {
   nome: string;
   empresa: string;
   telefone: string;
+  ruc?: string;
   status: 'pending' | 'active' | 'inactive';
   cidade: string;
   estado: string;
@@ -20,6 +21,7 @@ interface FormData {
   nome: string;
   empresa: string;
   telefone: string;
+  ruc: string;
   cep: string;
   endereco: string;
   numero: string;
@@ -39,6 +41,7 @@ export default function ArchitectsPage() {
     nome: '',
     empresa: '',
     telefone: '',
+    ruc: '',
     cep: '',
     endereco: '',
     numero: '',
@@ -79,7 +82,7 @@ export default function ArchitectsPage() {
       }
       setOpenDialog(false);
       setEditingId(null);
-      setFormData({ email: '', nome: '', empresa: '', telefone: '', cep: '', endereco: '', numero: '', complemento: '', bairro: '', cidade: '', estado: '' });
+      setFormData({ email: '', nome: '', empresa: '', telefone: '', ruc: '', cep: '', endereco: '', numero: '', complemento: '', bairro: '', cidade: '', estado: '' });
       loadArchitects();
     } catch (error) {
       console.error('Error al guardar arquitecto:', error);
@@ -88,7 +91,7 @@ export default function ArchitectsPage() {
 
   const handleEdit = (architect: Architect) => {
     setEditingId(architect.id);
-    setFormData({ email: architect.email, nome: architect.nome, empresa: architect.empresa, telefone: architect.telefone, cep: '', endereco: '', numero: '', complemento: '', bairro: '', cidade: architect.cidade, estado: architect.estado });
+    setFormData({ email: architect.email, nome: architect.nome, empresa: architect.empresa, telefone: architect.telefone, ruc: architect.ruc || '', cep: '', endereco: '', numero: '', complemento: '', bairro: '', cidade: architect.cidade, estado: architect.estado });
     setOpenDialog(true);
   };
 
@@ -131,7 +134,7 @@ export default function ArchitectsPage() {
         </div>
         <Dialog open={openDialog} onOpenChange={setOpenDialog}>
           <Button
-            onClick={() => { setEditingId(null); setFormData({ email: '', nome: '', empresa: '', telefone: '', cep: '', endereco: '', numero: '', complemento: '', bairro: '', cidade: '', estado: '' }); setOpenDialog(true); }}
+            onClick={() => { setEditingId(null); setFormData({ email: '', nome: '', empresa: '', telefone: '', ruc: '', cep: '', endereco: '', numero: '', complemento: '', bairro: '', cidade: '', estado: '' }); setOpenDialog(true); }}
             className="w-full sm:w-auto"
           >
             <Plus className="w-4 h-4 mr-2" />
@@ -148,6 +151,7 @@ export default function ArchitectsPage() {
                 <Input label="Correo electrónico" name="email" type="email" value={formData.email} onChange={handleInputChange} required disabled={!!editingId} />
                 <Input label="Nombre" name="nome" value={formData.nome} onChange={handleInputChange} required />
                 <Input label="Empresa" name="empresa" value={formData.empresa} onChange={handleInputChange} required />
+                <Input label="RUC" name="ruc" value={formData.ruc} onChange={handleInputChange} required />
                 <Input label="Teléfono" name="telefone" type="tel" value={formData.telefone} onChange={handleInputChange} required />
                 <Input label="Código postal" name="cep" value={formData.cep} onChange={handleInputChange} />
                 <Input label="Barrio" name="bairro" value={formData.bairro} onChange={handleInputChange} />
@@ -192,8 +196,9 @@ export default function ArchitectsPage() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Nombre</TableHead>
-                    <TableHead>Correo</TableHead>
+                    <TableHead>ID / Nombre</TableHead>
+                    <TableHead>RUC</TableHead>
+                    <TableHead>Contacto</TableHead>
                     <TableHead>Empresa</TableHead>
                     <TableHead>Ciudad</TableHead>
                     <TableHead>Estado</TableHead>
@@ -203,8 +208,20 @@ export default function ArchitectsPage() {
                 <TableBody>
                   {architects.map((architect) => (
                     <TableRow key={architect.id}>
-                      <TableCell className="font-medium">{architect.nome}</TableCell>
-                      <TableCell className="text-sm">{architect.email}</TableCell>
+                      <TableCell>
+                        <div className="font-medium">{architect.nome}</div>
+                        <div className="text-[10px] text-muted-foreground font-mono">ID: {architect.id}</div>
+                      </TableCell>
+                      <TableCell className="text-sm">{architect.ruc || '-'}</TableCell>
+                      <TableCell>
+                        <div className="text-sm">{architect.email}</div>
+                        {architect.telefone && (
+                          <a href={`https://wa.me/${architect.telefone.replace(/\D/g, '')}`} target="_blank" rel="noopener noreferrer"
+                            className="flex items-center gap-1 text-xs text-blue-600 hover:text-emerald-500 hover:underline mt-0.5 transition-colors">
+                            <Phone className="w-3 h-3" />{architect.telefone}
+                          </a>
+                        )}
+                      </TableCell>
                       <TableCell className="text-sm">{architect.empresa}</TableCell>
                       <TableCell className="text-sm">{architect.cidade}</TableCell>
                       <TableCell>

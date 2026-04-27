@@ -87,7 +87,7 @@ export default function StoresPage() {
       const response = await api.get<StoresResponse>('/stores');
       setStores(response.data.data || []);
     } catch (error) {
-      console.error('Error al cargar tiendas:', error);
+      console.error('Error al cargar socios exclusivos:', error);
       setStores([]);
     } finally {
       setLoading(false);
@@ -117,7 +117,7 @@ export default function StoresPage() {
       resetForm();
       await loadStores();
     } catch (error) {
-      console.error('Error al guardar tienda:', error);
+      console.error('Error al guardar socio exclusivo:', error);
     }
   };
 
@@ -139,13 +139,13 @@ export default function StoresPage() {
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm('¿Está seguro de que desea eliminar esta tienda?')) return;
+    if (!confirm('¿Está seguro de que desea eliminar este socio exclusivo?')) return;
 
     try {
       await api.delete(`/stores/${id}`);
       await loadStores();
     } catch (error) {
-      console.error('Error al eliminar tienda:', error);
+      console.error('Error al eliminar socio exclusivo:', error);
     }
   };
 
@@ -154,7 +154,7 @@ export default function StoresPage() {
       await api.patch(`/stores/${id}/status`, { status });
       await loadStores();
     } catch (error) {
-      console.error('Error al actualizar estado de la tienda:', error);
+      console.error('Error al actualizar estado del socio exclusivo:', error);
     }
   };
 
@@ -162,8 +162,8 @@ export default function StoresPage() {
     <div className="flex-1 p-4 sm:p-6 space-y-6">
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-foreground">Tiendas</h1>
-          <p className="text-sm text-muted-foreground mt-1">Administre las tiendas asociadas</p>
+          <h1 className="text-2xl sm:text-3xl font-bold text-foreground">Socios Exclusivos</h1>
+          <p className="text-sm text-muted-foreground mt-1">Administre las socios exclusivos asociados</p>
         </div>
 
         <Dialog open={openDialog} onOpenChange={setOpenDialog}>
@@ -175,12 +175,12 @@ export default function StoresPage() {
             }}
           >
             <Plus className="w-4 h-4 mr-2" />
-            Nueva Tienda
+            Nuevo Socio Exclusivo
           </Button>
 
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>{editingId ? 'Editar Tienda' : 'Nueva Tienda'}</DialogTitle>
+              <DialogTitle>{editingId ? 'Editar Socio Exclusivo' : 'Nuevo Socio Exclusivo'}</DialogTitle>
             </DialogHeader>
 
             <form onSubmit={handleSubmit} className="space-y-4">
@@ -205,7 +205,7 @@ export default function StoresPage() {
 
               <div className="space-y-1.5">
                 <label className="block text-[11px] font-bold uppercase tracking-widest text-muted-foreground">
-                  Logo de la Tienda
+                  Logo del Socio Exclusivo
                 </label>
                 <ImageUploader
                   currentUrl={formData.logo_url}
@@ -252,13 +252,13 @@ export default function StoresPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Lista de Tiendas</CardTitle>
+          <CardTitle>Lista de Socios Exclusivos</CardTitle>
         </CardHeader>
         <CardContent>
           {loading ? (
             <div className="text-center py-8 text-muted-foreground">Cargando...</div>
           ) : stores.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">Ninguna tienda registrada</div>
+            <div className="text-center py-8 text-muted-foreground">Ningún socio exclusivo registrado</div>
           ) : (
             <Table>
               <TableHeader>

@@ -48,7 +48,7 @@ router.post('/lojista', requireRole(['lojista']), asyncHandler(async (req: Reque
     return res.status(400).json({ success: false, error: 'Lojista sem loja associada' });
   }
 
-  const { architect_id, client_name, client_phone, product_name, quantity, amount_usd, description } = req.body;
+  const { architect_id, client_name, client_phone, product_name, quantity, amount_usd, description, receipt_url } = req.body;
   if (!architect_id || !amount_usd) {
     return res.status(400).json({ success: false, error: 'architect_id e amount_usd são obrigatórios' });
   }
@@ -76,26 +76,14 @@ router.post('/lojista', requireRole(['lojista']), asyncHandler(async (req: Reque
   const sale = await db.tx(async (tx) => {
     // points_generated is GENERATED ALWAYS AS (FLOOR(amount_usd)) — do NOT include in INSERT
     const newSale = await tx.one(
-      `INSERT INTO sales (architect_id, store_id, client_name, client_phone, product_name, quantity, amount_usd, campaign_id, points_effective, description)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING *`,
+      `INSERT INTO sales (architect_id, store_id, client_name, client_phone, product_name, quantity, amount_usd, campaign_id, points_effective, description, status, receipt_url)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, 'pending', $11) RETURNING *`,
       [architect_id, userRole.store_id, client_name || null, client_phone || null,
        product_name || null, quantity || 1, amount_usd,
-       activeCampaign?.id || null, pointsEffective, description || null]
+       activeCampaign?.id || null, pointsEffective, description || null, receipt_url || null]
     );
 
-    // Update architect points
-    await tx.none(
-      `UPDATE architects SET points_total = points_total + $1, updated_at = NOW() WHERE id = $2`,
-      [pointsEffective, architect_id]
-    );
-
-    // Link to campaign for ranking
-    if (activeCampaign) {
-      await tx.none(
-        `INSERT INTO campaign_sales (campaign_id, sale_id, points_earned) VALUES ($1, $2, $3)`,
-        [activeCampaign.id, newSale.id, pointsEffective]
-      );
-    }
+    // Points and campaign linkage will be done only on approval.
 
     return newSale;
   });
@@ -103,7 +91,7 @@ router.post('/lojista', requireRole(['lojista']), asyncHandler(async (req: Reque
   return res.status(201).json({
     success: true,
     data: { ...sale, points_generated: pointsEffective },
-    message: `Venda registrada com sucesso. ${pointsEffective} pontos gerados${activeCampaign ? ` (campanha ativa: ${multiplier}x)` : ''}.`,
+    message: `Venda registrada com sucesso e enviada para aprovação.`
   });
 }));
 
@@ -125,6 +113,39 @@ router.get('/my', requireRole(['architect']), asyncHandler(async (req: Request, 
     [userRole.architect_id]
   );
   return res.json({ success: true, data: sales || [], total: sales?.length || 0 });
+}));
+
+router.post('/:id/approve', requireRole(['admin']), asyncHandler(async (req: Request, res: Response) => {
+  const { id } = req.params;
+  const { db } = await import('../db/config.js');
+
+  const sale = await db.oneOrNone('SELECT * FROM sales WHERE id = $1', [id]);
+  if (!sale) return res.status(404).json({ success: false, error: 'Venda não encontrada' });
+  if (sale.status === 'approved') return res.status(400).json({ success: false, error: 'Venda já aprovada' });
+
+  await db.tx(async (tx) => {
+    await tx.none("UPDATE sales SET status = 'approved', updated_at = NOW() WHERE id = $1", [id]);
+    await tx.none('UPDATE architects SET points_total = points_total + $1, updated_at = NOW() WHERE id = $2', [sale.points_effective, sale.architect_id]);
+
+    if (sale.campaign_id) {
+      await tx.none('INSERT INTO campaign_sales (campaign_id, sale_id, points_earned) VALUES ($1, $2, $3)', [sale.campaign_id, sale.id, sale.points_effective]);
+    }
+  });
+
+  return res.json({ success: true, message: 'Venda aprovada com sucesso e pontos gerados' });
+}));
+
+router.post('/:id/reject', requireRole(['admin']), asyncHandler(async (req: Request, res: Response) => {
+  const { id } = req.params;
+  const { db } = await import('../db/config.js');
+
+  const sale = await db.oneOrNone('SELECT * FROM sales WHERE id = $1', [id]);
+  if (!sale) return res.status(404).json({ success: false, error: 'Venda não encontrada' });
+  if (sale.status !== 'pending') return res.status(400).json({ success: false, error: 'Apenas vendas pendentes podem ser rejeitadas' });
+
+  await db.none("UPDATE sales SET status = 'rejected', updated_at = NOW() WHERE id = $1", [id]);
+
+  return res.json({ success: true, message: 'Venda rejeitada' });
 }));
 
 router.get('/', requireRole(['admin']), asyncHandler(listSales));

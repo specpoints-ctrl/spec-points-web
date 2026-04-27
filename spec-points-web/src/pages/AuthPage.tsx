@@ -512,12 +512,12 @@ export default function AuthPage({ onLoginSuccess }: AuthPageProps) {
                       <Field label="CI del Responsable *" icon={CreditCard}>
                         <input type="text" value={ownerCi} onChange={e => setOwnerCi(e.target.value)} required placeholder="CI" className={inputCls} />
                       </Field>
-                      <Field label="RUC de la Tienda *" icon={CreditCard}>
+                      <Field label="RUC del Socio Exclusivo *" icon={CreditCard}>
                         <input type="text" value={storeRuc} onChange={e => setStoreRuc(e.target.value)} required placeholder="RUC" className={inputCls} />
                       </Field>
                     </div>
-                    <Field label="Nombre de la Tienda *" icon={Building2}>
-                      <input type="text" value={storeName} onChange={e => setStoreName(e.target.value)} required placeholder="Nombre de la tienda" className={inputCls} />
+                    <Field label="Nombre del Socio Exclusivo *" icon={Building2}>
+                      <input type="text" value={storeName} onChange={e => setStoreName(e.target.value)} required placeholder="Nombre del socio exclusivo" className={inputCls} />
                     </Field>
                     <Field label="RUC Empresa" icon={CreditCard}>
                       <input type="text" value={cnpj} onChange={e => setCnpj(e.target.value)} placeholder="RUC de la empresa" className={inputCls} />
@@ -530,7 +530,7 @@ export default function AuthPage({ onLoginSuccess }: AuthPageProps) {
                         <input type="tel" value={storeOfficePhone} onChange={e => setStoreOfficePhone(e.target.value)} placeholder="+595..." className={inputCls} />
                       </Field>
                     </div>
-                    <Field label="Dirección de la Tienda" icon={MapPin}>
+                    <Field label="Dirección del Socio Exclusivo" icon={MapPin}>
                       <input type="text" value={storeAddress} onChange={e => setStoreAddress(e.target.value)} placeholder="Dirección completa" className={inputCls} />
                     </Field>
                     <Field label="Ciudad" icon={MapPin}>

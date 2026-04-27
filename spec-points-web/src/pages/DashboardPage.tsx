@@ -146,7 +146,7 @@ function ArchitectDashboard() {
       {stores.length > 0 && (
         <div>
           <h2 className="text-sm font-bold uppercase tracking-widest text-muted-foreground mb-3 flex items-center gap-2">
-            <Store className="w-4 h-4 text-teal-500" /> Tiendas Asociadas
+            <Store className="w-4 h-4 text-teal-500" /> Socios Exclusivos Asociados
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             {stores.map(s => (
@@ -164,9 +164,9 @@ function ArchitectDashboard() {
                     </p>
                   )}
                   {s.phone && (
-                    <p className="text-xs text-muted-foreground flex items-center gap-1">
+                    <a href={`https://wa.me/${s.phone.replace(/\D/g, '')}`} target="_blank" rel="noopener noreferrer" className="text-xs text-muted-foreground flex items-center gap-1 hover:text-emerald-500 transition-colors">
                       <Phone className="w-3 h-3" />{s.phone}
-                    </p>
+                    </a>
                   )}
                 </div>
               </div>
@@ -193,7 +193,7 @@ function ArchitectDashboard() {
                     <ShoppingCart className="w-4 h-4 text-white" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold text-foreground truncate">{sale.store_name ?? 'Tienda'}</p>
+                    <p className="text-sm font-semibold text-foreground truncate">{sale.store_name ?? 'Socio Exclusivo'}</p>
                     <p className="text-xs text-muted-foreground">{sale.client_name ?? 'Cliente'}</p>
                   </div>
                   <div className="text-right shrink-0">

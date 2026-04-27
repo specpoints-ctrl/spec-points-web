@@ -2,7 +2,7 @@ import { Response } from 'express';
 import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
 import { AuthRequest } from '../middleware/auth.js';
 
-const ALLOWED_FOLDERS = ['avatars', 'prizes', 'stores'] as const;
+const ALLOWED_FOLDERS = ['avatars', 'prizes', 'stores', 'receipts'] as const;
 type UploadFolder = (typeof ALLOWED_FOLDERS)[number];
 
 // Railway injects different var names depending on connection style
@@ -77,6 +77,44 @@ export const uploadImage = async (req: AuthRequest, res: Response): Promise<void
     res.json({ success: true, data: { url } });
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : 'Upload falhou';
+    res.status(500).json({ success: false, error: message });
+  }
+};
+
+import { PutBucketPolicyCommand } from '@aws-sdk/client-s3';
+
+export const makeBucketPublic = async (_req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    const { endpoint, accessKeyId, secretAccessKey, bucketName, region } = getConfig();
+
+    const s3 = new S3Client({
+      endpoint,
+      region,
+      credentials: { accessKeyId, secretAccessKey },
+      forcePathStyle: false,
+    });
+
+    const policy = {
+      Version: '2012-10-17',
+      Statement: [
+        {
+          Sid: 'PublicReadGetObject',
+          Effect: 'Allow',
+          Principal: '*',
+          Action: 's3:GetObject',
+          Resource: `arn:aws:s3:::${bucketName}/*`
+        }
+      ]
+    };
+
+    await s3.send(new PutBucketPolicyCommand({
+      Bucket: bucketName,
+      Policy: JSON.stringify(policy)
+    }));
+
+    res.json({ success: true, message: 'Bucket policy applied successfully! Bucket is now public.' });
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : 'Failed to apply bucket policy';
     res.status(500).json({ success: false, error: message });
   }
 };

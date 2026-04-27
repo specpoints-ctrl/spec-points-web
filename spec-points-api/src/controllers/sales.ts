@@ -29,6 +29,8 @@ export async function listSales(_req: Request, res: Response) {
         s.quantity,
         s.description,
         s.campaign_id,
+        s.status,
+        s.receipt_url,
         s.created_at,
         a.name as architect_name,
         st.name as store_name,
@@ -56,7 +58,7 @@ export async function getSale(req: Request, res: Response) {
         s.id, s.architect_id, s.store_id, s.client_name, s.client_phone,
         s.amount_usd, COALESCE(s.points_effective, s.points_generated) as points_generated,
         s.points_effective, s.product_name, s.quantity, s.description,
-        s.campaign_id, s.created_at, s.updated_at,
+        s.campaign_id, s.status, s.receipt_url, s.created_at, s.updated_at,
         a.name as architect_name,
         st.name as store_name,
         c.title as campaign_title,
@@ -82,8 +84,8 @@ export async function createSale(req: Request, res: Response) {
   try {
     const {
       architect_id, store_id, client_name, client_phone,
-      amount_usd, description, product_name, quantity,
-    }: SaleData = req.body;
+      amount_usd, description, product_name, quantity, receipt_url,
+    } = req.body;
 
     if (!architect_id || !store_id || amount_usd === undefined || amount_usd === null) {
       throw new AppError('Arquiteto, loja e valor são obrigatórios', 400);
@@ -128,16 +130,16 @@ export async function createSale(req: Request, res: Response) {
       const newSale = await tx.one(
         `INSERT INTO sales (
           architect_id, store_id, client_name, client_phone, amount_usd,
-          description, product_name, quantity, campaign_id, points_effective
+          description, product_name, quantity, campaign_id, points_effective, status, receipt_url
         )
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, 'approved', $11)
         RETURNING *`,
         [
           architect_id, store_id,
           client_name || null, client_phone || null,
           amount_usd, description || null,
           product_name || null, quantity || 1,
-          activeCampaign?.id || null, pointsEffective,
+          activeCampaign?.id || null, pointsEffective, receipt_url || null,
         ]
       );
 

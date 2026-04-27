@@ -319,8 +319,8 @@ export default function RedemptionsPage() {
                     <TableCell>
                       <p className="font-semibold text-foreground">{redemption.architect_name || '-'}</p>
                       {redemption.architect_phone && (
-                        <a href={`tel:${redemption.architect_phone}`}
-                          className="flex items-center gap-1 text-xs text-blue-600 hover:underline mt-0.5">
+                        <a href={`https://wa.me/${redemption.architect_phone.replace(/\D/g, '')}`} target="_blank" rel="noopener noreferrer"
+                          className="flex items-center gap-1 text-xs text-blue-600 hover:text-emerald-500 hover:underline mt-0.5 transition-colors">
                           <Phone className="w-3 h-3" />{redemption.architect_phone}
                         </a>
                       )}

@@ -213,7 +213,7 @@ export const updateProfile = async (payload: { display_name?: string; avatar_url
 
 // ── Upload ─────────────────────────────────────────────────────────────────
 
-export type UploadFolder = 'avatars' | 'prizes' | 'stores';
+export type UploadFolder = 'avatars' | 'prizes' | 'stores' | 'receipts';
 
 export const uploadImage = async (
   file: File,
@@ -489,5 +489,16 @@ export const getActiveStoresList = async () => {
 
 export const getActiveCompleteArchitects = async () => {
   const response = await api.get<ApiResponse<{ id: number; nome: string; email: string }[]>>('/architects/active-complete');
+  return response.data;
+};
+
+// ── Sales extended ────────────────────────────────────────────────────────
+export const approveSale = async (id: number) => {
+  const response = await api.post<ApiResponse>(`/sales/${id}/approve`);
+  return response.data;
+};
+
+export const rejectSale = async (id: number) => {
+  const response = await api.post<ApiResponse>(`/sales/${id}/reject`);
   return response.data;
 };

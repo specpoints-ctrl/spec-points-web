@@ -38,6 +38,7 @@ import NotificationsPage from './pages/NotificationsPage';
 import AdminNotificationsPage from './pages/AdminNotificationsPage';
 import CampaignsPage from './pages/CampaignsPage';
 import PointsStorePage from './pages/PointsStorePage';
+import TermsPage from './pages/TermsPage';
 import { auth } from './lib/firebase';
 import { BackendUserProfile, getCurrentUser, checkTermsAcceptance, Terms } from './lib/api';
 import { AdminLayout } from './components/layouts/AdminLayout';
@@ -177,6 +178,7 @@ function App() {
               <Route path="/redemptions" element={withLayout(<RedemptionsPage />)} />
               <Route path="/settings" element={withLayout(<SettingsPage />)} />
               <Route path="/notifications" element={withLayout(<NotificationsPage />)} />
+              <Route path="/terms" element={<TermsPage />} />
 
               {/* Architect only */}
               <Route
