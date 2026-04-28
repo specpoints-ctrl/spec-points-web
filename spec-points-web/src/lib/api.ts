@@ -493,12 +493,12 @@ export const getActiveCompleteArchitects = async () => {
 };
 
 // ── Sales extended ────────────────────────────────────────────────────────
-export const approveSale = async (id: number) => {
+export const approveSale = async (id: string) => {
   const response = await api.post<ApiResponse>(`/sales/${id}/approve`);
   return response.data;
 };
 
-export const rejectSale = async (id: number) => {
+export const rejectSale = async (id: string) => {
   const response = await api.post<ApiResponse>(`/sales/${id}/reject`);
   return response.data;
 };
