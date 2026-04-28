@@ -2,6 +2,7 @@ import { Readable } from 'stream';
 import { Response } from 'express';
 import { GetObjectCommand, PutBucketPolicyCommand, PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
 import { AuthRequest } from '../middleware/auth.js';
+import { toPublicAssetUrl } from '../middleware/asset-urls.js';
 
 const ALLOWED_FOLDERS = ['avatars', 'prizes', 'stores', 'receipts'] as const;
 type UploadFolder = (typeof ALLOWED_FOLDERS)[number];
@@ -10,25 +11,17 @@ type UploadFolder = (typeof ALLOWED_FOLDERS)[number];
 const env = (keys: string[]): string | undefined =>
   keys.map((k) => process.env[k]).find(Boolean);
 
-const normalizeObjectKey = (value: string): string => value.replace(/^\/+/, '');
-
-const encodeObjectKey = (key: string): string =>
-  key.split('/').filter(Boolean).map(encodeURIComponent).join('/');
-
-const buildProxyUrl = (req: AuthRequest, key: string): string =>
-  `${req.protocol}://${req.get('host')}/api/upload/file/${encodeObjectKey(key)}`;
-
 const extractObjectKey = (value: string): string | null => {
   if (!value) return null;
 
   if (!/^https?:\/\//i.test(value)) {
-    const normalized = normalizeObjectKey(value);
+    const normalized = value.replace(/^\/+/, '');
     return normalized || null;
   }
 
   try {
     const parsed = new URL(value);
-    const normalized = normalizeObjectKey(decodeURIComponent(parsed.pathname));
+    const normalized = decodeURIComponent(parsed.pathname).replace(/^\/+/, '');
     return normalized || null;
   } catch {
     return null;
@@ -92,7 +85,7 @@ export const uploadImage = async (req: AuthRequest, res: Response): Promise<void
     // Railway buckets are private, so clients should read via the API proxy route.
     const url = publicUrl
       ? `${publicUrl.replace(/\/$/, '')}/${key}`
-      : buildProxyUrl(req, key);
+      : (toPublicAssetUrl(req, key) ?? key);
 
     res.json({ success: true, data: { url } });
   } catch (err: unknown) {
@@ -129,6 +122,8 @@ export const getUploadedFile = async (req: AuthRequest, res: Response): Promise<
       return;
     }
 
+    // Allow the frontend domain to embed images served from the API domain.
+    res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
     if (result.ContentType) res.setHeader('Content-Type', result.ContentType);
     if (result.ContentLength !== undefined) res.setHeader('Content-Length', String(result.ContentLength));
     if (result.ETag) res.setHeader('ETag', result.ETag);
