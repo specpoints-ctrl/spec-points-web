@@ -4,6 +4,7 @@ import { LogOut, Home, BarChart3, Bell, Settings, Menu, X } from 'lucide-react';
 import { auth } from '../../lib/firebase';
 import { useNotifications } from '../../contexts/NotificationsContext';
 import { useProfile } from '../../contexts/ProfileContext';
+import { resolveAssetUrl } from '../../lib/api';
 
 const Logo = () => (
   <svg width="32" height="32" viewBox="0 0 32 32" fill="none" aria-hidden>
@@ -91,7 +92,7 @@ export const LojistaLayout = ({ children }: { children: ReactNode }) => {
         <div className="flex items-center gap-3 mb-3 px-1">
           <div className="w-8 h-8 rounded-full overflow-hidden bg-gradient-to-br from-sidebar-accent to-[#c4956a] flex items-center justify-center shrink-0">
             {profile?.avatar_url ? (
-              <img src={profile.avatar_url} alt="" className="w-full h-full object-cover" />
+              <img src={resolveAssetUrl(profile.avatar_url)} alt="" className="w-full h-full object-cover" />
             ) : (
               <span className="text-xs font-bold text-slate-900">{initial}</span>
             )}

@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react';
 import { Camera, Loader2, ImageIcon, X } from 'lucide-react';
-import { uploadImage, UploadFolder } from '../../lib/api';
+import { resolveAssetUrl, uploadImage, UploadFolder } from '../../lib/api';
 
 interface ImageUploaderProps {
   /** URL atual da imagem (salva no DB) */
@@ -31,7 +31,7 @@ export default function ImageUploader({
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const displayUrl = previewUrl ?? currentUrl;
+  const displayUrl = previewUrl ?? resolveAssetUrl(currentUrl);
   const isCircle = shape === 'circle';
 
   const handleChange = async (e: React.ChangeEvent<HTMLInputElement>) => {

@@ -4,7 +4,7 @@ import {
   Dialog, DialogContent, DialogHeader, DialogTitle,
   Input, Table, TableBody, TableCell, TableHead, TableHeader, TableRow, Textarea,
 } from '../components/ui';
-import { api, getActiveCampaigns, getActiveCompleteArchitects, Campaign, uploadImage, approveSale, rejectSale } from '../lib/api';
+import { api, getActiveCampaigns, getActiveCompleteArchitects, Campaign, uploadImage, approveSale, rejectSale, resolveAssetUrl } from '../lib/api';
 import { useProfile } from '../contexts/ProfileContext';
 import { Edit2, Plus, Trash2, Zap, AlertCircle, Check, X, FileText, UploadCloud, ImageIcon, BadgeCheck } from 'lucide-react';
 
@@ -319,7 +319,7 @@ export default function SalesPage() {
                 <label className="block text-sm font-medium text-foreground">Comprobante (NF/Factura)</label>
                 {formData.receipt_url ? (
                   <div className="relative group rounded-xl border border-border/50 overflow-hidden bg-muted/30 p-2">
-                    <a href={formData.receipt_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3">
+                    <a href={resolveAssetUrl(formData.receipt_url)} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3">
                       <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center shrink-0">
                         <FileText className="w-6 h-6 text-primary" />
                       </div>
@@ -431,7 +431,7 @@ export default function SalesPage() {
                     <TableCell>
                       <div className="font-medium text-foreground">US$ {Number(sale.amount_usd || 0).toFixed(2)}</div>
                       {sale.receipt_url && (
-                        <a href={sale.receipt_url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-[11px] text-blue-600 hover:text-blue-800 hover:underline mt-1 bg-blue-50 px-1.5 py-0.5 rounded">
+                        <a href={resolveAssetUrl(sale.receipt_url)} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-[11px] text-blue-600 hover:text-blue-800 hover:underline mt-1 bg-blue-50 px-1.5 py-0.5 rounded">
                           <FileText className="w-3 h-3" /> Ver NF
                         </a>
                       )}

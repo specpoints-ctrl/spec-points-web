@@ -3,7 +3,7 @@ import {
   Camera, Loader2, CheckCircle2, AlertCircle, User, Lock, Mail,
 } from 'lucide-react';
 import {
-  getProfile, updateProfile, uploadImage, updateEmailApi, UserProfile,
+  getProfile, resolveAssetUrl, updateProfile, uploadImage, updateEmailApi, UserProfile,
 } from '../lib/api';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui';
 import { useProfile } from '../contexts/ProfileContext';
@@ -171,7 +171,7 @@ export default function SettingsPage() {
             <div className="relative shrink-0">
               <div className="w-20 h-20 rounded-full overflow-hidden bg-gradient-to-br from-sidebar-accent to-[#c4956a] flex items-center justify-center shadow-card">
                 {profile?.avatar_url
-                  ? <img src={profile.avatar_url} alt="Avatar" className="w-full h-full object-cover" />
+                  ? <img src={resolveAssetUrl(profile.avatar_url)} alt="Avatar" className="w-full h-full object-cover" />
                   : <span className="text-2xl font-bold text-white">{initial}</span>}
               </div>
               {uploading && (

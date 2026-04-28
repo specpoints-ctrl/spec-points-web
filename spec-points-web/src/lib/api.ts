@@ -10,6 +10,42 @@ export const API_BASE_URL = normalizedBaseUrl.endsWith('/api')
   ? normalizedBaseUrl
   : `${normalizedBaseUrl}/api`;
 
+const STORAGE_HOST_MARKERS = ['storageapi.dev', 'storage.railway.app'];
+
+const encodeAssetKey = (key: string) =>
+  key.split('/').filter(Boolean).map(encodeURIComponent).join('/');
+
+export const resolveAssetUrl = (rawUrl?: string | null): string => {
+  if (!rawUrl) return '';
+
+  if (rawUrl.startsWith(`${API_BASE_URL}/upload/file/`)) {
+    return rawUrl;
+  }
+
+  const trimmedUrl = rawUrl.trim();
+  const isAbsolute = /^https?:\/\//i.test(trimmedUrl);
+
+  if (isAbsolute) {
+    try {
+      const parsed = new URL(trimmedUrl);
+      const isRailwayBucket = STORAGE_HOST_MARKERS.some((marker) => parsed.host.includes(marker));
+
+      if (isRailwayBucket) {
+        const key = decodeURIComponent(parsed.pathname).replace(/^\/+/, '');
+        return key ? `${API_BASE_URL}/upload/file/${encodeAssetKey(key)}` : trimmedUrl;
+      }
+    } catch {
+      return trimmedUrl;
+    }
+  }
+
+  if (trimmedUrl.includes('/')) {
+    return `${API_BASE_URL}/upload/file/${encodeAssetKey(trimmedUrl.replace(/^\/+/, ''))}`;
+  }
+
+  return trimmedUrl;
+};
+
 export const api = axios.create({
   baseURL: API_BASE_URL,
   headers: {

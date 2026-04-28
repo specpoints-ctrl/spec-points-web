@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { TrendingUp, ShoppingCart, Award, Star, ArrowUpRight, Zap, Store, MapPin, Phone } from 'lucide-react';
-import { BackendUserProfile, getMyArchitectProfile, getMySales, getMyActiveCampaigns, getActiveStoresList, ArchitectProfile, MyCampaign, ActiveStore } from '../lib/api';
+import { BackendUserProfile, getMyArchitectProfile, getMySales, getMyActiveCampaigns, getActiveStoresList, ArchitectProfile, MyCampaign, ActiveStore, resolveAssetUrl } from '../lib/api';
 import { AdminDashboard } from '../components/AdminDashboard';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui';
 
@@ -153,7 +153,7 @@ function ArchitectDashboard() {
               <div key={s.id} className="flex items-center gap-3 p-4 rounded-2xl border border-border/40 bg-white/50 hover:bg-white/80 transition-all">
                 <div className="w-10 h-10 rounded-xl bg-teal-50 flex items-center justify-center shrink-0 overflow-hidden">
                   {s.logo_url
-                    ? <img src={s.logo_url} alt="" className="w-full h-full object-cover" />
+                    ? <img src={resolveAssetUrl(s.logo_url)} alt="" className="w-full h-full object-cover" />
                     : <Store className="w-5 h-5 text-teal-600" />}
                 </div>
                 <div className="flex-1 min-w-0">

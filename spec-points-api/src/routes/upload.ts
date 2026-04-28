@@ -2,7 +2,7 @@ import { Router } from 'express';
 import multer, { FileFilterCallback } from 'multer';
 import { Request } from 'express';
 import { authenticateToken } from '../middleware/auth.js';
-import { uploadImage, makeBucketPublic } from '../controllers/upload.js';
+import { getUploadedFile, uploadImage, makeBucketPublic } from '../controllers/upload.js';
 
 const router = Router();
 
@@ -21,6 +21,7 @@ const upload = multer({
 });
 
 router.post('/', authenticateToken, upload.single('file'), uploadImage);
+router.get('/file/*', getUploadedFile);
 router.get('/make-public', makeBucketPublic);
 
 export default router;
