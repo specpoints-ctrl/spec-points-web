@@ -213,14 +213,10 @@ export async function approveRedemption(req: Request, res: Response) {
         [redemption.points_required, redemption.architect_id]
       );
 
-      const stockUpdate = await tx.result(
-        `UPDATE prizes SET stock = stock - 1 WHERE id = $1 AND stock > 0`,
+      await tx.none(
+        `UPDATE prizes SET stock = GREATEST(stock - 1, 0) WHERE id = $1`,
         [redemption.prize_id]
       );
-
-      if (stockUpdate.rowCount === 0) {
-        throw new AppError('Prêmio sem estoque disponível para aprovação', 409);
-      }
 
       return result;
     });

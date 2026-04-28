@@ -202,7 +202,10 @@ export async function deleteStore(req: Request, res: Response) {
   try {
     const { id } = req.params;
 
-    await db.result('DELETE FROM stores WHERE id = $1', [id]);
+    await db.tx(async (tx) => {
+      await tx.none('DELETE FROM user_roles WHERE store_id = $1', [id]);
+      await tx.result('DELETE FROM stores WHERE id = $1', [id]);
+    });
 
     return res.json({
       success: true,
