@@ -3,7 +3,7 @@ import { api, getMyActiveCampaigns, getMyRedemptions, requestRedemption, MyCampa
 import { Card, CardContent, CardHeader, CardTitle, Dialog, DialogContent, DialogHeader, DialogTitle, Button } from '../components/ui';
 import {
   Gift, Star, ShoppingBag, Zap, Clock, CheckCircle2,
-  Package, AlertCircle, Loader2, Calendar, Trophy, Sparkles, Phone,
+  Package, AlertCircle, Loader2, Calendar, Trophy, Sparkles, Phone, Info,
 } from 'lucide-react';
 
 interface Prize {
@@ -46,6 +46,7 @@ export default function PointsStorePage() {
   const [loading, setLoading] = useState(true);
 
   const [selectedPrize, setSelectedPrize] = useState<Prize | null>(null);
+  const [previewPrize, setPreviewPrize] = useState<Prize | null>(null);
   const [requesting, setRequesting] = useState(false);
   const [reqError, setReqError] = useState<string | null>(null);
 
@@ -195,7 +196,18 @@ export default function PointsStorePage() {
                   )}
                   <CardContent className="p-4">
                     <h3 className="font-bold text-foreground text-sm">{prize.name}</h3>
-                    {prize.description && <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{prize.description}</p>}
+                    {prize.description && (
+                      <div className="mt-1">
+                        <p className="text-xs text-muted-foreground line-clamp-2">{prize.description}</p>
+                        <button
+                          onClick={e => { e.stopPropagation(); setPreviewPrize(prize); }}
+                          className="inline-flex items-center gap-1 text-xs font-medium mt-1 hover:opacity-80 transition-opacity"
+                          style={{ color: '#0b6e78' }}
+                        >
+                          <Info className="w-3 h-3" /> Ver más
+                        </button>
+                      </div>
+                    )}
                     <div className="flex items-center justify-between mt-3">
                       <div>
                         <p className="text-lg font-extrabold text-primary">{Number(prize.points_required).toLocaleString('es-PY')}</p>
@@ -285,6 +297,77 @@ export default function PointsStorePage() {
           </Card>
         )}
       </div>
+
+      {/* Prize detail dialog */}
+      <Dialog open={!!previewPrize} onOpenChange={open => !open && setPreviewPrize(null)}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Gift className="w-5 h-5 text-primary" /> Detalles del Premio
+            </DialogTitle>
+          </DialogHeader>
+          {previewPrize && (
+            <div className="space-y-4 pt-1">
+              {previewPrize.image_url ? (
+                <img
+                  src={resolveAssetUrl(previewPrize.image_url)}
+                  alt={previewPrize.name}
+                  className="w-full h-48 object-cover rounded-xl"
+                />
+              ) : (
+                <div className="w-full h-48 rounded-xl bg-gradient-to-br from-primary/10 to-primary/5 flex items-center justify-center">
+                  <Gift className="w-16 h-16 text-primary/20" />
+                </div>
+              )}
+
+              <div>
+                <h3 className="font-extrabold text-foreground text-lg leading-tight">{previewPrize.name}</h3>
+                <div className="flex items-center gap-3 mt-2">
+                  <span className="text-2xl font-extrabold text-primary">
+                    {Number(previewPrize.points_required).toLocaleString('es-PY')}
+                  </span>
+                  <span className="text-sm text-muted-foreground">puntos</span>
+                  <span className="ml-auto text-xs text-muted-foreground bg-muted px-2 py-1 rounded-lg">
+                    Stock: {previewPrize.stock}
+                  </span>
+                </div>
+              </div>
+
+              {previewPrize.description && (
+                <div className="p-3 rounded-xl bg-muted/40 border border-border/50">
+                  <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-wrap">
+                    {previewPrize.description}
+                  </p>
+                </div>
+              )}
+
+              <div className="flex gap-3 pt-1">
+                <Button variant="ghost" className="flex-1" onClick={() => setPreviewPrize(null)}>
+                  Cerrar
+                </Button>
+                <button
+                  onClick={() => { setPreviewPrize(null); setSelectedPrize(previewPrize); setReqError(null); }}
+                  disabled={!canRedeem(previewPrize)}
+                  className="flex-1 h-10 rounded-xl text-sm font-semibold transition-all duration-200 disabled:cursor-not-allowed"
+                  style={canRedeem(previewPrize) ? {
+                    background: 'linear-gradient(135deg,#0b6e78,#134e56)',
+                    color: 'white',
+                  } : {
+                    background: 'rgba(0,0,0,0.05)',
+                    color: '#9ca3af',
+                  }}
+                >
+                  {previewPrize.stock <= 0
+                    ? 'Sin stock'
+                    : availablePoints < previewPrize.points_required
+                    ? `Faltan ${(previewPrize.points_required - availablePoints).toLocaleString('es-PY')} pts`
+                    : 'Canjear'}
+                </button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
 
       <Dialog open={!!selectedPrize} onOpenChange={open => !open && setSelectedPrize(null)}>
         <DialogContent className="max-w-sm">
