@@ -1,6 +1,6 @@
 [build]
 builder = "DOCKERFILE"
-dockerfilePath = "spec-points-api/Dockerfile"
+dockerfilePath = "spec-points-web/Dockerfile"
 
 [deploy]
 healthcheckPath = "/health"
