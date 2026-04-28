@@ -12,7 +12,10 @@
     "migrate": "tsx src/db/migrate.ts",
     "seed:test": "tsx src/db/seed-test-accounts.ts",
     "lint": "eslint src --ext .ts",
-    "test": "vitest"
+    "test": "vitest",
+    "db:reset": "tsx src/db/reset-and-seed.ts",
+    "test:integration": "tsx scripts/run-integration-tests.ts",
+    "db:reset-and-test": "npm run db:reset && npm run test:integration"
   },
   "keywords": [
     "api",
