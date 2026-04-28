@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { api, getMyActiveCampaigns, getMyRedemptions, requestRedemption, MyCampaign } from '../lib/api';
+import { api, getMyActiveCampaigns, getMyRedemptions, requestRedemption, MyCampaign, resolveAssetUrl } from '../lib/api';
 import { Card, CardContent, CardHeader, CardTitle, Dialog, DialogContent, DialogHeader, DialogTitle, Button } from '../components/ui';
 import {
   Gift, Star, ShoppingBag, Zap, Clock, CheckCircle2,
@@ -186,7 +186,7 @@ export default function PointsStorePage() {
                 <Card key={prize.id} className={`overflow-hidden transition-all ${can ? 'hover:shadow-md' : 'opacity-70'}`}>
                   {prize.image_url ? (
                     <div className="h-40 overflow-hidden bg-muted">
-                      <img src={prize.image_url} alt={prize.name} className="w-full h-full object-cover" />
+                      <img src={resolveAssetUrl(prize.image_url)} alt={prize.name} className="w-full h-full object-cover" />
                     </div>
                   ) : (
                     <div className="h-40 flex items-center justify-center bg-gradient-to-br from-primary/10 to-primary/5">
@@ -252,7 +252,7 @@ export default function PointsStorePage() {
                   return (
                     <div key={r.id} className="flex items-center gap-4 p-4">
                       {r.prize_image ? (
-                        <img src={r.prize_image} alt={r.prize_name} className="w-12 h-12 rounded-xl object-cover shrink-0" />
+                        <img src={resolveAssetUrl(r.prize_image)} alt={r.prize_name} className="w-12 h-12 rounded-xl object-cover shrink-0" />
                       ) : (
                         <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
                           <Gift className="w-6 h-6 text-primary/40" />
@@ -296,7 +296,7 @@ export default function PointsStorePage() {
           {selectedPrize && (
             <div className="space-y-4 pt-2">
               {selectedPrize.image_url && (
-                <img src={selectedPrize.image_url} alt={selectedPrize.name}
+                <img src={resolveAssetUrl(selectedPrize.image_url)} alt={selectedPrize.name}
                   className="w-full h-40 object-cover rounded-xl" />
               )}
               <div className="p-4 rounded-xl bg-muted/30 border border-border/50 text-center">

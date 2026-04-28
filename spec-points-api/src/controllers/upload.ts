@@ -1,5 +1,6 @@
+import { Readable } from 'stream';
 import { Response } from 'express';
-import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
+import { GetObjectCommand, PutBucketPolicyCommand, PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
 import { AuthRequest } from '../middleware/auth.js';
 
 const ALLOWED_FOLDERS = ['avatars', 'prizes', 'stores', 'receipts'] as const;
@@ -8,6 +9,31 @@ type UploadFolder = (typeof ALLOWED_FOLDERS)[number];
 // Railway injects different var names depending on connection style
 const env = (keys: string[]): string | undefined =>
   keys.map((k) => process.env[k]).find(Boolean);
+
+const normalizeObjectKey = (value: string): string => value.replace(/^\/+/, '');
+
+const encodeObjectKey = (key: string): string =>
+  key.split('/').filter(Boolean).map(encodeURIComponent).join('/');
+
+const buildProxyUrl = (req: AuthRequest, key: string): string =>
+  `${req.protocol}://${req.get('host')}/api/upload/file/${encodeObjectKey(key)}`;
+
+const extractObjectKey = (value: string): string | null => {
+  if (!value) return null;
+
+  if (!/^https?:\/\//i.test(value)) {
+    const normalized = normalizeObjectKey(value);
+    return normalized || null;
+  }
+
+  try {
+    const parsed = new URL(value);
+    const normalized = normalizeObjectKey(decodeURIComponent(parsed.pathname));
+    return normalized || null;
+  } catch {
+    return null;
+  }
+};
 
 const getConfig = () => {
   const endpoint = env(['AWS_ENDPOINT_URL', 'BUCKET_ENDPOINT_URL', 'S3_ENDPOINT_URL']);
@@ -63,16 +89,10 @@ export const uploadImage = async (req: AuthRequest, res: Response): Promise<void
       ContentType: req.file.mimetype,
     }));
 
-    // Railway/Tigris public URL format: https://{bucket}.{endpoint-domain}/{key}
-    // Override with BUCKET_PUBLIC_URL if needed
-    let url: string;
-    if (publicUrl) {
-      url = `${publicUrl.replace(/\/$/, '')}/${key}`;
-    } else {
-      // Strip protocol to get domain, then build virtual-hosted-style URL
-      const endpointDomain = endpoint.replace(/^https?:\/\//, '').replace(/\/$/, '');
-      url = `https://${bucketName}.${endpointDomain}/${key}`;
-    }
+    // Railway buckets are private, so clients should read via the API proxy route.
+    const url = publicUrl
+      ? `${publicUrl.replace(/\/$/, '')}/${key}`
+      : buildProxyUrl(req, key);
 
     res.json({ success: true, data: { url } });
   } catch (err: unknown) {
@@ -81,7 +101,65 @@ export const uploadImage = async (req: AuthRequest, res: Response): Promise<void
   }
 };
 
-import { PutBucketPolicyCommand } from '@aws-sdk/client-s3';
+export const getUploadedFile = async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    const rawKey = req.params[0];
+    const key = rawKey ? extractObjectKey(rawKey) : null;
+
+    if (!key) {
+      res.status(400).json({ success: false, error: 'Arquivo invalido' });
+      return;
+    }
+
+    const { endpoint, accessKeyId, secretAccessKey, bucketName, region } = getConfig();
+    const s3 = new S3Client({
+      endpoint,
+      region,
+      credentials: { accessKeyId, secretAccessKey },
+      forcePathStyle: false,
+    });
+
+    const result = await s3.send(new GetObjectCommand({
+      Bucket: bucketName,
+      Key: key,
+    }));
+
+    if (!result.Body) {
+      res.status(404).json({ success: false, error: 'Arquivo nao encontrado' });
+      return;
+    }
+
+    if (result.ContentType) res.setHeader('Content-Type', result.ContentType);
+    if (result.ContentLength !== undefined) res.setHeader('Content-Length', String(result.ContentLength));
+    if (result.ETag) res.setHeader('ETag', result.ETag);
+    res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+
+    const body = result.Body;
+    if (body instanceof Readable) {
+      body.on('error', () => {
+        if (!res.headersSent) {
+          res.status(500).end();
+        } else {
+          res.end();
+        }
+      });
+      body.pipe(res);
+      return;
+    }
+
+    if (typeof (body as { transformToByteArray?: () => Promise<Uint8Array> }).transformToByteArray === 'function') {
+      const bytes = await (body as { transformToByteArray: () => Promise<Uint8Array> }).transformToByteArray();
+      res.end(Buffer.from(bytes));
+      return;
+    }
+
+    res.status(500).json({ success: false, error: 'Formato de arquivo nao suportado' });
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : 'Falha ao carregar arquivo';
+    const status = /NoSuchKey|not found|does not exist/i.test(message) ? 404 : 500;
+    res.status(status).json({ success: false, error: message });
+  }
+};
 
 export const makeBucketPublic = async (_req: AuthRequest, res: Response): Promise<void> => {
   try {

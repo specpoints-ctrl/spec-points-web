@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Users, Store, ShoppingCart, TrendingUp, Award, ArrowUpRight } from 'lucide-react';
-import { getDashboardStats, DashboardStats } from '../lib/api';
+import { getDashboardStats, DashboardStats, resolveAssetUrl } from '../lib/api';
 import { auth } from '../lib/firebase';
 import { Card, CardContent, CardHeader, CardTitle } from './ui';
 
@@ -50,7 +50,7 @@ function Avatar({
   if (src && !imgError) {
     return (
       <img
-        src={src}
+        src={resolveAssetUrl(src)}
         alt={name}
         onError={() => setImgError(true)}
         className={`${dim} rounded-full object-cover shrink-0 ring-1 ring-border/30`}
@@ -69,7 +69,7 @@ function StoreLogo({ src, name }: { src?: string | null; name: string }) {
   if (src && !imgError) {
     return (
       <img
-        src={src}
+        src={resolveAssetUrl(src)}
         alt={name}
         onError={() => setImgError(true)}
         className="w-6 h-6 rounded object-contain"
