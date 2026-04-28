@@ -184,7 +184,19 @@ export default function PointsStorePage() {
             {prizes.map(prize => {
               const can = canRedeem(prize);
               return (
-                <Card key={prize.id} className={`overflow-hidden transition-all ${can ? 'hover:shadow-md' : 'opacity-70'}`}>
+                <Card
+                  key={prize.id}
+                  onClick={() => setPreviewPrize(prize)}
+                  onKeyDown={e => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      setPreviewPrize(prize);
+                    }
+                  }}
+                  role="button"
+                  tabIndex={0}
+                  className={`overflow-hidden transition-all cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 ${can ? 'hover:shadow-md' : 'opacity-70'}`}
+                >
                   {prize.image_url ? (
                     <div className="h-40 overflow-hidden bg-muted">
                       <img src={resolveAssetUrl(prize.image_url)} alt={prize.name} className="w-full h-full object-cover" />
@@ -196,18 +208,18 @@ export default function PointsStorePage() {
                   )}
                   <CardContent className="p-4">
                     <h3 className="font-bold text-foreground text-sm">{prize.name}</h3>
-                    {prize.description && (
-                      <div className="mt-1">
+                    <div className="mt-1">
+                      {prize.description && (
                         <p className="text-xs text-muted-foreground line-clamp-2">{prize.description}</p>
-                        <button
-                          onClick={e => { e.stopPropagation(); setPreviewPrize(prize); }}
-                          className="inline-flex items-center gap-1 text-xs font-medium mt-1 hover:opacity-80 transition-opacity"
-                          style={{ color: '#0b6e78' }}
-                        >
-                          <Info className="w-3 h-3" /> Ver más
-                        </button>
-                      </div>
-                    )}
+                      )}
+                      <button
+                        onClick={e => { e.stopPropagation(); setPreviewPrize(prize); }}
+                        className="inline-flex items-center gap-1 text-xs font-medium mt-1 hover:opacity-80 transition-opacity"
+                        style={{ color: '#0b6e78' }}
+                      >
+                        <Info className="w-3 h-3" /> Ver detalles
+                      </button>
+                    </div>
                     <div className="flex items-center justify-between mt-3">
                       <div>
                         <p className="text-lg font-extrabold text-primary">{Number(prize.points_required).toLocaleString('es-PY')}</p>
@@ -218,7 +230,7 @@ export default function PointsStorePage() {
                       </div>
                     </div>
                     <button
-                      onClick={() => { setSelectedPrize(prize); setReqError(null); }}
+                      onClick={e => { e.stopPropagation(); setSelectedPrize(prize); setReqError(null); }}
                       disabled={!can}
                       className="w-full mt-3 h-9 rounded-xl text-sm font-semibold transition-all duration-200 disabled:cursor-not-allowed"
                       style={can ? {
@@ -333,13 +345,11 @@ export default function PointsStorePage() {
                 </div>
               </div>
 
-              {previewPrize.description && (
-                <div className="p-3 rounded-xl bg-muted/40 border border-border/50">
-                  <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-wrap">
-                    {previewPrize.description}
-                  </p>
-                </div>
-              )}
+              <div className="p-3 rounded-xl bg-muted/40 border border-border/50">
+                <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-wrap">
+                  {previewPrize.description?.trim() || 'Este premio no tiene descripción adicional.'}
+                </p>
+              </div>
 
               <div className="flex gap-3 pt-1">
                 <Button variant="ghost" className="flex-1" onClick={() => setPreviewPrize(null)}>
