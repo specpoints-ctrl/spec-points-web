@@ -9,6 +9,7 @@ import {
   Mail, Lock, User, Briefcase, Phone, Building2, MapPin, CreditCard,
   Calendar, ArrowLeft, ChevronRight,
 } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { auth } from '../lib/firebase';
 import { registerUser, validateLoginStatus, googleLoginUpsert } from '../lib/api';
 
@@ -547,9 +548,21 @@ export default function AuthPage({ onLoginSuccess }: AuthPageProps) {
             </>
           )}
 
-          <p className="mt-5 text-center text-[11px] text-gray-300">
-            Al continuar, acepta los términos de uso de la plataforma CONNECTUS.
-          </p>
+          <div className="mt-5 rounded-2xl border border-[#0b6e78]/10 bg-[#0b6e78]/[0.045] px-4 py-3 text-center">
+            <p className="text-xs leading-relaxed text-[#6c8a91]">
+              Al continuar, acepta los{' '}
+              <Link
+                to="/terms"
+                className="font-bold text-[#0b6e78] underline decoration-[#0b6e78]/40 underline-offset-2 transition-colors hover:text-[#071519]"
+              >
+                Términos de Uso
+              </Link>{' '}
+              de la plataforma CONNECTUS.
+            </p>
+            <p className="mt-1 text-[11px] text-[#8ea8ae]">
+              Léalos antes de acceder o crear su cuenta.
+            </p>
+          </div>
         </div>
       </div>
     </div>
