@@ -3,17 +3,11 @@ import { Camera, Loader2, ImageIcon, X } from 'lucide-react';
 import { resolveAssetUrl, uploadImage, UploadFolder } from '../../lib/api';
 
 interface ImageUploaderProps {
-  /** URL atual da imagem (salva no DB) */
   currentUrl?: string | null;
-  /** Pasta de destino no Storage */
   folder: UploadFolder;
-  /** Callback chamado com a nova URL após upload bem-sucedido */
   onUploaded: (url: string) => void;
-  /** Texto do botão (padrão: "Alterar imagem") */
   label?: string;
-  /** Forma do preview: quadrado ou círculo (padrão: square) */
   shape?: 'circle' | 'square';
-  /** Placeholder exibido quando não há imagem */
   placeholder?: React.ReactNode;
 }
 
@@ -21,7 +15,7 @@ export default function ImageUploader({
   currentUrl,
   folder,
   onUploaded,
-  label = 'Alterar imagem',
+  label = 'Cambiar imagen',
   shape = 'square',
   placeholder,
 }: ImageUploaderProps) {
@@ -39,16 +33,15 @@ export default function ImageUploader({
     if (!file) return;
 
     if (file.size > 5 * 1024 * 1024) {
-      setError('Arquivo muito grande. Máximo 5MB.');
+      setError('Archivo demasiado grande. Máximo 5 MB.');
       return;
     }
 
     if (!file.type.startsWith('image/')) {
-      setError('Apenas imagens são permitidas.');
+      setError('Solo se permiten imágenes.');
       return;
     }
 
-    // Show local preview immediately
     const objectUrl = URL.createObjectURL(file);
     setPreviewUrl(objectUrl);
     setError(null);
@@ -63,7 +56,7 @@ export default function ImageUploader({
     } catch (err) {
       URL.revokeObjectURL(objectUrl);
       setPreviewUrl(null);
-      setError(err instanceof Error ? err.message : 'Erro no upload');
+      setError(err instanceof Error ? err.message : 'Error al subir la imagen');
     } finally {
       setUploading(false);
       setProgress(0);
@@ -80,7 +73,6 @@ export default function ImageUploader({
 
   return (
     <div className="flex flex-col items-center gap-3">
-      {/* Preview area */}
       <div
         className={`relative group cursor-pointer overflow-hidden bg-gray-100 border-2 border-dashed border-gray-300 hover:border-primary transition-colors ${
           isCircle ? 'rounded-full w-24 h-24' : 'rounded-xl w-full h-40'
@@ -95,11 +87,9 @@ export default function ImageUploader({
               className="w-full h-full object-cover"
               onError={() => setPreviewUrl(null)}
             />
-            {/* Hover overlay */}
             <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
               <Camera className="w-6 h-6 text-white" />
             </div>
-            {/* Clear button */}
             {!uploading && (
               <button
                 type="button"
@@ -113,11 +103,10 @@ export default function ImageUploader({
         ) : (
           <div className="w-full h-full flex flex-col items-center justify-center gap-1.5 text-gray-400">
             {placeholder ?? <ImageIcon className="w-8 h-8" />}
-            <span className="text-xs">Clique para enviar</span>
+            <span className="text-xs">Haz clic para subirla</span>
           </div>
         )}
 
-        {/* Upload progress overlay */}
         {uploading && (
           <div className="absolute inset-0 bg-black/50 flex flex-col items-center justify-center gap-2">
             <Loader2 className="w-6 h-6 text-white animate-spin" />
@@ -126,17 +115,15 @@ export default function ImageUploader({
         )}
       </div>
 
-      {/* Trigger button */}
       <button
         type="button"
         disabled={uploading}
         onClick={() => inputRef.current?.click()}
         className="text-sm font-medium text-primary hover:underline disabled:opacity-50 disabled:cursor-not-allowed"
       >
-        {uploading ? `Enviando... ${progress}%` : label}
+        {uploading ? `Subiendo... ${progress}%` : label}
       </button>
 
-      {/* Error message */}
       {error && (
         <p className="text-xs text-red-600 text-center">{error}</p>
       )}

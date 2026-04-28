@@ -270,7 +270,7 @@ export const uploadImage = async (
   });
 
   if (!response.data.success || !response.data.data?.url) {
-    throw new Error(response.data.error ?? 'Upload falhou');
+    throw new Error(response.data.error ?? 'Error al subir el archivo');
   }
 
   return response.data.data.url;
