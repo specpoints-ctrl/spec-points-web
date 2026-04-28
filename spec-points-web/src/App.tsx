@@ -151,7 +151,7 @@ function App() {
 
   return (
     <ErrorBoundary>
-      <ProfileProvider>
+      <ProfileProvider initialProfile={profile}>
         <NotificationsProvider>
           {/* Terms acceptance modal — blocks UI until accepted */}
           {isAuthenticated && termsRequired && pendingTerms && (

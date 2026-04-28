@@ -1,5 +1,5 @@
 import { Router, Request, Response } from 'express';
-import { authenticateToken } from '../middleware/auth.js';
+import { authenticateToken, AuthRequest, loadUserContext } from '../middleware/auth.js';
 import { requireRole } from '../middleware/role-check.js';
 import {
   listArchitects,
@@ -19,15 +19,11 @@ router.use(authenticateToken);
 
 // GET own architect profile (architect role)
 router.get('/me', requireRole(['architect']), asyncHandler(async (req: Request, res: Response) => {
-  const uid = (req as any).user?.uid;
-  const userRole = await (await import('../db/config.js')).db.oneOrNone(
-    `SELECT ur.architect_id FROM user_roles ur JOIN users u ON u.id = ur.user_id WHERE u.firebase_uid = $1`,
-    [uid]
-  );
-  if (!userRole?.architect_id) return res.status(404).json({ success: false, error: 'Perfil de arquiteto não encontrado' });
+  const user = await loadUserContext(req as AuthRequest);
+  if (!user?.architectId) return res.status(404).json({ success: false, error: 'Perfil de arquiteto não encontrado' });
 
   const { db } = await import('../db/config.js');
-  const architect = await db.oneOrNone(`SELECT * FROM architects WHERE id = $1`, [userRole.architect_id]);
+  const architect = await db.oneOrNone(`SELECT * FROM architects WHERE id = $1`, [user.architectId]);
   if (!architect) return res.status(404).json({ success: false, error: 'Arquiteto não encontrado' });
   return res.json({ success: true, data: architect });
 }));
@@ -42,19 +38,14 @@ router.get('/', requireRole(['admin']), asyncHandler(listArchitects));
 router.get(
   '/:id',
   asyncHandler(async (req: Request, res: Response) => {
-    const user = (req as any).user;
     const { id } = req.params;
+    const user = await loadUserContext(req as AuthRequest);
 
-    // Check if user is admin or the architect themselves
-    const { db } = await import('../db/config.js');
-    const userRole = await db.oneOrNone(
-      `SELECT ur.role, ur.architect_id FROM user_roles ur
-       JOIN users u ON u.id = ur.user_id
-       WHERE u.firebase_uid = $1`,
-      [user.uid]
-    );
+    if (!user?.role) {
+      return res.status(403).json({ success: false, error: 'Acesso negado' });
+    }
 
-    if (userRole?.role !== 'admin' && String(userRole?.architect_id) !== id) {
+    if (user.role !== 'admin' && String(user.architectId) !== id) {
       return res.status(403).json({ success: false, error: 'Acesso negado' });
     }
 

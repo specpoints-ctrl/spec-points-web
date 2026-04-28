@@ -1,19 +1,12 @@
 import { Response } from 'express';
 import { db } from '../db/config.js';
 import { AppError } from '../middleware/error-handler.js';
-import { AuthRequest } from '../middleware/auth.js';
+import { AuthRequest, loadUserContext } from '../middleware/auth.js';
 
 // GET /api/notifications — lista notificações para o role do usuário logado
 export async function listNotifications(req: AuthRequest, res: Response) {
-  const uid = req.user?.uid;
-  if (!uid) throw new AppError('Não autenticado', 401);
-
-  const user = await db.oneOrNone(
-    `SELECT u.id, ur.role FROM users u LEFT JOIN user_roles ur ON ur.user_id = u.id WHERE u.firebase_uid = $1`,
-    [uid]
-  );
-
-  if (!user) throw new AppError('Usuário não encontrado', 404);
+  const user = await loadUserContext(req);
+  if (!user?.dbId || !user.role) throw new AppError('Usuário não encontrado', 404);
 
   const notifications = await db.manyOrNone(
     `SELECT n.id, n.title, n.message, n.type, n.target_role, n.created_at,
@@ -23,7 +16,7 @@ export async function listNotifications(req: AuthRequest, res: Response) {
      WHERE n.target_role = 'all' OR n.target_role = $2
      ORDER BY n.created_at DESC
      LIMIT 50`,
-    [user.id, user.role]
+    [user.dbId, user.role]
   );
 
   return res.json({ success: true, data: notifications || [] });
@@ -31,15 +24,8 @@ export async function listNotifications(req: AuthRequest, res: Response) {
 
 // GET /api/notifications/unread-count
 export async function getUnreadCount(req: AuthRequest, res: Response) {
-  const uid = req.user?.uid;
-  if (!uid) throw new AppError('Não autenticado', 401);
-
-  const user = await db.oneOrNone(
-    `SELECT u.id, ur.role FROM users u LEFT JOIN user_roles ur ON ur.user_id = u.id WHERE u.firebase_uid = $1`,
-    [uid]
-  );
-
-  if (!user) return res.json({ success: true, data: { count: 0 } });
+  const user = await loadUserContext(req);
+  if (!user?.dbId || !user.role) return res.json({ success: true, data: { count: 0 } });
 
   const result = await db.one(
     `SELECT COUNT(*) AS count
@@ -49,7 +35,7 @@ export async function getUnreadCount(req: AuthRequest, res: Response) {
          SELECT 1 FROM notification_reads nr
          WHERE nr.notification_id = n.id AND nr.user_id = $1
        )`,
-    [user.id, user.role]
+    [user.dbId, user.role]
   );
 
   return res.json({ success: true, data: { count: parseInt(result.count) } });
@@ -91,19 +77,15 @@ export async function createNotification(req: AuthRequest, res: Response) {
 
 // PATCH /api/notifications/:id/read — marca como lida para o usuário atual
 export async function markAsRead(req: AuthRequest, res: Response) {
-  const uid = req.user?.uid;
-  if (!uid) throw new AppError('Não autenticado', 401);
-
   const { id } = req.params;
-
-  const user = await db.oneOrNone(`SELECT id FROM users WHERE firebase_uid = $1`, [uid]);
-  if (!user) throw new AppError('Usuário não encontrado', 404);
+  const user = await loadUserContext(req);
+  if (!user?.dbId) throw new AppError('Usuário não encontrado', 404);
 
   await db.none(
     `INSERT INTO notification_reads (notification_id, user_id)
      VALUES ($1, $2)
      ON CONFLICT (notification_id, user_id) DO NOTHING`,
-    [id, user.id]
+    [id, user.dbId]
   );
 
   return res.json({ success: true });
@@ -111,14 +93,8 @@ export async function markAsRead(req: AuthRequest, res: Response) {
 
 // PATCH /api/notifications/read-all — marca todas como lidas
 export async function markAllAsRead(req: AuthRequest, res: Response) {
-  const uid = req.user?.uid;
-  if (!uid) throw new AppError('Não autenticado', 401);
-
-  const user = await db.oneOrNone(
-    `SELECT u.id, ur.role FROM users u LEFT JOIN user_roles ur ON ur.user_id = u.id WHERE u.firebase_uid = $1`,
-    [uid]
-  );
-  if (!user) throw new AppError('Usuário não encontrado', 404);
+  const user = await loadUserContext(req);
+  if (!user?.dbId || !user.role) throw new AppError('Usuário não encontrado', 404);
 
   await db.none(
     `INSERT INTO notification_reads (notification_id, user_id)
@@ -127,7 +103,7 @@ export async function markAllAsRead(req: AuthRequest, res: Response) {
        AND NOT EXISTS (
          SELECT 1 FROM notification_reads nr WHERE nr.notification_id = n.id AND nr.user_id = $1
        )`,
-    [user.id, user.role]
+    [user.dbId, user.role]
   );
 
   return res.json({ success: true });

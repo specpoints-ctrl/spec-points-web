@@ -1,4 +1,5 @@
 import { createContext, useContext, useEffect, useState, useCallback, ReactNode } from 'react';
+import { onAuthStateChanged } from 'firebase/auth';
 import { getUnreadCount } from '../lib/api';
 import { auth } from '../lib/firebase';
 
@@ -18,7 +19,11 @@ export const NotificationsProvider = ({ children }: { children: ReactNode }) => 
   const [unreadCount, setUnreadCount] = useState(0);
 
   const refreshCount = useCallback(async () => {
-    if (!auth.currentUser) return;
+    if (!auth.currentUser) {
+      setUnreadCount(0);
+      return;
+    }
+
     try {
       const res = await getUnreadCount();
       if (res.success && res.data) setUnreadCount(res.data.count);
@@ -28,9 +33,23 @@ export const NotificationsProvider = ({ children }: { children: ReactNode }) => 
   }, []);
 
   useEffect(() => {
-    refreshCount();
-    const interval = setInterval(refreshCount, 60_000);
-    return () => clearInterval(interval);
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (!user) {
+        setUnreadCount(0);
+        return;
+      }
+
+      void refreshCount();
+    });
+
+    const interval = setInterval(() => {
+      void refreshCount();
+    }, 60_000);
+
+    return () => {
+      unsubscribe();
+      clearInterval(interval);
+    };
   }, [refreshCount]);
 
   return (

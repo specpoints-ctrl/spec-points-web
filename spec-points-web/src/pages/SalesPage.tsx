@@ -6,7 +6,7 @@ import {
 } from '../components/ui';
 import { api, getActiveCampaigns, getActiveCompleteArchitects, Campaign, uploadImage, approveSale, rejectSale, resolveAssetUrl } from '../lib/api';
 import { useProfile } from '../contexts/ProfileContext';
-import { Edit2, Plus, Trash2, Zap, AlertCircle, Check, X, FileText, UploadCloud, ImageIcon, BadgeCheck } from 'lucide-react';
+import { Edit2, Plus, Trash2, Zap, AlertCircle, Check, X, FileText, UploadCloud, BadgeCheck } from 'lucide-react';
 
 interface Sale {
   id: string;
@@ -80,9 +80,9 @@ export default function SalesPage() {
   const [uploadingReceipt, setUploadingReceipt] = useState(false);
 
   useEffect(() => {
+    if (!profile?.role) return;
     void loadInitialData();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isLojista]);
+  }, [isLojista, profile?.role]);
 
   const multiplier = activeCampaign ? Number(activeCampaign.points_multiplier) : 1;
 
@@ -96,19 +96,17 @@ export default function SalesPage() {
     try {
       setLoading(true);
       const salesEndpoint = isLojista ? '/sales/lojista' : '/sales';
-      const [salesResponse, architectsResponse, campaignsResponse] = await Promise.all([
+      const storeRequest = isLojista ? Promise.resolve({ data: { data: [] } }) : api.get('/stores');
+      const [salesResponse, architectsResponse, campaignsResponse, storesResponse] = await Promise.all([
         api.get(salesEndpoint),
         getActiveCompleteArchitects(),
         getActiveCampaigns(),
+        storeRequest,
       ]);
 
       setSales(salesResponse.data.data || []);
       setArchitects(architectsResponse.data || []);
-
-      if (!isLojista) {
-        const storesResponse = await api.get('/stores');
-        setStores(storesResponse.data.data || []);
-      }
+      setStores(isLojista ? [] : storesResponse.data.data || []);
 
       const camps: Campaign[] = campaignsResponse.data || [];
       setActiveCampaign(camps.length > 0 ? camps[0] : null);

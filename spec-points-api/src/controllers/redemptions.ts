@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import { db } from '../db/config.js';
 import { AppError } from '../middleware/error-handler.js';
-import { AuthRequest } from '../middleware/auth.js';
+import { AuthRequest, loadUserContext } from '../middleware/auth.js';
 
 interface RedemptionData {
   architect_id: number;
@@ -96,22 +96,15 @@ export async function createRedemption(req: Request, res: Response) {
 // Architect: request their own redemption
 export async function requestRedemption(req: AuthRequest, res: Response) {
   try {
-    const uid = req.user?.uid;
-    if (!uid) throw new AppError('Não autenticado', 401);
+    const user = await loadUserContext(req);
+    if (!user?.architectId) throw new AppError('Perfil de arquiteto não encontrado', 404);
 
     const { prize_id } = req.body;
     if (!prize_id) throw new AppError('Prêmio é obrigatório', 400);
 
-    const userRole = await db.oneOrNone(
-      `SELECT ur.architect_id FROM user_roles ur JOIN users u ON u.id = ur.user_id WHERE u.firebase_uid = $1`,
-      [uid]
-    );
-
-    if (!userRole?.architect_id) throw new AppError('Perfil de arquiteto não encontrado', 404);
-
     const architect = await db.oneOrNone(
       `SELECT id, name, email, phone, points_total, points_redeemed FROM architects WHERE id = $1`,
-      [userRole.architect_id]
+      [user.architectId]
     );
     if (!architect) throw new AppError('Arquiteto não encontrado', 404);
 
@@ -135,7 +128,7 @@ export async function requestRedemption(req: AuthRequest, res: Response) {
       `INSERT INTO redemptions (architect_id, prize_id, status, deadline_at)
        VALUES ($1, $2, 'pending', NOW() + INTERVAL '30 days')
        RETURNING *`,
-      [userRole.architect_id, prize_id]
+      [user.architectId, prize_id]
     );
 
     // Notify admins with full architect contact details
@@ -167,21 +160,14 @@ export async function requestRedemption(req: AuthRequest, res: Response) {
 // Architect: get their own redemptions
 export async function getMyRedemptions(req: AuthRequest, res: Response) {
   try {
-    const uid = req.user?.uid;
-    if (!uid) throw new AppError('Não autenticado', 401);
-
-    const userRole = await db.oneOrNone(
-      `SELECT ur.architect_id FROM user_roles ur JOIN users u ON u.id = ur.user_id WHERE u.firebase_uid = $1`,
-      [uid]
-    );
-
-    if (!userRole?.architect_id) throw new AppError('Perfil de arquiteto não encontrado', 404);
+    const user = await loadUserContext(req);
+    if (!user?.architectId) throw new AppError('Perfil de arquiteto não encontrado', 404);
 
     const redemptions = await db.manyOrNone(
       `${REDEMPTION_SELECT}
        WHERE r.architect_id = $1
        ORDER BY r.created_at DESC`,
-      [userRole.architect_id]
+      [user.architectId]
     );
 
     return res.json({ success: true, data: redemptions || [] });
@@ -191,7 +177,7 @@ export async function getMyRedemptions(req: AuthRequest, res: Response) {
   }
 }
 
-// Admin: approve a redemption (pending → approved), deducts points
+// Admin: approve a redemption (pending â†’ approved), deducts points
 export async function approveRedemption(req: Request, res: Response) {
   try {
     const { id } = req.params;
@@ -227,10 +213,14 @@ export async function approveRedemption(req: Request, res: Response) {
         [redemption.points_required, redemption.architect_id]
       );
 
-      await tx.none(
+      const stockUpdate = await tx.result(
         `UPDATE prizes SET stock = stock - 1 WHERE id = $1 AND stock > 0`,
         [redemption.prize_id]
       );
+
+      if (stockUpdate.rowCount === 0) {
+        throw new AppError('Prêmio sem estoque disponível para aprovação', 409);
+      }
 
       return result;
     });

@@ -12,6 +12,7 @@ interface StoreData {
   cidade?: string;
   estado?: string;
   pais?: string;
+  logo_url?: string;
 }
 
 export async function listStores(_req: Request, res: Response) {
@@ -28,6 +29,7 @@ export async function listStores(_req: Request, res: Response) {
         city as cidade,
         state as estado,
         country as pais,
+        logo_url,
         status,
         created_at
       FROM stores
@@ -60,6 +62,7 @@ export async function getStore(req: Request, res: Response) {
         city as cidade,
         state as estado,
         country as pais,
+        logo_url,
         status,
         created_at,
         updated_at
@@ -81,7 +84,7 @@ export async function getStore(req: Request, res: Response) {
 
 export async function createStore(req: Request, res: Response) {
   try {
-    const { nome, cnpj, email, telefone, ramo, endereco, cidade, estado, pais }: StoreData = req.body;
+    const { nome, cnpj, email, telefone, ramo, endereco, cidade, estado, pais, logo_url }: StoreData = req.body;
 
     if (!nome || !cnpj) {
       throw new AppError('Nome e CNPJ sao obrigatorios', 400);
@@ -93,8 +96,8 @@ export async function createStore(req: Request, res: Response) {
     }
 
     const store = await db.one(
-      `INSERT INTO stores (name, cnpj, email, phone, branch, address, city, state, country, status)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 'active')
+      `INSERT INTO stores (name, cnpj, email, phone, branch, address, city, state, country, logo_url, status)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, 'active')
        RETURNING
          id,
          name as nome,
@@ -106,9 +109,21 @@ export async function createStore(req: Request, res: Response) {
          city as cidade,
          state as estado,
          country as pais,
+         logo_url,
          status,
          created_at`,
-      [nome, cnpj, email || null, telefone || null, ramo || null, endereco || null, cidade || null, estado || null, pais || null]
+      [
+        nome,
+        cnpj,
+        email || null,
+        telefone || null,
+        ramo || null,
+        endereco || null,
+        cidade || null,
+        estado || null,
+        pais || null,
+        logo_url || null,
+      ]
     );
 
     return res.status(201).json({
@@ -124,7 +139,7 @@ export async function createStore(req: Request, res: Response) {
 export async function updateStore(req: Request, res: Response) {
   try {
     const { id } = req.params;
-    const { nome, cnpj, email, telefone, ramo, endereco, cidade, estado, pais } = req.body as StoreData;
+    const { nome, cnpj, email, telefone, ramo, endereco, cidade, estado, pais, logo_url } = req.body as StoreData;
 
     const store = await db.oneOrNone(
       `UPDATE stores
@@ -138,8 +153,9 @@ export async function updateStore(req: Request, res: Response) {
          city = COALESCE($7, city),
          state = COALESCE($8, state),
          country = COALESCE($9, country),
+         logo_url = COALESCE($10, logo_url),
          updated_at = NOW()
-       WHERE id = $10
+       WHERE id = $11
        RETURNING
          id,
          name as nome,
@@ -151,10 +167,23 @@ export async function updateStore(req: Request, res: Response) {
          city as cidade,
          state as estado,
          country as pais,
+         logo_url,
          status,
          created_at,
          updated_at`,
-      [nome ?? null, cnpj ?? null, email ?? null, telefone ?? null, ramo ?? null, endereco ?? null, cidade ?? null, estado ?? null, pais ?? null, id]
+      [
+        nome ?? null,
+        cnpj ?? null,
+        email ?? null,
+        telefone ?? null,
+        ramo ?? null,
+        endereco ?? null,
+        cidade ?? null,
+        estado ?? null,
+        pais ?? null,
+        logo_url ?? null,
+        id,
+      ]
     );
 
     if (!store) throw new AppError('Loja nao encontrada', 404);
@@ -208,6 +237,7 @@ export async function updateStoreStatus(req: Request, res: Response) {
          city as cidade,
          state as estado,
          country as pais,
+         logo_url,
          status,
          created_at,
          updated_at`,

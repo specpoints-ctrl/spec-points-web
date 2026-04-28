@@ -22,7 +22,7 @@ export default function SettingsPage() {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const { refreshProfile } = useProfile();
+  const { profile: contextProfile, refreshProfile } = useProfile();
 
   const [currentPwd, setCurrentPwd] = useState('');
   const [newPwd, setNewPwd] = useState('');
@@ -38,6 +38,12 @@ export default function SettingsPage() {
   const [emailSuccess, setEmailSuccess] = useState<string | null>(null);
 
   useEffect(() => {
+    if (contextProfile) {
+      setProfile(contextProfile);
+      setDisplayName(contextProfile.display_name ?? '');
+      return;
+    }
+
     getProfile()
       .then((res) => {
         if (res.success && res.data) {
@@ -48,7 +54,7 @@ export default function SettingsPage() {
       .catch((err) => {
         console.error('[SettingsPage] getProfile failed:', err);
       });
-  }, []);
+  }, [contextProfile]);
 
   const handlePhotoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];

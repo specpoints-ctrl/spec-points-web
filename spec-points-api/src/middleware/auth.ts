@@ -77,9 +77,56 @@ export interface AuthRequest extends Request {
     uid: string;
     email?: string;
     emailVerified?: boolean;
+    dbId?: string;
+    status?: 'pending' | 'active' | 'blocked';
+    role?: 'admin' | 'architect' | 'lojista';
+    architectId?: number | null;
+    storeId?: number | null;
   };
   userId?: string;
 }
+
+export const loadUserContext = async (req: AuthRequest) => {
+  const uid = req.user?.uid;
+
+  if (!uid) {
+    return null;
+  }
+
+  if (req.user?.dbId) {
+    return req.user;
+  }
+
+  const email = req.user?.email;
+  const emailVerified = req.user?.emailVerified;
+
+  const { db } = await import('../db/config.js');
+  const userRecord = await db.oneOrNone(
+    `SELECT u.id, u.status, ur.role, ur.architect_id, ur.store_id
+     FROM users u
+     LEFT JOIN user_roles ur ON ur.user_id = u.id
+     WHERE u.firebase_uid = $1
+     LIMIT 1`,
+    [uid]
+  );
+
+  if (!userRecord) {
+    return null;
+  }
+
+  req.user = {
+    uid,
+    email,
+    emailVerified,
+    dbId: userRecord.id,
+    status: userRecord.status,
+    role: userRecord.role ?? undefined,
+    architectId: userRecord.architect_id ?? null,
+    storeId: userRecord.store_id ?? null,
+  };
+
+  return req.user;
+};
 
 // Middleware to verify Firebase authentication token
 export const authenticateToken = async (

@@ -1,5 +1,5 @@
 import { Router, Request, Response } from 'express';
-import { authenticateToken } from '../middleware/auth.js';
+import { authenticateToken, AuthRequest, loadUserContext } from '../middleware/auth.js';
 import { requireRole } from '../middleware/role-check.js';
 import { asyncHandler } from '../middleware/async-handler.js';
 import {
@@ -16,35 +16,29 @@ router.use(authenticateToken);
 
 // GET sales for lojista's own store
 router.get('/lojista', requireRole(['lojista']), asyncHandler(async (req: Request, res: Response) => {
-  const uid = (req as any).user?.uid;
-  const { db } = await import('../db/config.js');
-  const userRole = await db.oneOrNone(
-    `SELECT ur.store_id FROM user_roles ur JOIN users u ON u.id = ur.user_id WHERE u.firebase_uid = $1`,
-    [uid]
-  );
-  if (!userRole?.store_id) return res.json({ success: true, data: [], total: 0 });
+  const user = await loadUserContext(req as AuthRequest);
+  if (!user?.storeId) return res.json({ success: true, data: [], total: 0 });
 
+  const { db } = await import('../db/config.js');
   const sales = await db.manyOrNone(
-    `SELECT s.*, a.name as architect_name, st.name as store_name
+    `SELECT s.*, COALESCE(s.points_effective, s.points_generated) as points_generated,
+            a.name as architect_name, st.name as store_name
      FROM sales s
      LEFT JOIN architects a ON a.id = s.architect_id
      LEFT JOIN stores st ON st.id = s.store_id
      WHERE s.store_id = $1
      ORDER BY s.created_at DESC LIMIT 100`,
-    [userRole.store_id]
+    [user.storeId]
   );
   return res.json({ success: true, data: sales || [], total: sales?.length || 0 });
 }));
 
 // POST sale by lojista (auto-fills store_id)
 router.post('/lojista', requireRole(['lojista']), asyncHandler(async (req: Request, res: Response) => {
-  const uid = (req as any).user?.uid;
+  const user = await loadUserContext(req as AuthRequest);
   const { db } = await import('../db/config.js');
-  const userRole = await db.oneOrNone(
-    `SELECT ur.store_id FROM user_roles ur JOIN users u ON u.id = ur.user_id WHERE u.firebase_uid = $1`,
-    [uid]
-  );
-  if (!userRole?.store_id) {
+
+  if (!user?.storeId) {
     return res.status(400).json({ success: false, error: 'Lojista sem loja associada' });
   }
 
@@ -78,13 +72,12 @@ router.post('/lojista', requireRole(['lojista']), asyncHandler(async (req: Reque
     const newSale = await tx.one(
       `INSERT INTO sales (architect_id, store_id, client_name, client_phone, product_name, quantity, amount_usd, campaign_id, points_effective, description, status, receipt_url)
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, 'pending', $11) RETURNING *`,
-      [architect_id, userRole.store_id, client_name || null, client_phone || null,
+      [architect_id, user.storeId, client_name || null, client_phone || null,
        product_name || null, quantity || 1, amount_usd,
        activeCampaign?.id || null, pointsEffective, description || null, receipt_url || null]
     );
 
     // Points and campaign linkage will be done only on approval.
-
     return newSale;
   });
 
@@ -97,20 +90,18 @@ router.post('/lojista', requireRole(['lojista']), asyncHandler(async (req: Reque
 
 // GET own sales (architect role)
 router.get('/my', requireRole(['architect']), asyncHandler(async (req: Request, res: Response) => {
-  const uid = (req as any).user?.uid;
-  const { db } = await import('../db/config.js');
-  const userRole = await db.oneOrNone(
-    `SELECT ur.architect_id FROM user_roles ur JOIN users u ON u.id = ur.user_id WHERE u.firebase_uid = $1`,
-    [uid]
-  );
-  if (!userRole?.architect_id) return res.json({ success: true, data: [], total: 0 });
+  const user = await loadUserContext(req as AuthRequest);
+  if (!user?.architectId) return res.json({ success: true, data: [], total: 0 });
 
+  const { db } = await import('../db/config.js');
   const sales = await db.manyOrNone(
-    `SELECT s.*, st.name as store_name FROM sales s
+    `SELECT s.*, COALESCE(s.points_effective, s.points_generated) as points_generated,
+            st.name as store_name
+     FROM sales s
      LEFT JOIN stores st ON st.id = s.store_id
      WHERE s.architect_id = $1
      ORDER BY s.created_at DESC LIMIT 50`,
-    [userRole.architect_id]
+    [user.architectId]
   );
   return res.json({ success: true, data: sales || [], total: sales?.length || 0 });
 }));
@@ -121,14 +112,15 @@ router.post('/:id/approve', requireRole(['admin']), asyncHandler(async (req: Req
 
   const sale = await db.oneOrNone('SELECT * FROM sales WHERE id = $1', [id]);
   if (!sale) return res.status(404).json({ success: false, error: 'Venda não encontrada' });
-  if (sale.status === 'approved') return res.status(400).json({ success: false, error: 'Venda já aprovada' });
+  if (sale.status !== 'pending') return res.status(400).json({ success: false, error: 'Apenas vendas pendentes podem ser aprovadas' });
+  const pointsToCredit = sale.points_effective ?? sale.points_generated;
 
   await db.tx(async (tx) => {
     await tx.none("UPDATE sales SET status = 'approved', updated_at = NOW() WHERE id = $1", [id]);
-    await tx.none('UPDATE architects SET points_total = points_total + $1, updated_at = NOW() WHERE id = $2', [sale.points_effective, sale.architect_id]);
+    await tx.none('UPDATE architects SET points_total = points_total + $1, updated_at = NOW() WHERE id = $2', [pointsToCredit, sale.architect_id]);
 
     if (sale.campaign_id) {
-      await tx.none('INSERT INTO campaign_sales (campaign_id, sale_id, points_earned) VALUES ($1, $2, $3)', [sale.campaign_id, sale.id, sale.points_effective]);
+      await tx.none('INSERT INTO campaign_sales (campaign_id, sale_id, points_earned) VALUES ($1, $2, $3)', [sale.campaign_id, sale.id, pointsToCredit]);
     }
   });
 

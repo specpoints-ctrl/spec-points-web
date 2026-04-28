@@ -309,7 +309,7 @@ export const getCurrentUser = async (req: any, res: Response) => {
     }
 
     const user = await db.oneOrNone(
-      `SELECT u.id, u.firebase_uid, u.email, u.status, u.created_at,
+      `SELECT u.id, u.firebase_uid, u.email, u.display_name, u.avatar_url, u.status, u.created_at,
               ur.role, ur.architect_id, ur.store_id
        FROM users u
        LEFT JOIN user_roles ur ON ur.user_id = u.id

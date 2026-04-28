@@ -29,7 +29,7 @@ export const db = pgp(databaseUrl);
 // Test connection
 export const testConnection = async () => {
   try {
-    await db.connect();
+    await db.one('SELECT 1');
     log.error('Database connection established successfully');
     return true;
   } catch (error) {

@@ -108,6 +108,8 @@ export interface BackendUserProfile {
   id: string;
   firebase_uid: string;
   email: string;
+  display_name?: string | null;
+  avatar_url?: string | null;
   status: 'pending' | 'active' | 'blocked';
   role?: 'admin' | 'architect' | 'lojista';
   architect_id?: number;

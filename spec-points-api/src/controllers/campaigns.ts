@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import { db } from '../db/config.js';
 import { AppError } from '../middleware/error-handler.js';
-import { AuthRequest } from '../middleware/auth.js';
+import { AuthRequest, loadUserContext } from '../middleware/auth.js';
 
 interface CampaignPrize {
   name: string;
@@ -246,21 +246,14 @@ export async function getActiveCampaigns(_req: Request, res: Response) {
 
 export async function getMyActiveCampaigns(req: AuthRequest, res: Response) {
   try {
-    const uid = req.user?.uid;
-    if (!uid) throw new AppError('Não autenticado', 401);
-
-    const userRole = await db.oneOrNone(
-      `SELECT ur.architect_id FROM user_roles ur JOIN users u ON u.id = ur.user_id WHERE u.firebase_uid = $1`,
-      [uid]
-    );
-
-    if (!userRole?.architect_id) throw new AppError('Perfil de arquiteto não encontrado', 404);
+    const user = await loadUserContext(req);
+    if (!user?.architectId) throw new AppError('Perfil de arquiteto não encontrado', 404);
 
     const campaigns = await db.manyOrNone(
       `SELECT
         c.id, c.title, c.subtitle, c.focus, c.points_multiplier,
         c.start_date, c.end_date, c.active,
-        COALESCE(SUM(cs.points_earned), 0) as points_earned
+        COALESCE(SUM(cs.points_earned) FILTER (WHERE s.id IS NOT NULL), 0) as points_earned
        FROM campaigns c
        LEFT JOIN campaign_sales cs ON cs.campaign_id = c.id
        LEFT JOIN sales s ON s.id = cs.sale_id AND s.architect_id = $1
@@ -268,7 +261,7 @@ export async function getMyActiveCampaigns(req: AuthRequest, res: Response) {
          AND (c.focus = 'all' OR c.focus = 'architect')
        GROUP BY c.id
        ORDER BY c.start_date DESC`,
-      [userRole.architect_id]
+      [user.architectId]
     );
 
     return res.json({ success: true, data: campaigns || [] });

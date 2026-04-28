@@ -14,14 +14,30 @@ interface ArchitectData {
   bairro: string;
   cidade: string;
   estado: string;
+  ruc?: string;
 }
 
 // GET all architects
 export async function listArchitects(_req: Request, res: Response) {
   try {
     const architects = await db.manyOrNone(
-      `SELECT id, email, name as nome, company as empresa, telefone, status, city as cidade, state as estado, created_at 
-       FROM architects 
+      `SELECT
+         id,
+         email,
+         name as nome,
+         company as empresa,
+         telefone,
+         ruc,
+         cep,
+         address as endereco,
+         "number" as numero,
+         complement as complemento,
+         neighborhood as bairro,
+         city as cidade,
+         state as estado,
+         status,
+         created_at
+       FROM architects
        ORDER BY created_at DESC`
     );
 
@@ -41,7 +57,25 @@ export async function getArchitect(req: Request, res: Response) {
     const { id } = req.params;
 
     const architect = await db.oneOrNone(
-      'SELECT * FROM architects WHERE id = $1',
+      `SELECT
+         id,
+         email,
+         name as nome,
+         company as empresa,
+         telefone,
+         ruc,
+         cep,
+         address as endereco,
+         "number" as numero,
+         complement as complemento,
+         neighborhood as bairro,
+         city as cidade,
+         state as estado,
+         status,
+         created_at,
+         updated_at
+       FROM architects
+       WHERE id = $1`,
       [id]
     );
 
@@ -59,7 +93,7 @@ export async function getArchitect(req: Request, res: Response) {
 // CREATE architect
 export async function createArchitect(req: Request, res: Response) {
   try {
-    const { email, nome, empresa, telefone, cep, endereco, numero, complemento, bairro, cidade, estado }: ArchitectData = req.body;
+    const { email, nome, empresa, telefone, cep, endereco, numero, complemento, bairro, cidade, estado, ruc }: ArchitectData = req.body;
 
     // Validate required fields
     if (!email || !nome || !empresa || !telefone) {
@@ -77,10 +111,10 @@ export async function createArchitect(req: Request, res: Response) {
     }
 
     const architect = await db.one(
-      `INSERT INTO architects (email, name, company, telefone, cep, address, number, complement, neighborhood, city, state, status)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, 'pending')
+      `INSERT INTO architects (email, name, company, telefone, ruc, cep, address, number, complement, neighborhood, city, state, status)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, 'pending')
        RETURNING *`,
-      [email, nome, empresa, telefone, cep, endereco, numero, complemento || null, bairro, cidade, estado]
+      [email, nome, empresa, telefone, ruc || null, cep || null, endereco || null, numero || null, complemento || null, bairro || null, cidade || null, estado || null]
     );
 
     return res.status(201).json({
@@ -97,15 +131,58 @@ export async function createArchitect(req: Request, res: Response) {
 export async function updateArchitect(req: Request, res: Response) {
   try {
     const { id } = req.params;
-    const updates = req.body;
-
-    // Build dynamic update query
-    const fields = Object.keys(updates).map((key, index) => `${key} = $${index + 1}`).join(', ');
-    const values = Object.values(updates);
+    const { email, nome, empresa, telefone, ruc, cep, endereco, numero, complemento, bairro, cidade, estado } =
+      req.body as Partial<ArchitectData>;
 
     const architect = await db.oneOrNone(
-      `UPDATE architects SET ${fields} WHERE id = $${values.length + 1} RETURNING *`,
-      [...values, id]
+      `UPDATE architects
+       SET
+         email = COALESCE($1, email),
+         name = COALESCE($2, name),
+         company = COALESCE($3, company),
+         telefone = COALESCE($4, telefone),
+         ruc = COALESCE($5, ruc),
+         cep = COALESCE($6, cep),
+         address = COALESCE($7, address),
+         "number" = COALESCE($8, "number"),
+         complement = COALESCE($9, complement),
+         neighborhood = COALESCE($10, neighborhood),
+         city = COALESCE($11, city),
+         state = COALESCE($12, state),
+         updated_at = NOW()
+       WHERE id = $13
+       RETURNING
+         id,
+         email,
+         name as nome,
+         company as empresa,
+         telefone,
+         ruc,
+         cep,
+         address as endereco,
+         "number" as numero,
+         complement as complemento,
+         neighborhood as bairro,
+         city as cidade,
+         state as estado,
+         status,
+         created_at,
+         updated_at`,
+      [
+        email ?? null,
+        nome ?? null,
+        empresa ?? null,
+        telefone ?? null,
+        ruc ?? null,
+        cep ?? null,
+        endereco ?? null,
+        numero ?? null,
+        complemento ?? null,
+        bairro ?? null,
+        cidade ?? null,
+        estado ?? null,
+        id,
+      ]
     );
 
     if (!architect) throw new AppError('Arquiteto não encontrado', 404);
