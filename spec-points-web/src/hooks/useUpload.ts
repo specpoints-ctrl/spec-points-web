@@ -25,13 +25,12 @@ export const useUpload = (): UseUploadResult => {
     setUploading(true);
 
     try {
-      // Validate file
       if (file.size > 5 * 1024 * 1024) {
-        throw new Error('File must be less than 5MB');
+        throw new Error('El archivo debe pesar menos de 5 MB');
       }
 
       if (!file.type.startsWith('image/')) {
-        throw new Error('File must be an image (JPEG, PNG, WebP, etc.)');
+        throw new Error('El archivo debe ser una imagen válida');
       }
 
       const storage = getStorage();
@@ -39,10 +38,7 @@ export const useUpload = (): UseUploadResult => {
       const fileName = `${timestamp}_${file.name}`;
       const fileRef = ref(storage, `${path}/${fileName}`);
 
-      // Upload file
       const snapshot = await uploadBytes(fileRef, file);
-
-      // Get download URL
       const url = await getDownloadURL(snapshot.ref);
 
       setProgress(null);
@@ -50,7 +46,7 @@ export const useUpload = (): UseUploadResult => {
 
       return url;
     } catch (err: unknown) {
-      const errorMessage = err instanceof Error ? err.message : 'Upload failed';
+      const errorMessage = err instanceof Error ? err.message : 'Error de carga';
       setError(errorMessage);
       setUploading(false);
       throw err;
@@ -61,15 +57,13 @@ export const useUpload = (): UseUploadResult => {
     try {
       setError(null);
       const storage = getStorage();
-
-      // Extract path from URL
-      const baseUrl = url.split('?')[0]; // Remove query params
+      const baseUrl = url.split('?')[0];
       const decodedPath = decodeURIComponent(baseUrl.split('/o/')[1]);
 
       const fileRef = ref(storage, decodedPath);
       await deleteObject(fileRef);
     } catch (err: unknown) {
-      const errorMessage = err instanceof Error ? err.message : 'Delete failed';
+      const errorMessage = err instanceof Error ? err.message : 'Error al eliminar el archivo';
       setError(errorMessage);
       throw err;
     }

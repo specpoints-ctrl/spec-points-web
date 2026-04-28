@@ -11,11 +11,11 @@ class ErrorBoundary extends Component<{ children: ReactNode }, { error: Error | 
       return (
         <div className="min-h-screen flex flex-col items-center justify-center gap-4 p-8 bg-background">
           <div className="max-w-md w-full rounded-2xl border border-red-200 bg-red-50 p-6 text-center">
-            <p className="text-lg font-bold text-red-700 mb-2">Algo deu errado</p>
+            <p className="text-lg font-bold text-red-700 mb-2">Algo salió mal</p>
             <p className="text-sm text-red-600 font-mono break-all">{(this.state.error as Error).message}</p>
             <button onClick={() => window.location.reload()}
               className="mt-4 px-4 py-2 rounded-xl bg-red-600 text-white text-sm font-semibold hover:bg-red-700 transition-colors">
-              Recarregar
+              Recargar
             </button>
           </div>
         </div>
