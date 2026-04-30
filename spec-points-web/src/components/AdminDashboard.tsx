@@ -10,9 +10,24 @@ const MEDAL_COLORS = [
   { ring: 'ring-amber-600',  bg: 'bg-gradient-to-br from-amber-50 to-amber-200/50',   text: 'text-amber-700',  label: '🥉' },
 ];
 
-function parseDateSafe(value?: string | null): Date | null {
-  if (!value) return null;
-  const normalized = value.includes('T') ? value : value.replace(' ', 'T');
+function parseDateSafe(value?: string | number | Date | null): Date | null {
+  if (value === null || value === undefined) return null;
+
+  if (value instanceof Date) {
+    return Number.isNaN(value.getTime()) ? null : value;
+  }
+
+  if (typeof value === 'number') {
+    const parsedFromNumber = new Date(value);
+    return Number.isNaN(parsedFromNumber.getTime()) ? null : parsedFromNumber;
+  }
+
+  if (typeof value !== 'string') return null;
+
+  const raw = value.trim();
+  if (!raw) return null;
+
+  const normalized = raw.includes('T') ? raw : raw.replace(' ', 'T');
   const parsed = new Date(normalized);
   if (Number.isNaN(parsed.getTime())) return null;
   return parsed;

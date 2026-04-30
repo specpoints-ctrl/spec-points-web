@@ -6,10 +6,32 @@ import { Card } from '../components/ui/Card';
 import { Badge } from '../components/ui/Badge';
 import { Check, X, Loader } from 'lucide-react';
 
-const formatDateSafe = (value?: string) => {
-  if (!value) return 'Sin fecha';
-  const normalized = value.includes('T') ? value : value.replace(' ', 'T');
-  const date = new Date(normalized);
+const parseDateSafe = (value?: string | number | Date | null): Date | null => {
+  if (value === null || value === undefined) return null;
+
+  if (value instanceof Date) {
+    return Number.isNaN(value.getTime()) ? null : value;
+  }
+
+  if (typeof value === 'number') {
+    const parsedFromNumber = new Date(value);
+    return Number.isNaN(parsedFromNumber.getTime()) ? null : parsedFromNumber;
+  }
+
+  if (typeof value !== 'string') return null;
+
+  const raw = value.trim();
+  if (!raw) return null;
+
+  const normalized = raw.includes('T') ? raw : raw.replace(' ', 'T');
+  const parsed = new Date(normalized);
+  if (Number.isNaN(parsed.getTime())) return null;
+  return parsed;
+};
+
+const formatDateSafe = (value?: string | number | Date | null) => {
+  const date = parseDateSafe(value);
+  if (!date) return 'Sin fecha';
   if (Number.isNaN(date.getTime())) return 'Sin fecha';
   return date.toLocaleDateString('es-PY');
 };
