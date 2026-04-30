@@ -143,11 +143,22 @@ export default function AuthPage({ onLoginSuccess }: AuthPageProps) {
         setError(response.error || 'No fue posible registrar el usuario.');
         return;
       }
-      setSuccess(response.message || '¡Cuenta creada! Espere la aprobación del administrador.');
-      switchMode('login');
+      const registerMessage = response.message || '¡Cuenta creada! Espere la aprobación del administrador.';
+      setSuccess(`${registerMessage} Podrá iniciar sesión cuando el administrador la apruebe.`);
+      switchMode('login', { keepFeedback: true });
       setPassword('');
     } catch (err: unknown) {
-      setError(getApiErrorMessage(err, 'Error al registrar usuario.'));
+      const apiMessage = getApiErrorMessage(err, 'Error al registrar usuario.');
+      const normalizedMessage = apiMessage.toLowerCase();
+      if (normalizedMessage.includes('correo') && normalizedMessage.includes('pendiente')) {
+        setError(`${apiMessage} Si ya completó el registro, espere la aprobación y luego inicie sesión.`);
+        return;
+      }
+      if (normalizedMessage.includes('email') && normalizedMessage.includes('uso')) {
+        setError('Este correo ya está registrado. Si acaba de crear la cuenta, puede estar pendiente de aprobación.');
+        return;
+      }
+      setError(apiMessage);
     } finally {
       setLoading(false);
     }
@@ -204,9 +215,11 @@ export default function AuthPage({ onLoginSuccess }: AuthPageProps) {
     }
   };
 
-  const switchMode = (m: Mode) => {
+  const switchMode = (m: Mode, options?: { keepFeedback?: boolean }) => {
     setMode(m); setStep(1);
-    setError(null); setSuccess(null);
+    if (!options?.keepFeedback) {
+      setError(null); setSuccess(null);
+    }
   };
 
   const Feedback = () => (
@@ -513,15 +526,15 @@ export default function AuthPage({ onLoginSuccess }: AuthPageProps) {
                       <Field label="CI del Responsable *" icon={CreditCard}>
                         <input type="text" value={ownerCi} onChange={e => setOwnerCi(e.target.value)} required placeholder="CI" className={inputCls} />
                       </Field>
-                      <Field label="RUC del Socio Exclusivo *" icon={CreditCard}>
-                        <input type="text" value={storeRuc} onChange={e => setStoreRuc(e.target.value)} required placeholder="RUC" className={inputCls} />
+                      <Field label="RUC principal (empresa/socio) *" icon={CreditCard}>
+                        <input type="text" value={storeRuc} onChange={e => setStoreRuc(e.target.value)} required placeholder="RUC principal" className={inputCls} />
                       </Field>
                     </div>
                     <Field label="Nombre del Socio Exclusivo *" icon={Building2}>
                       <input type="text" value={storeName} onChange={e => setStoreName(e.target.value)} required placeholder="Nombre del socio exclusivo" className={inputCls} />
                     </Field>
-                    <Field label="RUC Empresa" icon={CreditCard}>
-                      <input type="text" value={cnpj} onChange={e => setCnpj(e.target.value)} placeholder="RUC de la empresa" className={inputCls} />
+                    <Field label="RUC secundario (opcional)" icon={CreditCard}>
+                      <input type="text" value={cnpj} onChange={e => setCnpj(e.target.value)} placeholder="Solo si es diferente del RUC principal" className={inputCls} />
                     </Field>
                     <div className="grid grid-cols-2 gap-3">
                       <Field label="Tel. Responsable *" icon={Phone}>

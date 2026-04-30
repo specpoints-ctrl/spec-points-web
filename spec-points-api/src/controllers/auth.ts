@@ -32,8 +32,20 @@ export const register = async (req: Request, res: Response) => {
       return res.status(400).json({ success: false, error: 'Nome da loja é obrigatório' });
     }
 
-    const existingUser = await db.oneOrNone('SELECT id FROM users WHERE email = $1', [email]);
+    const existingUser = await db.oneOrNone('SELECT id, status FROM users WHERE email = $1', [email]);
     if (existingUser) {
+      if (existingUser.status === 'pending') {
+        return res.status(409).json({
+          success: false,
+          error: 'Este correo ya fue registrado y está pendiente de aprobación del administrador.',
+        });
+      }
+      if (existingUser.status === 'blocked') {
+        return res.status(403).json({
+          success: false,
+          error: 'Esta cuenta está bloqueada. Contacte al soporte.',
+        });
+      }
       return res.status(400).json({ success: false, error: 'Email já está em uso' });
     }
 

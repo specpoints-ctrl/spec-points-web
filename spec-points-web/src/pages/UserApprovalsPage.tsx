@@ -6,6 +6,14 @@ import { Card } from '../components/ui/Card';
 import { Badge } from '../components/ui/Badge';
 import { Check, X, Loader } from 'lucide-react';
 
+const formatDateSafe = (value?: string) => {
+  if (!value) return 'Sin fecha';
+  const normalized = value.includes('T') ? value : value.replace(' ', 'T');
+  const date = new Date(normalized);
+  if (Number.isNaN(date.getTime())) return 'Sin fecha';
+  return date.toLocaleDateString('es-PY');
+};
+
 export default function UserApprovalsPage() {
   const [token, setToken] = useState<string | null>(null);
   const [pendingUsers, setPendingUsers] = useState<PendingUser[]>([]);
@@ -134,7 +142,7 @@ export default function UserApprovalsPage() {
                         <div>
                           <p className="text-gray-500">Solicitado</p>
                           <p className="font-medium text-gray-900">
-                            {new Date(user.created_at).toLocaleDateString('es-PY')}
+                            {formatDateSafe(user.created_at)}
                           </p>
                         </div>
                         {user.architect_id && (

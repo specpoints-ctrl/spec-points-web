@@ -21,10 +21,26 @@ router.get('/lojista', requireRole(['lojista']), asyncHandler(async (req: Reques
 
   const { db } = await import('../db/config.js');
   const sales = await db.manyOrNone(
-    `SELECT s.*, COALESCE(s.points_effective, s.points_generated) as points_generated,
-            a.name as architect_name, st.name as store_name
+    `SELECT
+            s.*,
+            COALESCE(s.points_effective, s.points_generated) as points_generated,
+            a.name as architect_name,
+            a.email as architect_email,
+            COALESCE(NULLIF(a.telefone, ''), NULLIF(a.phone, ''), NULLIF(a.office_phone, '')) as architect_phone,
+            a.document_ci as architect_document_ci,
+            a.ruc as architect_ruc,
+            a.company as architect_company,
+            au.avatar_url as architect_avatar_url,
+            st.name as store_name,
+            st.email as store_email,
+            COALESCE(NULLIF(st.phone, ''), NULLIF(st.office_phone, '')) as store_phone,
+            st.owner_name as store_owner_name,
+            st.cnpj as store_cnpj,
+            st.ruc as store_ruc,
+            st.city as store_city
      FROM sales s
      LEFT JOIN architects a ON a.id = s.architect_id
+     LEFT JOIN users au ON au.email = a.email
      LEFT JOIN stores st ON st.id = s.store_id
      WHERE s.store_id = $1
      ORDER BY s.created_at DESC LIMIT 100`,

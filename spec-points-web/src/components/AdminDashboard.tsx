@@ -10,8 +10,20 @@ const MEDAL_COLORS = [
   { ring: 'ring-amber-600',  bg: 'bg-gradient-to-br from-amber-50 to-amber-200/50',   text: 'text-amber-700',  label: '🥉' },
 ];
 
-function relativeTime(dateStr: string): string {
-  const diff = Date.now() - new Date(dateStr).getTime();
+function parseDateSafe(value?: string | null): Date | null {
+  if (!value) return null;
+  const normalized = value.includes('T') ? value : value.replace(' ', 'T');
+  const parsed = new Date(normalized);
+  if (Number.isNaN(parsed.getTime())) return null;
+  return parsed;
+}
+
+function relativeTime(dateStr?: string | null): string {
+  const parsedDate = parseDateSafe(dateStr);
+  if (!parsedDate) return '-';
+
+  const diff = Date.now() - parsedDate.getTime();
+  if (diff < 0) return 'ahora';
   const m = Math.floor(diff / 60000);
   if (m < 1)  return 'ahora';
   if (m < 60) return `hace ${m}min`;

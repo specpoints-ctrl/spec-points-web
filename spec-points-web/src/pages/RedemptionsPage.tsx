@@ -17,8 +17,8 @@ import {
   TableHeader,
   TableRow,
 } from '../components/ui';
-import { api, approveRedemption, deliverRedemption } from '../lib/api';
-import { Check, Edit2, Plus, Trash2, Package, Clock, Phone, Mail, PackageCheck } from 'lucide-react';
+import { api, approveRedemption, deliverRedemption, resolveAssetUrl } from '../lib/api';
+import { Check, Edit2, Plus, Trash2, Package, Clock, Phone, Mail, PackageCheck, Building2, CreditCard } from 'lucide-react';
 
 interface Redemption {
   id: string;
@@ -27,6 +27,12 @@ interface Redemption {
   architect_name?: string;
   architect_email?: string;
   architect_phone?: string;
+  architect_office_phone?: string;
+  architect_document_ci?: string;
+  architect_ruc?: string;
+  architect_company?: string;
+  architect_birthday?: string;
+  architect_avatar_url?: string;
   prize_name?: string;
   points_required?: number;
   status: 'pending' | 'approved' | 'delivered';
@@ -60,6 +66,18 @@ const emptyForm: RedemptionForm = {
   architect_id: '',
   prize_id: '',
   status: 'pending',
+};
+
+const normalizePhone = (value?: string | null) => (value || '').replace(/\D/g, '');
+
+const getInitial = (name?: string) => (name?.trim()?.charAt(0) || '?').toUpperCase();
+
+const formatDateSafe = (value?: string | null, fallback = '-') => {
+  if (!value) return fallback;
+  const normalized = value.includes('T') ? value : value.replace(' ', 'T');
+  const parsed = new Date(normalized);
+  if (Number.isNaN(parsed.getTime())) return fallback;
+  return parsed.toLocaleDateString('es-PY');
 };
 
 export default function RedemptionsPage() {
@@ -317,19 +335,61 @@ export default function RedemptionsPage() {
                 {redemptions.map((redemption) => (
                   <TableRow key={redemption.id}>
                     <TableCell>
-                      <p className="font-semibold text-foreground">{redemption.architect_name || '-'}</p>
-                      {redemption.architect_phone && (
-                        <a href={`https://wa.me/${redemption.architect_phone.replace(/\D/g, '')}`} target="_blank" rel="noopener noreferrer"
-                          className="flex items-center gap-1 text-xs text-blue-600 hover:text-emerald-500 hover:underline mt-0.5 transition-colors">
-                          <Phone className="w-3 h-3" />{redemption.architect_phone}
-                        </a>
-                      )}
-                      {redemption.architect_email && (
-                        <a href={`mailto:${redemption.architect_email}`}
-                          className="flex items-center gap-1 text-xs text-muted-foreground hover:underline mt-0.5">
-                          <Mail className="w-3 h-3" />{redemption.architect_email}
-                        </a>
-                      )}
+                      <div className="flex items-start gap-2.5">
+                        {redemption.architect_avatar_url ? (
+                          <img
+                            src={resolveAssetUrl(redemption.architect_avatar_url)}
+                            alt={redemption.architect_name || 'Arquitecto'}
+                            className="h-8 w-8 rounded-full object-cover border border-border/70 mt-0.5"
+                          />
+                        ) : (
+                          <div className="h-8 w-8 rounded-full bg-primary/15 text-primary flex items-center justify-center text-xs font-bold border border-primary/20 mt-0.5">
+                            {getInitial(redemption.architect_name)}
+                          </div>
+                        )}
+                        <div className="min-w-0">
+                          <p className="font-semibold text-foreground">{redemption.architect_name || '-'}</p>
+                          {redemption.architect_company && (
+                            <p className="text-xs text-muted-foreground inline-flex items-center gap-1">
+                              <Building2 className="w-3 h-3" />
+                              {redemption.architect_company}
+                            </p>
+                          )}
+                          {(redemption.architect_document_ci || redemption.architect_ruc) && (
+                            <p className="text-[11px] text-muted-foreground inline-flex items-center gap-1">
+                              <CreditCard className="w-3 h-3" />
+                              {redemption.architect_document_ci ? `CI: ${redemption.architect_document_ci}` : ''}
+                              {redemption.architect_document_ci && redemption.architect_ruc ? ' Â· ' : ''}
+                              {redemption.architect_ruc ? `RUC: ${redemption.architect_ruc}` : ''}
+                            </p>
+                          )}
+                          {redemption.architect_birthday && (
+                            <p className="text-[11px] text-muted-foreground">
+                              Nacimiento: {formatDateSafe(redemption.architect_birthday)}
+                            </p>
+                          )}
+                          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-0.5">
+                            {redemption.architect_phone && normalizePhone(redemption.architect_phone) && (
+                              <a href={`https://wa.me/${normalizePhone(redemption.architect_phone)}`} target="_blank" rel="noopener noreferrer"
+                                className="inline-flex items-center gap-1 text-xs text-emerald-600 hover:underline transition-colors">
+                                <Phone className="w-3 h-3" />{redemption.architect_phone}
+                              </a>
+                            )}
+                            {redemption.architect_office_phone && normalizePhone(redemption.architect_office_phone) && (
+                              <a href={`https://wa.me/${normalizePhone(redemption.architect_office_phone)}`} target="_blank" rel="noopener noreferrer"
+                                className="inline-flex items-center gap-1 text-xs text-blue-600 hover:underline transition-colors">
+                                <Phone className="w-3 h-3" />Oficina: {redemption.architect_office_phone}
+                              </a>
+                            )}
+                            {redemption.architect_email && (
+                              <a href={`mailto:${redemption.architect_email}`}
+                                className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:underline">
+                                <Mail className="w-3 h-3" />{redemption.architect_email}
+                              </a>
+                            )}
+                          </div>
+                        </div>
+                      </div>
                     </TableCell>
                     <TableCell className="font-medium">{redemption.prize_name || '-'}</TableCell>
                     <TableCell>{Number(redemption.points_required || 0).toLocaleString('es-PY')}</TableCell>
@@ -340,7 +400,7 @@ export default function RedemptionsPage() {
                       {redemption.deadline_at ? (
                         <span className="text-xs text-amber-600 flex items-center gap-1">
                           <Clock className="w-3 h-3" />
-                          {new Date(redemption.deadline_at).toLocaleDateString('es-PY')}
+                          {formatDateSafe(redemption.deadline_at)}
                         </span>
                       ) : '-'}
                     </TableCell>
@@ -365,7 +425,7 @@ export default function RedemptionsPage() {
                         {redemption.status === 'delivered' && (
                           <span className="inline-flex items-center gap-1 text-xs font-semibold text-emerald-600">
                             <PackageCheck className="w-3.5 h-3.5" />
-                            {redemption.delivered_at ? new Date(redemption.delivered_at).toLocaleDateString('es-PY') : 'Entregado'}
+                            {redemption.delivered_at ? formatDateSafe(redemption.delivered_at, 'Entregado') : 'Entregado'}
                           </span>
                         )}
                         <button

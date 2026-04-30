@@ -220,9 +220,17 @@ export async function deleteArchitect(req: Request, res: Response) {
 export async function listActiveCompleteArchitects(_req: Request, res: Response) {
   try {
     const architects = await db.manyOrNone(
-      `SELECT id, name as nome, email FROM architects
-       WHERE status = 'active' AND profile_complete = true
-       ORDER BY name ASC`
+      `SELECT
+         a.id,
+         a.name as nome,
+         a.email,
+         a.company,
+         COALESCE(NULLIF(a.telefone, ''), NULLIF(a.phone, ''), NULLIF(a.office_phone, '')) as phone,
+         u.avatar_url
+       FROM architects a
+       LEFT JOIN users u ON u.email = a.email
+       WHERE a.status = 'active' AND a.profile_complete = true
+       ORDER BY a.name ASC`
     );
 
     return res.json({ success: true, data: architects || [] });

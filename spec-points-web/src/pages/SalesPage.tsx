@@ -4,16 +4,52 @@ import {
   Dialog, DialogContent, DialogHeader, DialogTitle,
   Input, Table, TableBody, TableCell, TableHead, TableHeader, TableRow, Textarea,
 } from '../components/ui';
-import { api, getActiveCampaigns, getActiveCompleteArchitects, Campaign, uploadImage, approveSale, rejectSale, resolveAssetUrl } from '../lib/api';
+import {
+  api,
+  getActiveCampaigns,
+  getActiveCompleteArchitects,
+  Campaign,
+  uploadImage,
+  approveSale,
+  rejectSale,
+  resolveAssetUrl,
+  ActiveCompleteArchitect,
+} from '../lib/api';
 import { useProfile } from '../contexts/ProfileContext';
-import { Edit2, Plus, Trash2, Zap, AlertCircle, Check, X, FileText, UploadCloud, BadgeCheck } from 'lucide-react';
+import {
+  Edit2,
+  Plus,
+  Trash2,
+  Zap,
+  AlertCircle,
+  Check,
+  X,
+  FileText,
+  UploadCloud,
+  BadgeCheck,
+  Phone,
+  Mail,
+  Building2,
+} from 'lucide-react';
 
 interface Sale {
   id: string;
   architect_id: string;
   store_id: string;
   architect_name?: string;
+  architect_email?: string;
+  architect_phone?: string;
+  architect_document_ci?: string;
+  architect_ruc?: string;
+  architect_company?: string;
+  architect_avatar_url?: string;
   store_name?: string;
+  store_email?: string;
+  store_phone?: string;
+  store_owner_name?: string;
+  store_cnpj?: string;
+  store_ruc?: string;
+  store_city?: string;
   client_name?: string;
   client_phone?: string;
   amount_usd: number;
@@ -28,10 +64,7 @@ interface Sale {
   created_at: string;
 }
 
-interface ArchitectOption {
-  id: string | number;
-  nome: string;
-}
+type ArchitectOption = ActiveCompleteArchitect;
 
 interface StoreOption {
   id: string;
@@ -64,6 +97,10 @@ const emptyForm: SaleForm = {
 
 const selectCls = 'flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm min-h-[44px]';
 
+const normalizePhone = (value?: string | null) => (value || '').replace(/\D/g, '');
+
+const getInitial = (name?: string) => (name?.trim()?.charAt(0) || '?').toUpperCase();
+
 export default function SalesPage() {
   const { profile } = useProfile();
   const isLojista = profile?.role === 'lojista';
@@ -91,6 +128,11 @@ export default function SalesPage() {
     if (Number.isNaN(amount) || amount < 0) return 0;
     return Math.floor(amount * multiplier);
   }, [formData.amount_usd, multiplier]);
+
+  const selectedArchitect = useMemo(
+    () => architects.find((a) => String(a.id) === formData.architect_id),
+    [architects, formData.architect_id]
+  );
 
   const loadInitialData = async () => {
     try {
@@ -264,9 +306,56 @@ export default function SalesPage() {
                     className={selectCls} required>
                     <option value="">Seleccione el arquitecto</option>
                     {architects.map(a => (
-                      <option key={a.id} value={a.id}>{a.nome}</option>
+                      <option key={a.id} value={a.id}>
+                        {a.nome}{a.phone ? ` — ${a.phone}` : ''}
+                      </option>
                     ))}
                   </select>
+                  {selectedArchitect && (
+                    <div className="mt-2 rounded-xl border border-border/60 bg-muted/20 p-2.5">
+                      <div className="flex items-center gap-2.5">
+                        {selectedArchitect.avatar_url ? (
+                          <img
+                            src={resolveAssetUrl(selectedArchitect.avatar_url)}
+                            alt={selectedArchitect.nome}
+                            className="h-9 w-9 rounded-full object-cover border border-border/70"
+                          />
+                        ) : (
+                          <div className="h-9 w-9 rounded-full bg-primary/15 text-primary flex items-center justify-center text-sm font-bold border border-primary/20">
+                            {getInitial(selectedArchitect.nome)}
+                          </div>
+                        )}
+                        <div className="min-w-0">
+                          <p className="text-sm font-semibold text-foreground truncate">{selectedArchitect.nome}</p>
+                          {selectedArchitect.company && (
+                            <p className="text-xs text-muted-foreground truncate">{selectedArchitect.company}</p>
+                          )}
+                          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-0.5">
+                            {selectedArchitect.phone && (
+                              <a
+                                href={`https://wa.me/${normalizePhone(selectedArchitect.phone)}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="inline-flex items-center gap-1 text-xs text-emerald-600 hover:underline"
+                              >
+                                <Phone className="w-3 h-3" />
+                                {selectedArchitect.phone}
+                              </a>
+                            )}
+                            {selectedArchitect.email && (
+                              <a
+                                href={`mailto:${selectedArchitect.email}`}
+                                className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:underline"
+                              >
+                                <Mail className="w-3 h-3" />
+                                {selectedArchitect.email}
+                              </a>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                   {architects.length === 0 && (
                     <p className="text-xs text-muted-foreground mt-1">Ningún arquitecto con perfil completo y activo</p>
                   )}
@@ -415,8 +504,99 @@ export default function SalesPage() {
               <TableBody>
                 {sales.map(sale => (
                   <TableRow key={sale.id}>
-                    <TableCell className="font-medium">{sale.architect_name || '-'}</TableCell>
-                    <TableCell>{sale.store_name || '-'}</TableCell>
+                    <TableCell>
+                      <div className="flex items-start gap-2.5">
+                        {sale.architect_avatar_url ? (
+                          <img
+                            src={resolveAssetUrl(sale.architect_avatar_url)}
+                            alt={sale.architect_name || 'Arquitecto'}
+                            className="h-8 w-8 rounded-full object-cover border border-border/70 mt-0.5"
+                          />
+                        ) : (
+                          <div className="h-8 w-8 rounded-full bg-primary/15 text-primary flex items-center justify-center text-xs font-bold border border-primary/20 mt-0.5">
+                            {getInitial(sale.architect_name)}
+                          </div>
+                        )}
+                        <div className="min-w-0">
+                          <p className="font-semibold text-foreground leading-5">{sale.architect_name || '-'}</p>
+                          {sale.architect_company && (
+                            <p className="text-xs text-muted-foreground truncate">{sale.architect_company}</p>
+                          )}
+                          {(sale.architect_document_ci || sale.architect_ruc) && (
+                            <p className="text-[11px] text-muted-foreground">
+                              {sale.architect_document_ci ? `CI: ${sale.architect_document_ci}` : ''}
+                              {sale.architect_document_ci && sale.architect_ruc ? ' Â· ' : ''}
+                              {sale.architect_ruc ? `RUC: ${sale.architect_ruc}` : ''}
+                            </p>
+                          )}
+                          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-0.5">
+                            {sale.architect_phone && normalizePhone(sale.architect_phone) && (
+                              <a
+                                href={`https://wa.me/${normalizePhone(sale.architect_phone)}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="inline-flex items-center gap-1 text-[11px] text-emerald-600 hover:underline"
+                              >
+                                <Phone className="w-3 h-3" />
+                                {sale.architect_phone}
+                              </a>
+                            )}
+                            {sale.architect_email && (
+                              <a
+                                href={`mailto:${sale.architect_email}`}
+                                className="inline-flex items-center gap-1 text-[11px] text-muted-foreground hover:underline"
+                              >
+                                <Mail className="w-3 h-3" />
+                                {sale.architect_email}
+                              </a>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="min-w-0">
+                        <p className="font-semibold text-foreground leading-5">{sale.store_name || '-'}</p>
+                        {sale.store_owner_name && (
+                          <p className="text-xs text-muted-foreground">Responsable: {sale.store_owner_name}</p>
+                        )}
+                        {(sale.store_cnpj || sale.store_ruc) && (
+                          <p className="text-[11px] text-muted-foreground">
+                            {sale.store_cnpj ? `RUC/CNPJ: ${sale.store_cnpj}` : ''}
+                            {sale.store_cnpj && sale.store_ruc ? ' Â· ' : ''}
+                            {sale.store_ruc ? `RUC socio: ${sale.store_ruc}` : ''}
+                          </p>
+                        )}
+                        {sale.store_city && (
+                          <p className="text-[11px] text-muted-foreground inline-flex items-center gap-1">
+                            <Building2 className="w-3 h-3" />
+                            {sale.store_city}
+                          </p>
+                        )}
+                        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-0.5">
+                          {sale.store_phone && normalizePhone(sale.store_phone) && (
+                            <a
+                              href={`https://wa.me/${normalizePhone(sale.store_phone)}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center gap-1 text-[11px] text-emerald-600 hover:underline"
+                            >
+                              <Phone className="w-3 h-3" />
+                              {sale.store_phone}
+                            </a>
+                          )}
+                          {sale.store_email && (
+                            <a
+                              href={`mailto:${sale.store_email}`}
+                              className="inline-flex items-center gap-1 text-[11px] text-muted-foreground hover:underline"
+                            >
+                              <Mail className="w-3 h-3" />
+                              {sale.store_email}
+                            </a>
+                          )}
+                        </div>
+                      </div>
+                    </TableCell>
                     <TableCell>
                       <div>
                         <p className="text-sm">{sale.product_name || '-'}</p>

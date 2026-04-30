@@ -21,12 +21,19 @@ const REDEMPTION_SELECT = `
     r.updated_at,
     a.name as architect_name,
     a.email as architect_email,
-    a.phone as architect_phone,
+    COALESCE(NULLIF(a.telefone, ''), NULLIF(a.phone, ''), NULLIF(a.office_phone, '')) as architect_phone,
+    a.office_phone as architect_office_phone,
+    a.document_ci as architect_document_ci,
+    a.ruc as architect_ruc,
+    a.company as architect_company,
+    a.birthday as architect_birthday,
+    u.avatar_url as architect_avatar_url,
     p.name as prize_name,
     p.points_required,
     p.image_url as prize_image
   FROM redemptions r
   LEFT JOIN architects a ON a.id = r.architect_id
+  LEFT JOIN users u ON u.email = a.email
   LEFT JOIN prizes p ON p.id = r.prize_id
 `;
 
@@ -103,7 +110,15 @@ export async function requestRedemption(req: AuthRequest, res: Response) {
     if (!prize_id) throw new AppError('Prêmio é obrigatório', 400);
 
     const architect = await db.oneOrNone(
-      `SELECT id, name, email, phone, points_total, points_redeemed FROM architects WHERE id = $1`,
+      `SELECT
+         id,
+         name,
+         email,
+         COALESCE(NULLIF(telefone, ''), NULLIF(phone, ''), NULLIF(office_phone, '')) as phone,
+         points_total,
+         points_redeemed
+       FROM architects
+       WHERE id = $1`,
       [user.architectId]
     );
     if (!architect) throw new AppError('Arquiteto não encontrado', 404);

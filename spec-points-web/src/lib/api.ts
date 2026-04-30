@@ -531,8 +531,17 @@ export const getActiveStoresList = async () => {
 
 // ── Architects extended ───────────────────────────────────────────────────
 
+export interface ActiveCompleteArchitect {
+  id: number;
+  nome: string;
+  email: string;
+  phone?: string | null;
+  company?: string | null;
+  avatar_url?: string | null;
+}
+
 export const getActiveCompleteArchitects = async () => {
-  const response = await api.get<ApiResponse<{ id: number; nome: string; email: string }[]>>('/architects/active-complete');
+  const response = await api.get<ApiResponse<ActiveCompleteArchitect[]>>('/architects/active-complete');
   return response.data;
 };
 

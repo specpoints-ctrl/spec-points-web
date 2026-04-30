@@ -33,11 +33,24 @@ export async function listSales(_req: Request, res: Response) {
         s.receipt_url,
         s.created_at,
         a.name as architect_name,
+        a.email as architect_email,
+        COALESCE(NULLIF(a.telefone, ''), NULLIF(a.phone, ''), NULLIF(a.office_phone, '')) as architect_phone,
+        a.document_ci as architect_document_ci,
+        a.ruc as architect_ruc,
+        a.company as architect_company,
+        au.avatar_url as architect_avatar_url,
         st.name as store_name,
+        st.email as store_email,
+        COALESCE(NULLIF(st.phone, ''), NULLIF(st.office_phone, '')) as store_phone,
+        st.owner_name as store_owner_name,
+        st.cnpj as store_cnpj,
+        st.ruc as store_ruc,
+        st.city as store_city,
         c.title as campaign_title,
         c.points_multiplier
       FROM sales s
       LEFT JOIN architects a ON a.id = s.architect_id
+      LEFT JOIN users au ON au.email = a.email
       LEFT JOIN stores st ON st.id = s.store_id
       LEFT JOIN campaigns c ON c.id = s.campaign_id
       ORDER BY s.created_at DESC`
@@ -60,11 +73,24 @@ export async function getSale(req: Request, res: Response) {
         s.points_effective, s.product_name, s.quantity, s.description,
         s.campaign_id, s.status, s.receipt_url, s.created_at, s.updated_at,
         a.name as architect_name,
+        a.email as architect_email,
+        COALESCE(NULLIF(a.telefone, ''), NULLIF(a.phone, ''), NULLIF(a.office_phone, '')) as architect_phone,
+        a.document_ci as architect_document_ci,
+        a.ruc as architect_ruc,
+        a.company as architect_company,
+        au.avatar_url as architect_avatar_url,
         st.name as store_name,
+        st.email as store_email,
+        COALESCE(NULLIF(st.phone, ''), NULLIF(st.office_phone, '')) as store_phone,
+        st.owner_name as store_owner_name,
+        st.cnpj as store_cnpj,
+        st.ruc as store_ruc,
+        st.city as store_city,
         c.title as campaign_title,
         c.points_multiplier
       FROM sales s
       LEFT JOIN architects a ON a.id = s.architect_id
+      LEFT JOIN users au ON au.email = a.email
       LEFT JOIN stores st ON st.id = s.store_id
       LEFT JOIN campaigns c ON c.id = s.campaign_id
       WHERE s.id = $1`,

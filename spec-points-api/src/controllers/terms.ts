@@ -77,13 +77,20 @@ export async function checkAcceptance(req: AuthRequest, res: Response) {
     const uid = req.user?.uid;
     if (!uid) throw new AppError('Não autenticado', 401);
 
-    // Admins never need to accept terms
-    const userRole = await db.oneOrNone(
-      `SELECT ur.role FROM user_roles ur JOIN users u ON u.id = ur.user_id WHERE u.firebase_uid = $1`,
+    const user = await db.oneOrNone(
+      `SELECT u.id, ur.role
+       FROM users u
+       LEFT JOIN user_roles ur ON ur.user_id = u.id
+       WHERE u.firebase_uid = $1
+       ORDER BY ur.id NULLS LAST
+       LIMIT 1`,
       [uid]
     );
 
-    if (userRole?.role === 'admin') {
+    if (!user) throw new AppError('Usuário não encontrado', 404);
+
+    // Admins never need to accept terms
+    if (user.role === 'admin') {
       return res.json({ success: true, data: { accepted: true, terms: null } });
     }
 
@@ -96,17 +103,34 @@ export async function checkAcceptance(req: AuthRequest, res: Response) {
     }
 
     const acceptance = await db.oneOrNone(
-      `SELECT uta.id FROM user_terms_acceptance uta
-       JOIN users u ON u.id = uta.user_id
-       WHERE u.firebase_uid = $1 AND uta.terms_id = $2`,
-      [uid, activeTerms.id]
+      `SELECT uta.id
+       FROM user_terms_acceptance uta
+       WHERE uta.user_id = $1 AND uta.terms_id = $2`,
+      [user.id, activeTerms.id]
     );
+
+    let accepted = !!acceptance;
+
+    // Fallback: if active terms were recreated with the same version,
+    // keep acceptance valid for that version.
+    if (!accepted) {
+      const sameVersionAcceptance = await db.oneOrNone(
+        `SELECT uta.id
+         FROM user_terms_acceptance uta
+         JOIN terms t ON t.id = uta.terms_id
+         WHERE uta.user_id = $1 AND t.version = $2
+         ORDER BY uta.accepted_at DESC
+         LIMIT 1`,
+        [user.id, activeTerms.version]
+      );
+      accepted = !!sameVersionAcceptance;
+    }
 
     return res.json({
       success: true,
       data: {
-        accepted: !!acceptance,
-        terms: acceptance ? null : activeTerms,
+        accepted,
+        terms: accepted ? null : activeTerms,
       },
     });
   } catch (error) {
