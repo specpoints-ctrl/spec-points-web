@@ -461,8 +461,14 @@ export const getActiveTerms = async () => {
   return response.data;
 };
 
-export const checkTermsAcceptance = async () => {
-  const response = await api.get<ApiResponse<{ accepted: boolean; terms: Terms | null }>>('/terms/check');
+export const checkTermsAcceptance = async (token?: string) => {
+  const response = await api.get<ApiResponse<{ accepted: boolean; terms: Terms | null }>>('/terms/check', {
+    headers: token
+      ? {
+          Authorization: `Bearer ${token}`,
+        }
+      : undefined,
+  });
   return response.data;
 };
 

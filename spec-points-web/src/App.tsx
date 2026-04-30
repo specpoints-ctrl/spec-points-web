@@ -87,7 +87,7 @@ function App() {
         const userRole = response.data?.role ?? response.data?.user_roles?.[0]?.role;
         if (userRole !== 'admin') {
           try {
-            const termsRes = await checkTermsAcceptance();
+            const termsRes = await checkTermsAcceptance(token);
             if (termsRes.success && termsRes.data && !termsRes.data.accepted && termsRes.data.terms) {
               setTermsRequired(true);
               setPendingTerms(termsRes.data.terms);
