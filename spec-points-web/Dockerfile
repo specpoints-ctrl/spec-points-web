@@ -45,7 +45,13 @@ RUN printf 'server {\n\
         add_header Cache-Control "no-cache, no-store, must-revalidate" always;\n\
     }\n\
 \n\
-    location ~* \\.(js|css|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot)$ {\n\
+    location = /favicon.ico {\n\
+        access_log off;\n\
+        log_not_found off;\n\
+        return 204;\n\
+    }\n\
+\n\
+    location ~* \\.(js|css|png|jpg|jpeg|gif|webp|ico|svg|woff|woff2|ttf|eot|map)$ {\n\
         expires 1y;\n\
         add_header Cache-Control "public, immutable";\n\
     }\n\
