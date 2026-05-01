@@ -22,23 +22,31 @@ export async function listArchitects(_req: Request, res: Response) {
   try {
     const architects = await db.manyOrNone(
       `SELECT
-         id,
-         email,
-         name as nome,
-         company as empresa,
-         telefone,
-         ruc,
-         cep,
-         address as endereco,
-         "number" as numero,
-         complement as complemento,
-         neighborhood as bairro,
-         city as cidade,
-         state as estado,
-         status,
-         created_at
-       FROM architects
-       ORDER BY created_at DESC`
+         a.id,
+         a.email,
+         a.name as nome,
+         a.company as empresa,
+         COALESCE(NULLIF(a.telefone, ''), NULLIF(a.phone, ''), NULLIF(a.office_phone, '')) as telefone,
+         a.office_phone,
+         a.document_ci,
+         a.ruc,
+         a.cep,
+         a.address as endereco,
+         a."number" as numero,
+         a.complement as complemento,
+         a.neighborhood as bairro,
+         a.city as cidade,
+         a.state as estado,
+         a.birthday,
+         a.profile_complete,
+         a.status,
+         a.created_at,
+         u.display_name as user_display_name,
+         u.avatar_url,
+         u.instagram_handle
+       FROM architects a
+       LEFT JOIN users u ON u.email = a.email
+       ORDER BY a.created_at DESC`
     );
 
     return res.json({
@@ -58,24 +66,32 @@ export async function getArchitect(req: Request, res: Response) {
 
     const architect = await db.oneOrNone(
       `SELECT
-         id,
-         email,
-         name as nome,
-         company as empresa,
-         telefone,
-         ruc,
-         cep,
-         address as endereco,
-         "number" as numero,
-         complement as complemento,
-         neighborhood as bairro,
-         city as cidade,
-         state as estado,
-         status,
-         created_at,
-         updated_at
-       FROM architects
-       WHERE id = $1`,
+         a.id,
+         a.email,
+         a.name as nome,
+         a.company as empresa,
+         COALESCE(NULLIF(a.telefone, ''), NULLIF(a.phone, ''), NULLIF(a.office_phone, '')) as telefone,
+         a.office_phone,
+         a.document_ci,
+         a.ruc,
+         a.cep,
+         a.address as endereco,
+         a."number" as numero,
+         a.complement as complemento,
+         a.neighborhood as bairro,
+         a.city as cidade,
+         a.state as estado,
+         a.birthday,
+         a.profile_complete,
+         a.status,
+         a.created_at,
+         a.updated_at,
+         u.display_name as user_display_name,
+         u.avatar_url,
+         u.instagram_handle
+       FROM architects a
+       LEFT JOIN users u ON u.email = a.email
+       WHERE a.id = $1`,
       [id]
     );
 
@@ -226,7 +242,8 @@ export async function listActiveCompleteArchitects(_req: Request, res: Response)
          a.email,
          a.company,
          COALESCE(NULLIF(a.telefone, ''), NULLIF(a.phone, ''), NULLIF(a.office_phone, '')) as phone,
-         u.avatar_url
+         u.avatar_url,
+         u.instagram_handle
        FROM architects a
        LEFT JOIN users u ON u.email = a.email
        WHERE a.status = 'active' AND a.profile_complete = true

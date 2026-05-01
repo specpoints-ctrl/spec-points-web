@@ -29,11 +29,12 @@ export const getDashboardStats = async (_req: Request, res: Response) => {
         `SELECT a.id, a.name, a.email,
                 COALESCE(SUM(COALESCE(s.points_effective, s.points_generated)), 0) as total_points,
                 COUNT(s.id) as total_sales,
-                u.avatar_url
+                u.avatar_url,
+                u.instagram_handle
          FROM architects a
          LEFT JOIN sales s ON a.id = s.architect_id
          LEFT JOIN users u ON u.email = a.email
-         GROUP BY a.id, a.name, a.email, u.avatar_url
+         GROUP BY a.id, a.name, a.email, u.avatar_url, u.instagram_handle
          ORDER BY total_points DESC
          LIMIT 5`
       ),

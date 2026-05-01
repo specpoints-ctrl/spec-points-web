@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
-import { Users, Store, ShoppingCart, TrendingUp, Award, ArrowUpRight } from 'lucide-react';
-import { getDashboardStats, DashboardStats, resolveAssetUrl } from '../lib/api';
+import { Users, Store, ShoppingCart, TrendingUp, Award, ArrowUpRight, Instagram } from 'lucide-react';
+import { buildInstagramUrl, getDashboardStats, DashboardStats, resolveAssetUrl } from '../lib/api';
 import { auth } from '../lib/firebase';
 import { Card, CardContent, CardHeader, CardTitle } from './ui';
 
@@ -267,7 +267,21 @@ export const AdminDashboard = () => {
                       />
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center justify-between mb-1">
-                          <p className="text-sm font-semibold text-foreground truncate">{arch.name}</p>
+                          <div className="flex items-center gap-1.5 min-w-0">
+                            <p className="text-sm font-semibold text-foreground truncate">{arch.name}</p>
+                            {buildInstagramUrl(arch.instagram_handle) && (
+                              <a
+                                href={buildInstagramUrl(arch.instagram_handle)!}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="shrink-0 text-muted-foreground hover:text-primary transition-colors"
+                                title="Ver Instagram"
+                                aria-label={`Instagram de ${arch.name}`}
+                              >
+                                <Instagram className="w-3.5 h-3.5" />
+                              </a>
+                            )}
+                          </div>
                           <p className="text-sm font-bold text-primary tabular-nums shrink-0 ml-2">
                             {arch.total_points.toLocaleString('es-PY')}
                           </p>

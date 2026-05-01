@@ -17,8 +17,8 @@ import {
   TableHeader,
   TableRow,
 } from '../components/ui';
-import { api, approveRedemption, deliverRedemption, resolveAssetUrl } from '../lib/api';
-import { Check, Edit2, Plus, Trash2, Package, Clock, Phone, Mail, PackageCheck, Building2, CreditCard } from 'lucide-react';
+import { api, approveRedemption, deliverRedemption, resolveAssetUrl, buildInstagramUrl } from '../lib/api';
+import { Check, Edit2, Plus, Trash2, Package, Clock, Phone, Mail, PackageCheck, Building2, CreditCard, Instagram } from 'lucide-react';
 
 interface Redemption {
   id: string;
@@ -33,6 +33,7 @@ interface Redemption {
   architect_company?: string;
   architect_birthday?: string;
   architect_avatar_url?: string;
+  architect_instagram_handle?: string | null;
   prize_name?: string;
   points_required?: number;
   status: 'pending' | 'approved' | 'delivered';
@@ -407,6 +408,13 @@ export default function RedemptionsPage() {
                               <a href={`mailto:${redemption.architect_email}`}
                                 className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:underline">
                                 <Mail className="w-3 h-3" />{redemption.architect_email}
+                              </a>
+                            )}
+                            {buildInstagramUrl(redemption.architect_instagram_handle) && (
+                              <a href={buildInstagramUrl(redemption.architect_instagram_handle)!}
+                                target="_blank" rel="noopener noreferrer"
+                                className="inline-flex items-center gap-1 text-xs text-pink-600 hover:underline">
+                                <Instagram className="w-3 h-3" />@{redemption.architect_instagram_handle}
                               </a>
                             )}
                           </div>

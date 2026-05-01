@@ -20,8 +20,8 @@ import {
   TableRow,
   Textarea,
 } from '../components/ui';
-import { api } from '../lib/api';
-import { Check, Edit2, Plus, Trash2, X } from 'lucide-react';
+import { api, buildInstagramUrl } from '../lib/api';
+import { Check, Edit2, Plus, Trash2, X, Phone, Mail, Instagram, User, MapPin, CreditCard } from 'lucide-react';
 
 interface Store {
   id: string;
@@ -29,12 +29,21 @@ interface Store {
   cnpj: string;
   email?: string;
   telefone?: string;
+  office_phone?: string;
   ramo?: string;
   endereco?: string;
   cidade?: string;
   estado?: string;
   pais?: string;
   logo_url?: string;
+  owner_name?: string;
+  owner_ci?: string;
+  ruc?: string;
+  owner_birthday?: string;
+  profile_complete?: boolean;
+  account_email?: string;
+  account_status?: string;
+  instagram_handle?: string | null;
   status: 'active' | 'inactive';
   created_at: string;
 }
@@ -264,8 +273,9 @@ export default function StoresPage() {
               <TableHeader>
                 <TableRow>
                   <TableHead>Nombre</TableHead>
-                  <TableHead>RUC</TableHead>
-                  <TableHead>Ciudad</TableHead>
+                  <TableHead>Documentos</TableHead>
+                  <TableHead>Contacto / Cuenta</TableHead>
+                  <TableHead>Ubicación</TableHead>
                   <TableHead>Estado</TableHead>
                   <TableHead>Acciones</TableHead>
                 </TableRow>
@@ -273,13 +283,87 @@ export default function StoresPage() {
               <TableBody>
                 {stores.map((store) => (
                   <TableRow key={store.id}>
-                    <TableCell className="font-medium">{store.nome}</TableCell>
-                    <TableCell>{store.cnpj}</TableCell>
-                    <TableCell>{store.cidade || '-'}</TableCell>
+                    <TableCell>
+                      <div className="font-medium">{store.nome}</div>
+                      {store.owner_name && (
+                        <div className="text-xs text-muted-foreground flex items-center gap-1 mt-0.5">
+                          <User className="w-3 h-3" />
+                          {store.owner_name}
+                        </div>
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      <div className="text-sm">{store.cnpj || '-'}</div>
+                      {store.ruc && (
+                        <div className="text-xs text-muted-foreground flex items-center gap-1 mt-0.5">
+                          <CreditCard className="w-3 h-3" />
+                          RUC: {store.ruc}
+                        </div>
+                      )}
+                      {store.owner_ci && (
+                        <div className="text-xs text-muted-foreground mt-0.5">CI Responsable: {store.owner_ci}</div>
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      {(store.email || store.account_email) && (
+                        <a
+                          href={`mailto:${store.email || store.account_email}`}
+                          className="text-xs text-muted-foreground hover:text-primary hover:underline flex items-center gap-1"
+                        >
+                          <Mail className="w-3 h-3" />
+                          {store.email || store.account_email}
+                        </a>
+                      )}
+                      {store.telefone && (
+                        <a
+                          href={`https://wa.me/${store.telefone.replace(/\D/g, '')}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-xs text-blue-600 hover:text-emerald-500 hover:underline flex items-center gap-1 mt-0.5"
+                        >
+                          <Phone className="w-3 h-3" />
+                          {store.telefone}
+                        </a>
+                      )}
+                      {store.office_phone && (
+                        <a
+                          href={`https://wa.me/${store.office_phone.replace(/\D/g, '')}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-xs text-blue-600 hover:text-emerald-500 hover:underline flex items-center gap-1 mt-0.5"
+                        >
+                          <Phone className="w-3 h-3" />
+                          Oficina: {store.office_phone}
+                        </a>
+                      )}
+                      {buildInstagramUrl(store.instagram_handle) && (
+                        <a
+                          href={buildInstagramUrl(store.instagram_handle)!}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-xs text-pink-600 hover:text-pink-700 hover:underline flex items-center gap-1 mt-0.5"
+                        >
+                          <Instagram className="w-3 h-3" />@{store.instagram_handle}
+                        </a>
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      <div className="text-sm">{store.cidade || '-'}</div>
+                      <div className="text-xs text-muted-foreground mt-0.5">{store.estado || '-'}</div>
+                      {store.endereco && (
+                        <div className="text-xs text-muted-foreground mt-0.5 flex items-center gap-1">
+                          <MapPin className="w-3 h-3" />
+                          <span className="truncate max-w-[220px] inline-block align-bottom">{store.endereco}</span>
+                        </div>
+                      )}
+                    </TableCell>
                     <TableCell>
                       <Badge variant={store.status === 'active' ? 'success' : 'destructive'}>
                         {store.status === 'active' ? 'Activa' : 'Inactiva'}
                       </Badge>
+                      <div className="text-[10px] text-muted-foreground mt-1">
+                        {store.profile_complete ? 'Perfil completo' : 'Perfil incompleto'}
+                      </div>
                     </TableCell>
                     <TableCell>
                       <div className="flex gap-2">

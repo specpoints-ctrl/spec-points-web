@@ -157,11 +157,38 @@ export interface PendingUser {
   id: string;
   firebase_uid: string;
   email: string;
+  display_name?: string | null;
+  avatar_url?: string | null;
+  instagram_handle?: string | null;
   status: string;
   created_at: string;
   role: string;
   architect_id?: number;
+  store_id?: number;
   architect_name?: string;
+  architect_company?: string | null;
+  architect_phone?: string | null;
+  architect_office_phone?: string | null;
+  architect_document_ci?: string | null;
+  architect_ruc?: string | null;
+  architect_city?: string | null;
+  architect_state?: string | null;
+  architect_address?: string | null;
+  architect_birthday?: string | null;
+  architect_profile_complete?: boolean;
+  store_name?: string | null;
+  store_email?: string | null;
+  store_cnpj?: string | null;
+  store_ruc?: string | null;
+  store_owner_name?: string | null;
+  store_owner_ci?: string | null;
+  store_phone?: string | null;
+  store_office_phone?: string | null;
+  store_city?: string | null;
+  store_state?: string | null;
+  store_address?: string | null;
+  store_owner_birthday?: string | null;
+  store_profile_complete?: boolean;
 }
 
 export const registerUser = async (payload: RegisterPayload) => {
@@ -575,6 +602,7 @@ export interface ActiveCompleteArchitect {
   phone?: string | null;
   company?: string | null;
   avatar_url?: string | null;
+  instagram_handle?: string | null;
 }
 
 export const getActiveCompleteArchitects = async () => {

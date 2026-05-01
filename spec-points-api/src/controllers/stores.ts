@@ -19,21 +19,41 @@ export async function listStores(_req: Request, res: Response) {
   try {
     const stores = await db.manyOrNone(
       `SELECT
-        id,
-        name as nome,
-        cnpj,
-        email,
-        phone as telefone,
-        branch as ramo,
-        address as endereco,
-        city as cidade,
-        state as estado,
-        country as pais,
-        logo_url,
-        status,
-        created_at
-      FROM stores
-      ORDER BY created_at DESC`
+        s.id,
+        s.name as nome,
+        s.cnpj,
+        s.email,
+        COALESCE(NULLIF(s.phone, ''), NULLIF(s.office_phone, '')) as telefone,
+        s.office_phone,
+        s.branch as ramo,
+        s.address as endereco,
+        s.city as cidade,
+        s.state as estado,
+        s.country as pais,
+        s.logo_url,
+        s.owner_name,
+        s.owner_ci,
+        s.ruc,
+        s.owner_birthday,
+        s.profile_complete,
+        s.status,
+        s.created_at,
+        linked_user.account_email,
+        linked_user.account_status,
+        linked_user.instagram_handle
+      FROM stores s
+      LEFT JOIN LATERAL (
+        SELECT
+          u.email as account_email,
+          u.status as account_status,
+          u.instagram_handle
+        FROM user_roles ur
+        JOIN users u ON u.id = ur.user_id
+        WHERE ur.store_id = s.id
+        ORDER BY u.created_at ASC
+        LIMIT 1
+      ) linked_user ON true
+      ORDER BY s.created_at DESC`
     );
 
     return res.json({
@@ -52,22 +72,42 @@ export async function getStore(req: Request, res: Response) {
 
     const store = await db.oneOrNone(
       `SELECT
-        id,
-        name as nome,
-        cnpj,
-        email,
-        phone as telefone,
-        branch as ramo,
-        address as endereco,
-        city as cidade,
-        state as estado,
-        country as pais,
-        logo_url,
-        status,
-        created_at,
-        updated_at
-      FROM stores
-      WHERE id = $1`,
+        s.id,
+        s.name as nome,
+        s.cnpj,
+        s.email,
+        COALESCE(NULLIF(s.phone, ''), NULLIF(s.office_phone, '')) as telefone,
+        s.office_phone,
+        s.branch as ramo,
+        s.address as endereco,
+        s.city as cidade,
+        s.state as estado,
+        s.country as pais,
+        s.logo_url,
+        s.owner_name,
+        s.owner_ci,
+        s.ruc,
+        s.owner_birthday,
+        s.profile_complete,
+        s.status,
+        s.created_at,
+        s.updated_at,
+        linked_user.account_email,
+        linked_user.account_status,
+        linked_user.instagram_handle
+      FROM stores s
+      LEFT JOIN LATERAL (
+        SELECT
+          u.email as account_email,
+          u.status as account_status,
+          u.instagram_handle
+        FROM user_roles ur
+        JOIN users u ON u.id = ur.user_id
+        WHERE ur.store_id = s.id
+        ORDER BY u.created_at ASC
+        LIMIT 1
+      ) linked_user ON true
+      WHERE s.id = $1`,
       [id]
     );
 
@@ -104,12 +144,18 @@ export async function createStore(req: Request, res: Response) {
          cnpj,
          email,
          phone as telefone,
+         office_phone,
          branch as ramo,
          address as endereco,
          city as cidade,
          state as estado,
          country as pais,
          logo_url,
+         owner_name,
+         owner_ci,
+         ruc,
+         owner_birthday,
+         profile_complete,
          status,
          created_at`,
       [
@@ -161,13 +207,19 @@ export async function updateStore(req: Request, res: Response) {
          name as nome,
          cnpj,
          email,
-         phone as telefone,
+         COALESCE(NULLIF(phone, ''), NULLIF(office_phone, '')) as telefone,
+         office_phone,
          branch as ramo,
          address as endereco,
          city as cidade,
          state as estado,
          country as pais,
          logo_url,
+         owner_name,
+         owner_ci,
+         ruc,
+         owner_birthday,
+         profile_complete,
          status,
          created_at,
          updated_at`,
@@ -234,13 +286,19 @@ export async function updateStoreStatus(req: Request, res: Response) {
          name as nome,
          cnpj,
          email,
-         phone as telefone,
+         COALESCE(NULLIF(phone, ''), NULLIF(office_phone, '')) as telefone,
+         office_phone,
          branch as ramo,
          address as endereco,
          city as cidade,
          state as estado,
          country as pais,
          logo_url,
+         owner_name,
+         owner_ci,
+         ruc,
+         owner_birthday,
+         profile_complete,
          status,
          created_at,
          updated_at`,

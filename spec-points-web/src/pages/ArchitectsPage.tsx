@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Button, Card, CardContent, CardHeader, CardTitle, Input, Badge, Table, TableBody, TableCell, TableHead, TableHeader, TableRow, Dialog, DialogContent, DialogHeader, DialogTitle, Textarea } from '../components/ui';
-import { Plus, Edit2, Trash2, Check, X, Phone } from 'lucide-react';
-import { api } from '../lib/api';
+import { Plus, Edit2, Trash2, Check, X, Phone, Instagram, Building2, CreditCard } from 'lucide-react';
+import { api, buildInstagramUrl } from '../lib/api';
 
 interface Architect {
   id: string;
@@ -9,7 +9,12 @@ interface Architect {
   nome: string;
   empresa: string;
   telefone: string;
+  office_phone?: string;
+  document_ci?: string;
   ruc?: string;
+  birthday?: string;
+  profile_complete?: boolean;
+  instagram_handle?: string | null;
   status: 'pending' | 'active' | 'inactive';
   cidade: string;
   estado: string;
@@ -211,6 +216,9 @@ export default function ArchitectsPage() {
                       <TableCell>
                         <div className="font-medium">{architect.nome}</div>
                         <div className="text-[10px] text-muted-foreground font-mono">ID: {architect.id}</div>
+                        {architect.document_ci && (
+                          <div className="text-[10px] text-muted-foreground">CI: {architect.document_ci}</div>
+                        )}
                       </TableCell>
                       <TableCell className="text-sm">{architect.ruc || '-'}</TableCell>
                       <TableCell>
@@ -221,8 +229,33 @@ export default function ArchitectsPage() {
                             <Phone className="w-3 h-3" />{architect.telefone}
                           </a>
                         )}
+                        {architect.office_phone && (
+                          <a href={`https://wa.me/${architect.office_phone.replace(/\D/g, '')}`} target="_blank" rel="noopener noreferrer"
+                            className="flex items-center gap-1 text-xs text-blue-600 hover:text-emerald-500 hover:underline mt-0.5 transition-colors">
+                            <Phone className="w-3 h-3" />Oficina: {architect.office_phone}
+                          </a>
+                        )}
+                        {buildInstagramUrl(architect.instagram_handle) && (
+                          <a
+                            href={buildInstagramUrl(architect.instagram_handle)!}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center gap-1 text-xs text-pink-600 hover:text-pink-700 hover:underline mt-0.5 transition-colors"
+                          >
+                            <Instagram className="w-3 h-3" />@{architect.instagram_handle}
+                          </a>
+                        )}
                       </TableCell>
-                      <TableCell className="text-sm">{architect.empresa}</TableCell>
+                      <TableCell>
+                        <div className="text-sm flex items-center gap-1.5">
+                          <Building2 className="w-3.5 h-3.5 text-muted-foreground" />
+                          <span>{architect.empresa || '-'}</span>
+                        </div>
+                        <div className="text-xs text-muted-foreground mt-0.5 flex items-center gap-1.5">
+                          <CreditCard className="w-3.5 h-3.5" />
+                          <span>{architect.profile_complete ? 'Perfil completo' : 'Perfil incompleto'}</span>
+                        </div>
+                      </TableCell>
                       <TableCell className="text-sm">{architect.cidade}</TableCell>
                       <TableCell>
                         <Badge variant={getStatusBadge(architect.status).variant}>

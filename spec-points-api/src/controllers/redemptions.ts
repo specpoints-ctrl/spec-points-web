@@ -28,6 +28,7 @@ const REDEMPTION_SELECT = `
     a.company as architect_company,
     a.birthday as architect_birthday,
     u.avatar_url as architect_avatar_url,
+    u.instagram_handle as architect_instagram_handle,
     p.name as prize_name,
     p.points_required,
     p.image_url as prize_image
