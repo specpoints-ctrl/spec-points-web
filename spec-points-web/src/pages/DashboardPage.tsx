@@ -40,7 +40,32 @@ function ArchitectDashboard() {
   }
 
   const available = (architect?.points_total ?? 0) - (architect?.points_redeemed ?? 0);
+  const approvedSales = sales.filter((sale) => sale?.status === 'approved');
+  const pendingSales = sales.filter((sale) => sale?.status === 'pending');
+  const rejectedSales = sales.filter((sale) => sale?.status === 'rejected');
   const totalSalesValue = sales.reduce((acc, s) => acc + parseFloat(s.amount_usd ?? 0), 0);
+  const approvedSalesValue = approvedSales.reduce((acc, s) => acc + parseFloat(s.amount_usd ?? 0), 0);
+
+  const getStatusMeta = (status?: string) => {
+    if (status === 'approved') {
+      return {
+        label: 'Aprobada',
+        className: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+      };
+    }
+
+    if (status === 'rejected') {
+      return {
+        label: 'Rechazada',
+        className: 'bg-rose-50 text-rose-700 border-rose-200',
+      };
+    }
+
+    return {
+      label: 'Pendiente',
+      className: 'bg-amber-50 text-amber-700 border-amber-200',
+    };
+  };
 
   return (
     <div className="p-4 sm:p-6 space-y-6">
@@ -177,7 +202,7 @@ function ArchitectDashboard() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Mis Ventas Recientes</CardTitle>
+          <CardTitle>Mis Ventas Recientes (pendientes y aprobadas)</CardTitle>
         </CardHeader>
         <CardContent>
           {sales.length === 0 ? (
@@ -194,10 +219,21 @@ function ArchitectDashboard() {
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-semibold text-foreground truncate">{sale.store_name ?? 'Socio Exclusivo'}</p>
-                    <p className="text-xs text-muted-foreground">{sale.client_name ?? 'Cliente'}</p>
+                    <div className="flex items-center gap-2">
+                      <p className="text-xs text-muted-foreground">{sale.client_name ?? 'Cliente'}</p>
+                      <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border ${getStatusMeta(sale?.status).className}`}>
+                        {getStatusMeta(sale?.status).label}
+                      </span>
+                    </div>
                   </div>
                   <div className="text-right shrink-0">
-                    <p className="text-sm font-bold text-emerald-600 tabular-nums">+{parseInt(sale.points_generated ?? 0).toLocaleString('es-PY')} pts</p>
+                    <p className={`text-sm font-bold tabular-nums ${sale?.status === 'approved' ? 'text-emerald-600' : sale?.status === 'rejected' ? 'text-rose-500' : 'text-amber-600'}`}>
+                      {sale?.status === 'approved'
+                        ? `+${parseInt(sale.points_generated ?? 0).toLocaleString('es-PY')} pts`
+                        : sale?.status === 'rejected'
+                          ? 'No acreditado'
+                          : `En revisión (+${parseInt(sale.points_generated ?? 0).toLocaleString('es-PY')} pts)`}
+                    </p>
                     <p className="text-[11px] text-muted-foreground">US${parseFloat(sale.amount_usd ?? 0).toFixed(2)}</p>
                   </div>
                 </div>
@@ -206,8 +242,27 @@ function ArchitectDashboard() {
           )}
           {sales.length > 0 && (
             <div className="mt-4 pt-4 border-t border-border/30 flex justify-between items-center">
-              <p className="text-xs text-muted-foreground">Total en ventas</p>
-              <p className="text-sm font-bold text-foreground tabular-nums">US${totalSalesValue.toFixed(2)}</p>
+              <div>
+                <p className="text-xs text-muted-foreground">Total registrado</p>
+                <p className="text-sm font-bold text-foreground tabular-nums">US${totalSalesValue.toFixed(2)}</p>
+              </div>
+              <div className="text-right">
+                <p className="text-xs text-muted-foreground">Total aprobado</p>
+                <p className="text-sm font-bold text-emerald-600 tabular-nums">US${approvedSalesValue.toFixed(2)}</p>
+              </div>
+            </div>
+          )}
+          {sales.length > 0 && (
+            <div className="mt-3 flex flex-wrap gap-2">
+              <span className="text-[11px] font-semibold px-2.5 py-1 rounded-full border bg-emerald-50 text-emerald-700 border-emerald-200">
+                {approvedSales.length} aprobada(s)
+              </span>
+              <span className="text-[11px] font-semibold px-2.5 py-1 rounded-full border bg-amber-50 text-amber-700 border-amber-200">
+                {pendingSales.length} pendiente(s)
+              </span>
+              <span className="text-[11px] font-semibold px-2.5 py-1 rounded-full border bg-rose-50 text-rose-700 border-rose-200">
+                {rejectedSales.length} rechazada(s)
+              </span>
             </div>
           )}
         </CardContent>

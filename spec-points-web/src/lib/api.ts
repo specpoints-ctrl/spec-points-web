@@ -15,6 +15,8 @@ const STORAGE_HOST_MARKERS = ['storageapi.dev', 'storage.railway.app'];
 const encodeAssetKey = (key: string) =>
   key.split('/').filter(Boolean).map(encodeURIComponent).join('/');
 
+const INSTAGRAM_HANDLE_REGEX = /^[A-Za-z0-9._]{1,30}$/;
+
 export const resolveAssetUrl = (rawUrl?: string | null): string => {
   if (!rawUrl) return '';
 
@@ -44,6 +46,35 @@ export const resolveAssetUrl = (rawUrl?: string | null): string => {
   }
 
   return trimmedUrl;
+};
+
+export const normalizeInstagramHandle = (rawValue?: string | null): string => {
+  if (!rawValue) return '';
+
+  let candidate = rawValue.trim();
+  if (!candidate) return '';
+
+  if (/^https?:\/\//i.test(candidate)) {
+    try {
+      const parsed = new URL(candidate);
+      const hostname = parsed.hostname.toLowerCase().replace(/^www\./, '');
+      if (hostname !== 'instagram.com') return '';
+      candidate = parsed.pathname.split('/').filter(Boolean)[0] ?? '';
+    } catch {
+      return '';
+    }
+  }
+
+  candidate = candidate.replace(/^@+/, '').trim();
+  if (!candidate) return '';
+  if (!INSTAGRAM_HANDLE_REGEX.test(candidate)) return '';
+  return candidate;
+};
+
+export const buildInstagramUrl = (rawValue?: string | null): string | null => {
+  const handle = normalizeInstagramHandle(rawValue);
+  if (!handle) return null;
+  return `https://instagram.com/${handle}`;
 };
 
 export const api = axios.create({
@@ -110,6 +141,7 @@ export interface BackendUserProfile {
   email: string;
   display_name?: string | null;
   avatar_url?: string | null;
+  instagram_handle?: string | null;
   status: 'pending' | 'active' | 'blocked';
   role?: 'admin' | 'architect' | 'lojista';
   architect_id?: number;
@@ -233,6 +265,7 @@ export interface UserProfile {
   email: string;
   display_name: string | null;
   avatar_url: string | null;
+  instagram_handle?: string | null;
   status: string;
   role: string;
   architect_id?: number;
@@ -244,7 +277,11 @@ export const getProfile = async () => {
   return response.data;
 };
 
-export const updateProfile = async (payload: { display_name?: string; avatar_url?: string }) => {
+export const updateProfile = async (payload: {
+  display_name?: string;
+  avatar_url?: string;
+  instagram_handle?: string | null;
+}) => {
   const response = await api.put<ApiResponse<UserProfile>>('/profile', payload);
   return response.data;
 };

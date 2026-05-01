@@ -1,9 +1,9 @@
-import { useEffect, useRef, useState } from 'react';
+﻿import { useEffect, useRef, useState } from 'react';
 import {
-  Camera, Loader2, CheckCircle2, AlertCircle, User, Lock, Mail,
+  Camera, Loader2, CheckCircle2, AlertCircle, User, Lock, Mail, Instagram,
 } from 'lucide-react';
 import {
-  getProfile, resolveAssetUrl, updateProfile, uploadImage, updateEmailApi, UserProfile,
+  getProfile, normalizeInstagramHandle, resolveAssetUrl, updateProfile, uploadImage, updateEmailApi, UserProfile,
 } from '../lib/api';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui';
 import { useProfile } from '../contexts/ProfileContext';
@@ -16,6 +16,7 @@ import { auth } from '../lib/firebase';
 export default function SettingsPage() {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [displayName, setDisplayName] = useState('');
+  const [instagramHandle, setInstagramHandle] = useState('');
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [savingName, setSavingName] = useState(false);
@@ -41,6 +42,7 @@ export default function SettingsPage() {
     if (contextProfile) {
       setProfile(contextProfile);
       setDisplayName(contextProfile.display_name ?? '');
+      setInstagramHandle(contextProfile.instagram_handle ?? '');
       return;
     }
 
@@ -49,6 +51,7 @@ export default function SettingsPage() {
         if (res.success && res.data) {
           setProfile(res.data);
           setDisplayName(res.data.display_name ?? '');
+          setInstagramHandle(res.data.instagram_handle ?? '');
         }
       })
       .catch((err) => {
@@ -65,7 +68,7 @@ export default function SettingsPage() {
       const res = await updateProfile({ avatar_url: url });
       if (res.success) {
         setProfile((prev) => prev ? { ...prev, avatar_url: url } : prev);
-        setSuccess('¡Foto actualizada con éxito!');
+        setSuccess('Â¡Foto actualizada con Ã©xito!');
         await refreshProfile();
       }
     } catch (err) {
@@ -76,18 +79,35 @@ export default function SettingsPage() {
     }
   };
 
-  const handleSaveName = async () => {
+  const handleSaveProfile = async () => {
     if (!displayName.trim()) return;
     setSavingName(true); setError(null); setSuccess(null);
     try {
-      const res = await updateProfile({ display_name: displayName.trim() });
+      const normalizedInstagram = instagramHandle.trim()
+        ? normalizeInstagramHandle(instagramHandle)
+        : '';
+
+      if (instagramHandle.trim() && !normalizedInstagram) {
+        setError('Instagram invalido. Use @usuario ou URL do Instagram.');
+        return;
+      }
+
+      const res = await updateProfile({
+        display_name: displayName.trim(),
+        instagram_handle: normalizedInstagram || null,
+      });
       if (res.success) {
-        setSuccess('¡Nombre actualizado con éxito!');
-        setProfile((prev) => prev ? { ...prev, display_name: displayName.trim() } : prev);
+        setSuccess('Perfil atualizado com sucesso!');
+        setProfile((prev) => prev ? {
+          ...prev,
+          display_name: displayName.trim(),
+          instagram_handle: normalizedInstagram || null,
+        } : prev);
+        setInstagramHandle(normalizedInstagram || '');
         await refreshProfile();
       }
     } catch {
-      setError('Error al guardar nombre.');
+      setError('Erro ao salvar perfil.');
     } finally {
       setSavingName(false);
     }
@@ -96,8 +116,8 @@ export default function SettingsPage() {
   const handleChangePassword = async (e: React.FormEvent) => {
     e.preventDefault();
     setPwdError(null); setPwdSuccess(null);
-    if (newPwd.length < 8) { setPwdError('La nueva contraseña debe tener al menos 8 caracteres'); return; }
-    if (newPwd !== confirmPwd) { setPwdError('Las contraseñas no coinciden'); return; }
+    if (newPwd.length < 8) { setPwdError('La nueva contraseÃ±a debe tener al menos 8 caracteres'); return; }
+    if (newPwd !== confirmPwd) { setPwdError('Las contraseÃ±as no coinciden'); return; }
     setSavingPwd(true);
     try {
       const user = auth.currentUser;
@@ -105,13 +125,13 @@ export default function SettingsPage() {
       const credential = EmailAuthProvider.credential(user.email, currentPwd);
       await reauthenticateWithCredential(user, credential);
       await fbUpdatePassword(user, newPwd);
-      setPwdSuccess('¡Contraseña cambiada con éxito!');
+      setPwdSuccess('Â¡ContraseÃ±a cambiada con Ã©xito!');
       setCurrentPwd(''); setNewPwd(''); setConfirmPwd('');
     } catch (err: any) {
       if (err.code === 'auth/wrong-password' || err.code === 'auth/invalid-credential') {
-        setPwdError('Contraseña actual incorrecta.');
+        setPwdError('ContraseÃ±a actual incorrecta.');
       } else {
-        setPwdError(err.message || 'Error al cambiar contraseña.');
+        setPwdError(err.message || 'Error al cambiar contraseÃ±a.');
       }
     } finally {
       setSavingPwd(false);
@@ -121,7 +141,7 @@ export default function SettingsPage() {
   const handleChangeEmail = async (e: React.FormEvent) => {
     e.preventDefault();
     setEmailError(null); setEmailSuccess(null);
-    if (!newEmail.includes('@')) { setEmailError('Correo inválido'); return; }
+    if (!newEmail.includes('@')) { setEmailError('Correo invÃ¡lido'); return; }
     setSavingEmail(true);
     try {
       const user = auth.currentUser;
@@ -130,15 +150,15 @@ export default function SettingsPage() {
       await reauthenticateWithCredential(user, credential);
       await fbUpdateEmail(user, newEmail);
       await updateEmailApi(newEmail);
-      setEmailSuccess('¡Correo cambiado con éxito!');
+      setEmailSuccess('Â¡Correo cambiado con Ã©xito!');
       setProfile((prev) => prev ? { ...prev, email: newEmail } : prev);
       setNewEmail(''); setEmailPwd('');
       await refreshProfile();
     } catch (err: any) {
       if (err.code === 'auth/wrong-password' || err.code === 'auth/invalid-credential') {
-        setEmailError('Contraseña incorrecta.');
+        setEmailError('ContraseÃ±a incorrecta.');
       } else if (err.code === 'auth/email-already-in-use') {
-        setEmailError('Este correo ya está en uso.');
+        setEmailError('Este correo ya estÃ¡ en uso.');
       } else {
         setEmailError(err.message || 'Error al cambiar correo.');
       }
@@ -187,7 +207,7 @@ export default function SettingsPage() {
               )}
             </div>
             <div className="flex-1">
-              <p className="text-sm text-muted-foreground mb-3">JPG, PNG o WebP. Máximo 5MB.</p>
+              <p className="text-sm text-muted-foreground mb-3">JPG, PNG o WebP. MÃ¡ximo 5MB.</p>
               <input ref={fileInputRef} type="file" accept="image/jpeg,image/png,image/webp" onChange={handlePhotoChange} className="hidden" />
               <button onClick={() => fileInputRef.current?.click()} disabled={uploading} className={btnCls}>
                 {uploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Camera className="w-4 h-4" />}
@@ -213,15 +233,29 @@ export default function SettingsPage() {
                 className="w-full px-4 py-3 rounded-xl border border-border/40 bg-muted/30 text-sm text-muted-foreground cursor-not-allowed" />
             </div>
             <div className="space-y-1">
+              <label className="block text-[11px] font-bold uppercase tracking-widest text-muted-foreground">Instagram</label>
+              <div className="relative">
+                <Instagram className="w-4 h-4 text-muted-foreground absolute left-3 top-1/2 -translate-y-1/2" />
+                <input
+                  type="text"
+                  value={instagramHandle}
+                  onChange={e => setInstagramHandle(e.target.value)}
+                  placeholder="@seu_usuario ou https://instagram.com/seu_usuario"
+                  maxLength={120}
+                  className={`${inputCls} pl-10`}
+                />
+              </div>
+            </div>
+            <div className="space-y-1">
               <label className="block text-[11px] font-bold uppercase tracking-widest text-muted-foreground">Perfil</label>
               <div className="flex items-center gap-2 px-4 py-3 rounded-xl border border-border/40 bg-muted/30">
                 <User className="w-4 h-4 text-muted-foreground" />
-                <span className="text-sm text-muted-foreground capitalize">{profile?.role ?? '—'}</span>
+                <span className="text-sm text-muted-foreground capitalize">{profile?.role ?? 'â€”'}</span>
               </div>
             </div>
-            <button onClick={handleSaveName} disabled={savingName || !displayName.trim()} className={btnCls}>
+            <button onClick={handleSaveProfile} disabled={savingName || !displayName.trim()} className={btnCls}>
               {savingName ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4" />}
-              {savingName ? 'Guardando...' : 'Guardar nombre'}
+              {savingName ? 'Guardando...' : 'Guardar perfil'}
             </button>
           </div>
         </CardContent>
@@ -229,7 +263,7 @@ export default function SettingsPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2"><Lock className="w-4 h-4" /> Cambiar Contraseña</CardTitle>
+          <CardTitle className="flex items-center gap-2"><Lock className="w-4 h-4" /> Cambiar ContraseÃ±a</CardTitle>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleChangePassword} className="space-y-4">
@@ -244,23 +278,23 @@ export default function SettingsPage() {
               </div>
             )}
             <div className="space-y-1">
-              <label className="block text-[11px] font-bold uppercase tracking-widest text-muted-foreground">Contraseña Actual</label>
+              <label className="block text-[11px] font-bold uppercase tracking-widest text-muted-foreground">ContraseÃ±a Actual</label>
               <input type="password" value={currentPwd} onChange={e => setCurrentPwd(e.target.value)} required
-                placeholder="Su contraseña actual" className={inputCls} />
+                placeholder="Su contraseÃ±a actual" className={inputCls} />
             </div>
             <div className="space-y-1">
-              <label className="block text-[11px] font-bold uppercase tracking-widest text-muted-foreground">Nueva Contraseña</label>
+              <label className="block text-[11px] font-bold uppercase tracking-widest text-muted-foreground">Nueva ContraseÃ±a</label>
               <input type="password" value={newPwd} onChange={e => setNewPwd(e.target.value)} required minLength={8}
-                placeholder="Mínimo 8 caracteres" className={inputCls} />
+                placeholder="MÃ­nimo 8 caracteres" className={inputCls} />
             </div>
             <div className="space-y-1">
-              <label className="block text-[11px] font-bold uppercase tracking-widest text-muted-foreground">Confirmar Nueva Contraseña</label>
+              <label className="block text-[11px] font-bold uppercase tracking-widest text-muted-foreground">Confirmar Nueva ContraseÃ±a</label>
               <input type="password" value={confirmPwd} onChange={e => setConfirmPwd(e.target.value)} required
-                placeholder="Repita la nueva contraseña" className={inputCls} />
+                placeholder="Repita la nueva contraseÃ±a" className={inputCls} />
             </div>
             <button type="submit" disabled={savingPwd || !currentPwd || !newPwd || !confirmPwd} className={btnCls}>
               {savingPwd ? <Loader2 className="w-4 h-4 animate-spin" /> : <Lock className="w-4 h-4" />}
-              {savingPwd ? 'Cambiando...' : 'Cambiar contraseña'}
+              {savingPwd ? 'Cambiando...' : 'Cambiar contraseÃ±a'}
             </button>
           </form>
         </CardContent>
@@ -288,9 +322,9 @@ export default function SettingsPage() {
                 placeholder="nuevo@correo.com" className={inputCls} />
             </div>
             <div className="space-y-1">
-              <label className="block text-[11px] font-bold uppercase tracking-widest text-muted-foreground">Confirmar con Contraseña</label>
+              <label className="block text-[11px] font-bold uppercase tracking-widest text-muted-foreground">Confirmar con ContraseÃ±a</label>
               <input type="password" value={emailPwd} onChange={e => setEmailPwd(e.target.value)} required
-                placeholder="Su contraseña actual" className={inputCls} />
+                placeholder="Su contraseÃ±a actual" className={inputCls} />
             </div>
             <button type="submit" disabled={savingEmail || !newEmail || !emailPwd} className={btnCls}>
               {savingEmail ? <Loader2 className="w-4 h-4 animate-spin" /> : <Mail className="w-4 h-4" />}
@@ -302,3 +336,4 @@ export default function SettingsPage() {
     </div>
   );
 }
+

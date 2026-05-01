@@ -2,11 +2,11 @@ import { ReactNode, useEffect, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import {
   LogOut, Home, Users, Store, ShoppingCart, Gift,
-  RotateCcw, Settings, Menu, X, CheckCircle, Megaphone, Target,
+  RotateCcw, Settings, Menu, X, CheckCircle, Megaphone, Target, Instagram,
 } from 'lucide-react';
 import { auth } from '../../lib/firebase';
 import { useProfile } from '../../contexts/ProfileContext';
-import { resolveAssetUrl } from '../../lib/api';
+import { buildInstagramUrl, resolveAssetUrl } from '../../lib/api';
 
 const Logo = () => (
   <svg width="32" height="32" viewBox="0 0 32 32" fill="none" aria-hidden>
@@ -58,6 +58,7 @@ export const AdminLayout = ({ children }: { children: ReactNode }) => {
 
   const isActive = (path: string) => location.pathname === path;
   const initial = ((profile?.display_name || user?.email || 'A')[0] ?? 'A').toUpperCase();
+  const instagramUrl = buildInstagramUrl(profile?.instagram_handle);
 
   const renderSidebar = () => (
     <div className="flex flex-col h-full">
@@ -107,8 +108,24 @@ export const AdminLayout = ({ children }: { children: ReactNode }) => {
             )}
           </div>
           <div className="flex-1 min-w-0">
-            {profile?.display_name && (
-              <p className="text-xs font-semibold text-sidebar-foreground/90 truncate">{profile.display_name}</p>
+            {(profile?.display_name || instagramUrl) && (
+              <div className="flex items-center gap-1.5">
+                {profile?.display_name && (
+                  <p className="text-xs font-semibold text-sidebar-foreground/90 truncate">{profile.display_name}</p>
+                )}
+                {instagramUrl && (
+                  <a
+                    href={instagramUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    aria-label="Abrir Instagram"
+                    className="shrink-0 text-sidebar-foreground/65 hover:text-sidebar-foreground transition-colors"
+                    title="Abrir Instagram"
+                  >
+                    <Instagram className="w-3.5 h-3.5" />
+                  </a>
+                )}
+              </div>
             )}
             <p className={`truncate ${profile?.display_name ? 'text-[10px] text-sidebar-foreground/45' : 'text-xs text-sidebar-foreground/65'}`}>{user?.email}</p>
           </div>

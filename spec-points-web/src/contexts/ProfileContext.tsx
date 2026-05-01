@@ -29,6 +29,7 @@ const normalizeProfile = (profile: InitialProfile): UserProfile | null => {
     email: profile.email,
     display_name: profile.display_name ?? null,
     avatar_url: profile.avatar_url ?? null,
+    instagram_handle: profile.instagram_handle ?? null,
     status: profile.status,
     role,
     architect_id: profile.architect_id,
